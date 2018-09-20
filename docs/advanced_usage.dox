@@ -1,0 +1,127 @@
+/**
+
+\~english
+
+\page advanced_usage Advanced Usage
+
+- Output log directory can be specified by "Log" parameter.
+
+~~~{.sh}
+./run Target=macliquid3 Log=log_waterdrop
+~~~
+
+- Scene of simulation can be specified by "Name" parameter.
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 Name=dambreak2
+~~~
+
+The scene settings are found at resources/liquid and resources/smoke.
+
+- Screenshots can be saved by "Screenshot" parameter:
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 Screenshot=path_to_directory
+~~~
+
+- Spatial resolution can be scaled via "ResolutionScale" parameter.
+
+~~~{.sh}
+./run Target=macliquid2 ResolutionScale=3.0
+~~~
+
+- Spatial resolution can be specified via "ResolutionX", "ResolutionY" and "ResolutionZ" parameter.
+
+~~~{.sh}
+./run Target=macliquid2 ResolutionX=256 ResolutionY=128
+~~~
+
+- Maximal number of threads can be specified by a "Threads" parameter.
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1
+~~~
+
+- Window size can be scaled by "WindowScale" parameter.
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 WindowScale=2.0
+~~~
+
+- You can hide SHKZ logo by "ShowLogo" parameter.
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 ShowLogo=No
+~~~
+
+- You can pause the simulation on start by "Paused" parameter.
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 Paused=Yes
+~~~
+
+to start the simulation, hit "/" key.
+
+\~japanese
+
+\page advanced_usage 発展した使い方
+
+- ログの出力先は Log パラメータを使って指定します。
+
+~~~{.sh}
+./run Target=macliquid3 Log=log_waterdrop
+~~~
+
+- "Name" パラメータを用いて、シーンの種類を変更出来ます。
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 Name=dambreak2
+~~~
+
+シーン設定は resources/liquid と resources/smoke に記述されています。
+
+- "Screenshot" パラメータを使えば、シミュレーションのスクリーンショットを保存出来ます。
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 Screenshot=path_to_directory
+~~~
+
+- 空間解像度を変更するには "ResolutionScale" パラメータを使います。
+
+~~~{.sh}
+./run Target=macliquid2 ResolutionScale=3.0
+~~~
+
+- 空間解像度を具体的に指定するには "ResolutionX", "ResolutionY" と "ResolutionZ" パラメータを使います。
+
+~~~{.sh}
+./run Target=macliquid2 ResolutionX=256 ResolutionY=128
+~~~
+
+- 最大スレッドの数をコントールするには、Threads パラメータを使います。
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1
+~~~
+
+- ウィンドウの大きさは WindowScale パラメータで変更できます。
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 WindowScale=2.0
+~~~
+
+- "ShowLogo" パラメータを使って、SHKZ ロゴの表示非表示を設定出来ます。
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 ShowLogo=No
+~~~
+
+- "Paused" パラメータを使って、シミュレーションを実行時に停止できます。
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 Paused=Yes
+~~~
+
+シミュレーションを開始するには、"/" キーを押して下さい。
+
+*/

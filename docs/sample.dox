@@ -1,0 +1,402 @@
+/**
+
+\page sample Sample Page
+
+ここに簡単な説明が入ります．
+このページは研究結果をまとめるためのにdoxygenを乱用するための
+使い方をまとめたものです．
+
+研究結果をまとめるときによく使いそうなコマンドが以下にまとめられています．
+もし，面白い情報やより，説明がわかりやすくなりそうなコマンドが
+あったら，順次追加していく予定です．
+
+<HR>
+
+\section s_how_to_write2 doxygenの書き方
+
+doxygenに文章を追加する方法はソースコードにコメントを書く方法以外に
+文章を表すdoxという拡張子を使用します．
+また，doxの中身はdoxygenのコメントから文章を作成するという特性上，
+すべてコメントアウトされていなければなりません．
+何を行っているかわからないかもしれませんが，
+要は，example.doxというファイルがあったとして，その中身は
+
+\code{.sh}
+/**
+
+自由にリンク，ページ名を設定
+\page link_example example
+
+ここに自由に文章を記述
+
+**/
+\endcode
+
+としなければならないということです．
+ページとはhtmlにコンパイルした時の実際のページのことです．
+１つのmainpageとその他複数のpageから成り立っています．
+リンクとは，doxygenでは各ページや各セクションにURLが付与され，ページ内リンクを
+作成することが可能で,そのときにURLの代わりに使用されるユーザー定義の文字列のことです．．
+
+<HR>
+
+\section abst2 概要
+
+[TOC]
+TOC Table of Contents. つまり目次が作られます．
+~~~{.sh}
+[TOC]
+~~~
+
+
+\author Harumo Sasatake
+
+~~~{.sh}
+\author Harumo Sasatake
+~~~
+
+\version 1.0
+
+~~~{.sh}
+\version version num
+~~~
+
+\date 2017-8-16
+
+~~~{.sh}
+\date 2017-*-**
+~~~
+
+\copyright GPL/LGPL/MIT
+
+~~~{.sh}
+\copyright ***
+~~~
+
+<HR>
+
+\section section_explanation セクション
+sectionコマンドにより，文章内を章，節などに分類することができます．
+大きさはsubsubsectionまで使用できます．
+
+\section s12 Section1 
+
+\code
+\section s12 Section1
+\endcode
+
+s1はページ内リンクを貼るときのURLとして使えます．
+そのため，同じものが２つあってはいけません．
+[Section1へのリンクはこんな感じです](@ref s1)
+Section1は章のタイトルです．自由に付けましょう.
+
+\subsection s2 Subsection2
+
+\code
+\subsection <section name> (section title)
+\endcode
+
+\subsubsection s3 Subsubsection3
+
+\code
+\subsubsection <section name> (section title)
+\endcode
+
+<HR>
+
+\section link リンク
+\subsection internal_link ページ内リンク
+sectionコマンドの<section name>をURLのように使用して
+ページ内リンクを貼ることができます．
+
+[Section1へのリンクはこんな感じです](@ref s1)
+
+\code
+[Section1へのリンクはこんな感じです](@ref s1)
+\endcode
+
+\subsection outer_link ページ外リンク
+普通のURLを使用して，そのページヘのリンクも貼ることが可能です．
+
+[doxygen.jp](http://www.doxygen.jp/)
+
+\code
+[doxygen.jp](http://www.doxygen.jp/)
+\endcode
+
+<HR>
+
+\section sp_ex 特殊な表現
+
+\subsection special_expression 誇張表現
+
+Related PagesにBUG Listが自動的に作られます
+
+\subsection expression 内容に関する表現
+
+\par A paragraph title
+これは段落です．この段落は空行もしくは，
+他のセクションの導入コマンドで終了します．
+
+\code{.sh}
+\par (paragraph title)
+\endcode
+
+\remarks
+これは注釈です．この注釈を記述するための段落は，
+空行，もしくは他のセクションの導入コマンドで終了します．
+
+\code{.sh}
+\remarks
+\endcode
+
+\subsubsection font フォント
+\li \a Italic 
+\li \b Bold   
+\li \c Type \c writer \c font (expressing code)
+
+~~~{.sh}
+\li \a Italic 
+\li \b Bold   
+\li \c Type_writer_font 
+~~~
+
+\subsubsection list list<doxygen version | Nest is not available>
+\li リスト表示1
+\li リスト表示2
+\li リスト表示3
+
+\code{.sh}
+\li リスト表示1
+\li リスト表示2
+\li リスト表示3
+\endcode
+
+
+\subsection misc その他の表現
+
+\subsubsection hightlighting ソースコードのシンタックスハイライト
+
+\code{.cpp}
+int main(void);
+\endcode
+
+(円マーク)code{.cpp}\n
+int main(void);\n
+(円マーク)endcode\n
+円マークのところをエンターキーの上にある円マークにしてください．
+もしくは，mainpage.dox内をご覧ください．
+
+
+\subsubsection dot Graphviz
+プラント図やクラス図も簡単にかつ，綺麗に書くことができます．
+
+\dot
+digraph example {
+	node [shape=record, fontsize=10];
+	b [ label="class B"];
+	c [ label="class C"];
+	b -> c [arrowhead="open", style="dashed"];
+}
+\enddot
+
+\code{.dot}
+\dot
+digraph example {
+	node [shape=record, fontsize=10];
+	b [ label="class B"];
+	c [ label="class C"];
+	b -> c [arrowhead="open", style="dashed"];
+}
+\enddot
+\endcode
+
+\subsubsection eqation 数式
+
+1. インライン数式
+
+ \f$(x_1,y_1)\f$ と \f$(x_2,y_2)\f$ の間の距離は \f$\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}\f$。
+
+2. 中央揃えの番号なし数式
+
+  \f[
+    |I_2|=\left| \int_{0}^T \psi(t) 
+             \left\{ 
+                u(a,t)-
+                \int_{\gamma(t)}^a 
+                \frac{d\theta}{k(\theta,t)}
+                \int_{a}^\theta c(\xi)u_t(\xi,t)\,d\xi
+             \right\} dt
+          \right|
+  \f]
+
+3. latexコマンドを使用しての数式
+
+   \f{eqnarray*}{
+        g &=& \frac{Gm_2}{r^2} \\ 
+          &=& \frac{(6.673 \times 10^{-11}\,\mbox{m}^3\,\mbox{kg}^{-1}\,
+              \mbox{s}^{-2})(5.9736 \times 10^{24}\,\mbox{kg})}{(6371.01\,\mbox{km})^2} \\ 
+          &=& 9.82066032\,\mbox{m/s}^2
+   \f}
+
+<HR>
+
+\section md マークダウン
+ここでは，マークダウンの記法をすべて紹介することはありませんが，
+大体すべてのマークダウンの記法を使用できます．
+
+\subsection Header_md 見出し
+ヘッダにラベル付をすることができます．
+
+# h1 {#head1}
+
+\code 
+#h1 {#head1}
+\endcode
+{head1}はsectionでいうsection nameでページ内リンクを貼るときにURLのように
+参照できます．
+
+## h2
+
+\code
+## h2
+\endcode
+通常のマークダウンと同じように{head2}なしでも使用できます．ただ，この場合はこの章に対する
+ページ内リンクは作成できません．
+
+### h3
+
+#### h4
+
+#### h5
+
+## リンク
+webサイトへのリンクも，インラインリンクも，相対パスによる
+PC内部のhtmlへのリンクも可能です．
+
+[H1](#head1)
+
+~~~{.sh}
+[H1](#head1)
+~~~
+
+
+## リスト表示<markdown version Nest is available>
+- list1
+ - list1.1
+- list2
+- list3
+ - list3.1
+  - list3.2
+   - list3.3
+
+1. first
+2. second
+3. third
+
+### 引用
+> quate\n
+> quate\n
+> quate
+
+### Code
+バッククオートではなくチルダによりコードブロックを作成します．
+
+~~~{.cpp}
+int main(void)
+~~~
+
+### 水平線
+
+---
+
+\code 
+---
+\endcode
+
+### テーブル
+
+|Table|Table|
+|-----|-----|
+|table|table|
+|chair|chair|
+|desk |desk |
+
+\code{.md}
+|Table|Table|
+|-----|-----|
+|table|table|
+|chair|chair|
+|desk |desk |
+\endcode{.md}
+
+<HR>
+
+\section html HTML
+
+ドキュメント内でHTMLタグを使用することも可能です．
+詳しくは[ここ](http://www.doxygen.jp/htmlcmds.html)を見てください．
+
+また，htmlonlyコマンドを使用すると，作成されるhtmlにhtmlコードを埋め込む
+ことが可能です．doxygenのバージョンにもよりますがhtml5に対応しています．
+したがって，audioタグやvideoタグを使用すれば，音楽や動画もいけるはずです．
+下の例ではプログレスバーを表示してみました.
+
+
+\htmlonly
+<progress value="70" max="100">70 %</progress>
+\endhtmlonly
+
+\code{.html}
+\htmlonly
+<progress value="70" max="100">70 %</progress>
+\endhtmlonly
+\endcode
+
+
+\section edit 編集に際して
+編集時に以下のコマンドを叩いておくと，10秒ごとにdoxygenがコンパイルされます．
+あとはfirefoxなどで生成されたhtmlを表示し，適当に更新ボタンを押すと，編集中の
+doxファイルを見ることができます．firefoxのプラグインでローカルのファイルが変更されたら
+逐次更新して表示するというものがあったので，それを導入してもいいかもしれませんね．
+
+\code{.shell}
+watch -n 10 doxygen Doxyfile
+\endcode
+
+\section css extra css
+表示をかっこ良くするためにお好みのCSSを使用することができます．
+CSSは先人がいくつか作っているので，それをダウンロードしましょう．
+このページで試用しているCSSは以下のgithubからダウンロードしてきたものです．
+
+[doxygen-theme](https://github.com/nnen/doxygen-theme)
+
+Doxyfileのある場所に
+
+- customdoxygen.css
+- DoxygenLayout.xml
+
+をコピーしましょう．
+
+そして，Doxyfileの
+
+- HTML_EXTRA_STYLESHEET =
+- LAYOUT_FILE =
+
+の項目に先ほどコピーしたファイルを設定しましょう
+
+- HTML_EXTRA_STYLESHEET = ./customdoxygen.css
+- LAYOUT_FILE = ./DoxygenLayout.xml
+
+最後に
+
+~~~{.sh}
+doxygen Doxyfile
+~~~
+
+として，コマンドを走らせると
+CSSが適用されたものが出来上がります．
+**/
+
+
+**/

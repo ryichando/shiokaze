@@ -1,0 +1,81 @@
+/**
+
+\~english
+
+\page basic_usage Basic Usage
+
+Shiokaze is designed to be launched right from "shiokaze" directory by the command like:
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1
+~~~
+
+where macliquid2 is the target name for a dynamic library, and the parameter Threads specifies the number of threads (when omitted, the maximal available number will be used. It's usually faster to specify only one for 2D animations). Program will launch, and as well as a two dimensional water dropping animation, you also find a section below in your terminal:
+
+\snippet param_example.sh section
+
+This is the list of available parameters for the part of liquid solver, which can be changed through the command line interface. For example, if you want to double the spatial resolution, you can do it by
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 ResolutionScale=2.0
+~~~
+
+Alternatively, you can do the same by
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 Liquid.ResolutionScale=2.0
+~~~
+
+Here, we call the part "Liquid" as argument name, and "ResolutionScale" argument item. You may get descriptions for all the parameter fields by adding "help" in the command:
+
+~~~{.sh}
+./run Target=macliquid2 help
+~~~
+
+As default, when a key '/' is pressed, it pauses or resumes simulation. If 'R' key is pressed, it restarts the simulation. When '.' is pressed while the simulation is paused, it advances simulation once. To debug Shiokaze, run
+
+~~~{.sh}
+./waf debug
+~~~
+
+to compile debuggable binary. Debug can then start by
+
+~~~{.sh}
+./waf debug
+~~~
+
+\~japanese
+
+\page basic_usage 基本的な使い方
+
+潮風は "shiokaze" ディレクトリ直下から次のようなコマンドで実行されるよう設計されています。
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1
+~~~
+
+macliquid2 は目的となる動的ライブラリの名前で、Threads パラメータはスレッドの数です (もし省略された場合、利用できる最大コアの数が割り当てられます。2次元のアニメーションでは、スレッドの数を1にした場合が高速な傾向があります。)プログラムは実行され、2次元の水球落下のアニメーションと共に、次のセクションがターミナルにプリントされます。
+
+\snippet param_example.sh section
+
+これは液体ソルバに該当するパラメータのリストで、コマンドラインインターフェースを用いて変更できます。例えば、空間解像度を2倍にしたい場合、次のコマンドを走らせます。
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 ResolutionScale=2.0
+~~~
+
+同じことが、次のコマンドでも可能です。
+
+~~~{.sh}
+./run Target=macliquid2 Threads=1 Liquid.ResolutionScale=2.0
+~~~
+
+ここで、私達は "Liquid" は変数名と呼び、"ResolutionScale" は変数項目と呼びます。それぞれのパラメータについて詳細を知りたい場合、コマンドに "help" を追加して確認できます。
+
+~~~{.sh}
+./run Target=macliquid2 help
+~~~
+
+キーボード処理として、'/' が押されたらシミュレーションを一時停止したり実行したりします。'R' が押されたら、シミュレーションを最初から開始します。'.' キーが押されたら、シミュレーションが一時停止の時、一度だけ idle 関数を呼びます。
+
+*/

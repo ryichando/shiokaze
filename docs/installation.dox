@@ -1,0 +1,200 @@
+/**
+
+\htmlonly <style>div.image img[src="waterdrop.jpg"]{width:673px;}</style> \endhtmlonly 
+\htmlonly <style>div.image img[src="waterdrop3.png"]{width:900px;}</style> \endhtmlonly 
+
+\~english
+
+\page installation Installation
+
+\section compiling_via_docker Compiling via Docker
+
+This is the easiest and most reliable option if you want to make sure that Shiokaze compiles out without error. First, visit [Docker](https://www.docker.com) and get a copy of Docker installed. Next, run:
+
+~~~{.sh}
+docker run -p 8080:80 --rm -ti ryichando/shiokaze /bin/bash
+~~~
+
+This will automatically download a Docker image of Shiokaze build environment, create a container, and log in. Note that --rm option tells Docker that a created container will be destroyed when logged out, which means that all the files in the container will be lost. If you intend to incrementally work on the container, please remove --rm option or append -v ${PWD}:/var/www/html option, which maps currently directory on the host to the working directory in the container. Next, run
+
+~~~{.sh}
+git clone https://bitbucket.org/ryichando/shiokaze.git
+~~~
+
+to get the source of code of Shiokaze at the working directory. Next, run
+
+~~~{.sh}
+cd shiokaze
+./waf configure
+./waf
+~~~
+
+to compile Shiokaze. Finally, run
+
+~~~{.sh}
+./run Target=macliquid3 Log=log_waterdrop
+~~~
+
+After a moment, visit http://localhost:8080/shiokaze/log_waterdrop/mesh_img/ to see the results like below. You may alternatively build our Docker image by yourself through Dockerfile located at shiokaze/scripts/Dockerfile. We note that currently Shiokaze compiled with our Docker image does not support interactive UI display. If this is desired, proceed to below to compile on your platform.
+
+\image html waterdrop3.png
+
+\section compling_by_your_own Compiling on Mac or Linux
+
+Source code of Shiokaze can be obtained by:
+
+~~~{.sh}
+git clone https://bitbucket.org/ryichando/shiokaze.git
+~~~
+
+\subsection compiling_macos macOS
+
+On macOS, we need to install required libraries. To do so, we first install Xcode command line tools and Homebrew. They can be installed by:
+
+\li Xcode
+~~~{.sh}
+xcode-select --install
+~~~
+
+\li Homebrew
+~~~{.sh}
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+~~~
+
+and
+
+~~~{.sh}
+brew install libpng tbb openexr boost gsl glfw3
+~~~
+
+\subsection compiling_linux Debian (Ubuntu Linux)
+
+On Debian, we need to install required libraries as well. They can be installed by:
+
+~~~{.sh}
+sudo apt-get install build-essential ocl-icd-opencl-dev libglfw3-dev freeglut3-dev libboost-all-dev libtbb-dev libgsl0-dev gnuplot libpng-dev zlib1g-dev libopenexr-dev libblas-dev
+~~~
+
+\subsection compling_and_run Compile and Run
+
+Shiokaze adopts [Waf](https://waf.io/) build system. First, set up build environment by running:
+
+~~~{.sh}
+./waf configure
+~~~
+
+Next, compile and generate dynamic libraries by running:
+
+~~~{.sh}
+./waf
+~~~
+
+Finally, run:
+
+~~~{.sh}
+./run Target=macliquid2
+~~~
+
+If you see a simulation like below, hit esc key to leave the simulation. Now, your Shiokaze is ready to go.
+
+\image html waterdrop.jpg
+
+\~japanese
+
+\page installation インストール
+
+\section compiling_via_docker Docker を通してコンパイルする
+
+潮風を確実にコンパイルするには、Docker イメージを使った方法がお勧めです。まず、[Docker](https://www.docker.com) を入手して、インストールします。そして、次のコマンドを実行します:
+
+~~~{.sh}
+docker run -p 8080:80 --rm -ti ryichando/shiokaze /bin/bash
+~~~
+
+このコマンドで、潮風のコンパイル環境が自動的にダウンロードされ、Docker コンテナが作成され、ログインされます。注意事項として、--rm オプションでは、作成された Docker コンテナはログアウトすると消去されます。つまり、コンテナ内のファイルは全て失われてしまいます。もし、将来的にコンテナで作業をしたい場合は、--rm オプションを外すか、-v ${PWD}:/var/www/html オプションを追加して下さい。このオプションでは、ホストのカレントディレクトリをコンテナの作業ディレクトリにマッピングします。次に、次のコマンドを実行してソースコードをダウンロードします:
+
+~~~{.sh}
+git clone https://bitbucket.org/ryichando/shiokaze.git
+~~~
+
+最後に、次のコマンドを実行して潮風をコンパイルします。
+
+~~~{.sh}
+cd shiokaze
+./waf configure
+./waf
+~~~
+
+コンパイル出来たら、次のコマンドを実行して潮風を実行します。
+
+~~~{.sh}
+./run Target=macliquid3 Log=log_waterdrop
+~~~
+
+しばらく経って http://localhost:8080/shiokaze/log_waterdrop/mesh_img/ にアクセスすると、下の図のような結果が閲覧できます。もし、自身で Docker イメージをビルドしたい場合、対応する Dockerfile が shiokaze/scripts/Dockerfile にあります。現在、Docker を通じてコンパイルされた潮風は、インタラクティブなユーザーインターフェースの表示がありません。もしこれが必要な場合、次の章に進んで下さい。
+
+\image html waterdrop3.png
+
+\section compling_by_your_own Mac あるいは Debian系 の Linux 環境でコンパイルする
+
+まず、潮風のソースコードを以下のコマンドを実行してダウンロードします。
+
+~~~{.sh}
+git clone https://bitbucket.org/ryichando/shiokaze.git
+~~~
+
+\subsection compiling_macos macOS
+
+潮風を macOS でコンパイルするには、Xcode のコマンドラインツールと Homebrew がインストールされている必要があります。それぞれ
+
+\li Xcode
+~~~{.sh}
+xcode-select --install
+~~~
+
+\li Homebrew
+~~~{.sh}
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+~~~
+
+でインストールできます。インストール出来たら、Homebrew を通して必要なパッケージをインストールします。これは、
+
+~~~{.sh}
+brew install libpng tbb openexr boost gsl glfw3
+~~~
+
+で行えます。
+
+\subsection compiling_linux Debian (Ubuntu Linux)
+
+潮風を Debian でコンパイルするには、必要なパッケージがインストールされている必要があります。これは、次を実行して行います。
+
+~~~{.sh}
+sudo apt-get install build-essential ocl-icd-opencl-dev libglfw3-dev freeglut3-dev libboost-all-dev libtbb-dev libgsl0-dev gnuplot libpng-dev zlib1g-dev libopenexr-dev libblas-dev
+~~~
+
+\subsection compling_and_run コンパイルと実行
+
+潮風は [Waf](https://waf.io/) ビルドシステムを採用しています。最初に、ビルド環境を次のコマンドで整えます。
+
+~~~{.sh}
+./waf configure
+~~~
+
+次に、実際にコンパイルとライブラリ生成を次のコマンドで行います。
+
+~~~{.sh}
+./waf
+~~~
+
+最後に、コマンドを実行します。
+
+~~~{.sh}
+./run Target=macliquid2
+~~~
+
+以下のようなシミュレーションが実行されれば、潮風の設定は無事完了です。
+
+\image html waterdrop.jpg
+
+**/

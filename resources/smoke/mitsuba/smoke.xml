@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<scene version="0.5.0">
+	<integrator type="volpath_simple">
+		<integer name="maxDepth" value="8"/>
+	</integrator>
+
+	<medium type="heterogeneous" id="smoke">
+		<string name="method" value="woodcock"/>
+
+		<volume name="density" type="gridvolume">
+			<string name="filename" value="$density_filename"/>
+		</volume>
+
+		<volume name="albedo" type="constvolume">
+			<spectrum name="value" value="0.9"/>
+		</volume>
+		<float name="scale" value="$volume_scale"/>
+	</medium>
+
+	<shape type="obj">
+		<string name="filename" value="bounds.obj"/>
+		<ref name="interior" id="smoke"/>
+	</shape>
+	
+	<shape type="rectangle">
+		<transform name="toWorld">
+			<rotate x="1" angle="-90"/>
+			<scale value="100"/>
+			<translate y="-.48"/>
+		</transform>
+		<bsdf type="diffuse">
+			<srgb name="diffuseReflectance" value="#AA8877"/>
+		</bsdf>
+	</shape>
+
+	<sensor type="perspective">
+		<float name="focusDistance" value="1.5"/>
+		<float name="fov" value="25.0"/>
+		<transform name="toWorld">
+			<lookat target="0.0, 0.0, 0.0" origin="0.0, 0.3, 3.0" up="0.0, 1, 0.0"/>
+		</transform>
+		
+		<sampler type="ldsampler">
+			<integer name="sampleCount" value="$sample_count"/>
+		</sampler>
+
+		<film type="hdrfilm">
+			<boolean name="banner" value="false"/>
+			<integer name="width" value="720"/>
+			<integer name="height" value="720"/>
+			<rfilter type="gaussian"/>
+		</film>
+	</sensor>
+
+	<shape type="sphere">
+		<point name="center" x="-1" y="5" z="1"/>
+		<float name="radius" value=".2"/>
+		<emitter type="area">
+			<spectrum name="radiance" value="1500"/>
+		</emitter>
+	</shape>
+</scene>

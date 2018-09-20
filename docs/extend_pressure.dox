@@ -1,0 +1,93 @@
+/**
+
+\htmlonly <style>div.image img[src="Liquid_simstep.png"]{width:700px;}</style> \endhtmlonly 
+
+\~english
+
+\page extend_pressure Extending Pressure Solver
+
+\section extend_pressure_code_implement Implementation Code
+
+Let's say you have a great idea how to solve the Poission's equation for pressure in a new way and you want to try out as part of Shiokaze. To demonstate how to do it, we just show how to implement gauss-seidel method as example. To do so, we first create a source file gauss_seidel.cpp at src/linsolver/gauss_seidel.cpp. The contents looks like this:
+
+\snippet gauss_seidel_example.cpp code
+
+Finally, append these lines to wscript file in the same directory:
+
+\snippet gauss_seidel_example.cpp wscript
+
+and you are done. Run ./waf and make sure that everything compiles out without error.
+
+\section extend_pressure_examine_performance Examining Performance
+
+Let's run a simulation of water drop and measure the performance using the gauss seidel solver above. This can be done by:
+
+\code{.sh}
+./run Target=macliquid3 LinSolver=gauss_seidel Container=Yes Log=log_waterdrop_gauss_seidel
+\endcode
+
+While the simulation is running, you can view intermediate results in real time at:
+
+\li Gauss Seidel iteration count at http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/graph_images/Projection_number_projection_iteration.png
+\li Time to solve the linear system: http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/graph_images/Projection_projection.png
+\li Simulation time per step: http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/graph_images/Liquid_simstep.png
+
+The raw log files are found at:
+
+\li http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/Projection_number_projection_iteration.out
+\li http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/Projection_projection.out
+\li http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/Liquid_simstep.out
+
+Of course, you can view the rendered results at:
+
+\li http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/mesh_img/
+
+All timings are recorded in milliseconds. Below is an example of simulation time per step:
+
+\image html Liquid_simstep.png
+
+\~japanese
+
+\page extend_pressure 圧力ソルバを拡張する
+
+\section extend_pressure_code_implement 実装コード
+
+潮風を使えば、新しい圧力のポアソン方程式を解くためのアイデアを思いついた時、そのアイデアを簡単に組み込むことが出来ます。ここでは、ガウス＝ザイデル法を例にして解説します。まず、gauss_seidel.cpp を src/linsolver/gauss_seidel.cpp に作成します。コンテンツは以下の通りです。
+
+\snippet gauss_seidel_example.cpp code
+
+最後に、これらの行を同じディレクトリに存在する wscript に書き込みます。
+
+\snippet gauss_seidel_example.cpp wscript
+
+これで終わりです。./waf コマンドを走らせて、問題なくコンパイルできることを確認します。
+
+\section extend_pressure_examine_performance パフォーマンスを計測する
+
+上記で実装したガウスザイデル法を使って、シミュレーションを行い、パフォーマンスを計測してみましょう。これは、次のコマンドを走らせて行います。
+
+\code{.sh}
+./run Target=macliquid3 LinSolver=gauss_seidel Container=Yes Log=log_waterdrop_gauss_seidel
+\endcode
+
+シミュレーションが実行されている間、その中間結果を次の URL でリアルタイムに確認出来ます。
+
+\li Gauss Seidel 法の反復回数: http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/graph_images/Projection_number_projection_iteration.png
+\li 線形方程式を解くのにかかった時間: http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/graph_images/Projection_projection.png
+\li ステップ毎のシミュレーションの時間: http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/graph_images/Liquid_simstep.png
+
+これらの元のログファイルは次の URL で確認出来ます。
+
+\li http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/Projection_number_projection_iteration.out
+\li http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/Projection_projection.out
+\li http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/record/Liquid_simstep.out
+
+もちろん、レンダリング結果も次の URL で閲覧出来ます。
+
+\li http://localhost:8080/shiokaze/log_waterdrop_gauss_seidel/mesh_img/
+
+全ての時間はミリ秒で記録されています。下の画像は、ステップ毎のシミュレーション時間のグラフの例です。
+
+\image html Liquid_simstep.png
+
+*/

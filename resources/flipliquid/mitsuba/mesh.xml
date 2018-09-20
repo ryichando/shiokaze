@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scene version="0.5.0">
+<integrator type="direct">
+</integrator>
+
+<sensor type="perspective">
+	<float name="focusDistance" value="6"/>
+	<float name="fov" value="30"/>
+	<string name="fovAxis" value="x"/>
+	<transform name="toWorld">
+	<lookat target="$target_x,$target_y,$target_z" origin="$origin_x,$origin_y,$origin_z" up="0, 1, 0"/>
+</transform>
+
+<sampler type="halton">
+	<integer name="sampleCount" value="$sample_count"/>
+</sampler>
+<film type="hdrfilm">
+	<boolean name="banner" value="false"/>
+	<integer name="width" value="1280"/>
+	<integer name="height" value="720"/>
+	<string name="pixelFormat" value="rgb"/>
+	<rfilter type="gaussian"/>
+</film>
+</sensor>
+
+<emitter type="sunsky">
+<spectrum name="albedo" value="0"/>
+<vector name="sunDirection" x="-0.2" y="0.4" z="0.3"/>
+<float name="sunScale" value="3.0"/><float name="skyScale" value="6.0"/></emitter>
+
+<shape type="rectangle">
+	<transform name="toWorld">
+		<rotate x="1" angle="-90"/>
+		<scale value="100"/>
+	</transform>
+	<bsdf type="diffuse">
+		<srgb name="reflectance" value="#FFFFFF"/>
+	</bsdf>
+</shape>
+
+<shape type="ply">
+	<string name="filename" value="$mesh_filename"/>
+	<bsdf type="twosided"><bsdf type="plastic">
+		<srgb name="diffuseReflectance" value="$liquid_color"/>
+		<float name="intIOR" value="1.5"/>
+	</bsdf></bsdf>
+</shape>
+
+<shape type="ply">
+	<string name="filename" value="$solid_filename"/>
+	<bsdf type="twosided"><bsdf type="diffuse">
+	</bsdf></bsdf>
+</shape>
+
+</scene>

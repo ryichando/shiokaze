@@ -1,0 +1,80 @@
+/**
+
+\page gallery Gallery
+
+\section extended_nbflip Extended Narrow Band FLIP for Liquid Simulations
+Takahiro Sato, Chris Wojtan, Nils Thuerey, Takeo Igarashi and Ryoichi Ando.
+Computer Graphics Forum (Eurographics) 2018.
+
+\code{.sh}
+./run Target=macflipliquid3 ResolutionScale=2.0 RenderTransparent=Yes Name=cylinders3 Log=log_cylinders
+open http://localhost:8080/shiokaze/log_cylinders/transparent_img/
+\endcode
+
+\htmlonly
+<iframe width="840" height="473" src="https://www.youtube.com/embed/pfCvmFe8yw8" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+\endhtmlonly
+
+\code{.sh}
+./run Target=macflipliquid3 ResolutionScale=3.0 RenderTransparent=Yes Name=stanfordparty3 Log=log_stanfordparty
+open http://localhost:8080/shiokaze/log_stanfordparty/transparent_img/
+\endcode
+
+\htmlonly
+<iframe width="840" height="473" src="https://www.youtube.com/embed/SN2km5RV9cI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+\endhtmlonly
+
+\code{.sh}
+./run Target=macflipliquid3 ResolutionScale=3.0 RenderTransparent=Yes Log=log_waterdrop Container=Yes
+open http://localhost:8080/shiokaze/log_waterdrop/transparent_img/
+\endcode
+
+\htmlonly
+<iframe width="840" height="473" src="https://www.youtube.com/embed/XST1Xrb1JDo" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+\endhtmlonly
+
+\section A Long-Term Semi-Lagrangian Method for Accurate Velocity Advection
+Takahiro Sato, Christopher Batty, Takeo Igarashi and Ryoichi Ando.
+SIGGRAPH Asia 2017 Technical Briefs
+
+\code{.sh}
+./run Target=macbackwardflipsmoke3 ResolutionScale=2.0 Log=log_backwardflip_smoke
+open http://localhost:8080/shiokaze/log_backwardflip_smoke/img/
+\endcode
+
+\htmlonly
+<iframe width="600" height="600" src="https://www.youtube.com/embed/BNG1lsh4Gx4" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+\endhtmlonly
+
+\section stream_func_solve A Stream Function Solver for Liquid Simulations
+
+Ryoichi Ando, Nils Thuerey and Chris Wojtan. ACM Transactions on Graphics (SIGGRAPH) 2015.
+
+\code{.sh}
+./run Target=macflipliquid3 ResolutionScale=2.0 RenderTransparent=Yes Name=glugging3 Log=log_gluggung EncloseSolid=Yes
+open http://localhost:8080/shiokaze/log_gluggung/transparent_img/
+\endcode
+
+\htmlonly
+<iframe width="840" height="473" src="https://www.youtube.com/embed/5h6UAjB4Xjo" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+\endhtmlonly
+
+\section level_set_liquid Level Set Liquid
+
+\code{.sh}
+./run Target=macliquid3 ResolutionScale=2.0 RenderTransparent=Yes Name=cylinders3 Log=log_cylinders_levelset
+open http://localhost:8080/shiokaze/log_cylinders_levelset/transparent_img/
+\endcode
+
+\htmlonly
+<iframe width="840" height="473" src="https://www.youtube.com/embed/xE7u3bikgK0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+\endhtmlonly
+
+\code{.sh}
+open http://localhost:8080/shiokaze/log_cylinders_levelset/mesh_img/
+\endcode
+
+\htmlonly
+<iframe width="840" height="473" src="https://www.youtube.com/embed/eCFhQNYSjy0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+\endhtmlonly
+*/

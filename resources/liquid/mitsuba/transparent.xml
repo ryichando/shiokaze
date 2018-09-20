@@ -1,0 +1,66 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scene version="0.5.0">
+<integrator type="volpath_simple">
+	<integer name="maxDepth" value="10"/>
+</integrator>
+
+<sensor type="perspective">
+	<float name="focusDistance" value="6"/>
+	<float name="fov" value="30"/>
+	<string name="fovAxis" value="x"/>
+	<transform name="toWorld">
+	<lookat target="$target_x,$target_y,$target_z" origin="$origin_x,$origin_y,$origin_z" up="0, 1, 0"/>
+</transform>
+
+<sampler type="stratified">
+	<integer name="dimension" value="6"/>
+	<integer name="sampleCount" value="$sample_count"/>
+</sampler>
+
+<film type="hdrfilm">
+	<boolean name="banner" value="false"/>
+	<integer name="width" value="1280"/>
+	<integer name="height" value="720"/>
+	<string name="pixelFormat" value="rgb"/>
+	<rfilter type="gaussian"/>
+</film>
+</sensor>
+
+<emitter type="envmap" id="envmapLight">
+	<string name="filename" value="veranda_1k.hdr"/>
+	<transform name="toWorld">
+		<rotate y="1" angle="-75"/>
+	</transform>
+	<float name="scale" value="1.75"/>
+</emitter>
+
+<shape type="rectangle">
+	<transform name="toWorld">
+		<rotate x="1" angle="-90"/>
+		<scale value="100"/>
+		<translate y="0.004" />
+	</transform>
+	<bsdf type="diffuse">
+		<srgb name="reflectance" value="#FFFFFF"/>
+	</bsdf>
+</shape>
+
+<shape type="ply">
+	<string name="filename" value="$mesh_filename"/>
+	<bsdf type="dielectric">
+		<string name="intIOR" value="water"/>
+		<string name="extIOR" value="air"/>
+	</bsdf>
+	<medium name="interior" type="homogeneous">
+		<rgb name="sigmaS" value="0, 0, 0"/>
+		<rgb name="sigmaA" value="8, 3.1, 1.5"/>
+	</medium>
+</shape>
+
+<shape type="ply">
+	<string name="filename" value="$solid_filename"/>
+	<bsdf type="twosided"><bsdf type="diffuse">
+	</bsdf></bsdf>
+</shape>
+
+</scene>

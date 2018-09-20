@@ -1,0 +1,5 @@
+@INCLUDE               = Doxyfile
+OUTPUT_DIRECTORY       = ./docs/ja
+OUTPUT_LANGUAGE        = Japanese
+PROJECT_NAME           = "潮風フレームワーク"
+PROJECT_BRIEF          = "研究開発に特化したコンピューターグラフィックスのための流体ソルバ"

@@ -1,0 +1,37 @@
+/**
+
+\~english
+
+\page create_scene Creating New Scene
+
+To create a new scene for liquid simulation, we add a new C++ code to resources/liquid. This example shows a code for dam break scene (dambreak3.cpp):
+
+\snippet dambreak3_sample.cpp code
+
+To add this scene to build settings, we include this code to resources/liquid/wscript:
+
+\snippet dambreak3_sample.cpp wscript
+
+For information of other usages, please see the source files in the same directory.
+
+\~japanese
+
+\page create_scene 新しいシーンを作成する
+
+液体計算の新しいシーンを追加するには、resources/liquid に新しい C++ コードを追加して行います。次の例は、ダム崩壊シーンを記述した dambreak3.cpp です。
+
+\snippet dambreak3_sample.cpp code
+
+最後に、次のコードを resources/liquid/wscript に記述して、ビルド設定ファイルに反映させます。
+
+\snippet dambreak3_sample.cpp wscript
+
+潮風で、シーンを指定するには、Name パラメータを使います。
+
+~~~{.sh}
+./run Target=macliquid2 Name=dambreak3
+~~~
+
+その他のシーンファイルの記述例は、同ディレクトリのソースコードを参照して下さい。
+
+*/

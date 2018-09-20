@@ -1,0 +1,155 @@
+/**
+
+\htmlonly <style>div.image img[src="screenshot.jpg"]{width:850px;}</style> \endhtmlonly 
+
+\~english
+
+\mainpage Introduction
+
+\section Overview
+
+\image html screenshot.jpg
+
+Shiokaze framework (Shiokaze) is developed to make it easy to start research in fluid simulation for computer graphics, without really understanding every component of fluid simulation. How's that possible? Because Shiokaze delivers following highlights:
+
+\li It consists of a collection of dynamic libraries that are completely independent to each other.
+\li Each library focuses on separated individual problems.
+\li Shiokaze selects which library to load at runtime, allowing one to quickly switch different implementations.
+\li It is designed such that you can pick some specific part of the code and adapt to your own (not limited to fluid) project.
+\li All the codes are licensed either MIT, CC, Apache, or public domain.
+\li Simulation configuration can be dynamically changed via the command line interface or in the scene file.
+\li It comes with implementations of various algorithms to let you quickly compare or test against different methods.
+\li Shiokaze is delivered through the [Docker](https://www.docker.com) image - eliminating chance of failure to compile and allow anyone to run out of the box.
+
+<HR>
+
+\section motivation Motivation
+
+Research in fluid for computer graphics actually can be done without knowing every detail of fluid simulation. This is thanks to the fact that fluid simulation consists of various algorithms that deal with independent different problems, and improving one problem can be a major contribution. For example, solving Poisson's equation of pressure is often a computationally expensive part of the whole simulation, and speeding up the solver can be a significant contribution. Tracking deforming surfaces of fluid surfaces undergoing topology changes is also an open problem for liquid simulation, and making it accurate is also a remarkable contribution. However, in order to complete research, implementing the whole fluid simulation, visualizing results and comparisons to existing methods are required, which are the major obstacles for anyone who starts research in fluid. Shiokaze aims at removing such obstacles. For instance, if one comes up with a new idea for efficiently solving Poisson's equation of pressure, only he/she has to do is to focus on the implementation of an algorithm to solve the linear equations. Comparisons and visualization are quicky done by a couple of command lines. The authors of Shiokaze wish that the Shiokaze makes fluid simulation familiar, and let anyone enjoy research in fluid. Shiokaze means ocean breeze in Japanese.
+
+\section features Features
+
+Shiokaze currently comes with following algorithms:
+
+\li Adaptive time stepping.
+\li Pressure solver.
+\li Second-order accurate boundary conditions for pressure solve both for free surfaces and solid walls by [Batty et al.](https://dl.acm.org/citation.cfm?id=1276502)
+\li PDE-based level set redistancing algorithm with second-order accurate boundary conditions.
+\li Parallel fast marching method for level set redistancing.
+\li [Stream function solver](http://pub.ist.ac.at/group_wojtan/projects/2015_Ando_ASFSfLS/index.html) with second-order accurate boundary conditions for free surfaces and solid walls.
+\li Semi-Lagrangian advection method.
+\li MacCormack advetion method.
+\li Six-th order accurate WENO interpolation.
+\li Built-in matrix and vector operations.
+\li Tile-based sparse grid and standard linear grid.
+\li Narrow band level set with flood fill using bit operations.
+\li Level set generation from point cloud using convex hulls and the method of [Zhu and Bridson.](https://dl.acm.org/citation.cfm?id=1073298)
+\li Surface mesh generation from level set using [Marching Cubes](http://paulbourke.net/geometry/polygonise/) and [Dual Marching Cubes](https://github.com/dominikwodniok/dualmc) by [Dominik Wodniok](http://dominikwodniok.de/).
+\li Grid hash for neighborhood search.
+\li Mesh loader ([RPly](http://w3.impa.br/~diego/software/rply/)) and writer.
+\li Two and three dimensional smoke solver.
+\li Two and three dimensional liquid solver.
+\li Level set generator from surface meshes using [SDFGen.](https://github.com/christopherbatty/SDFGen)
+\li Conjugate gradient method.
+\li Modified Incomplete cholesky preconditioned conjugate gradient method using [Robert Bridson's code.](https://www.cs.ubc.ca/~rbridson/fluidsimulation/)
+\li Algebraic multigrid preconditioned conjugate gradient method using [AMGCL.](https://github.com/ddemidov/amgcl)
+\li Shared grids.
+\li [FLIP](https://dl.acm.org/citation.cfm?id=1073298), [narrow band FLIP](https://wwwcg.in.tum.de/research/research/publications/2016/narrow-band-flip-for-liquid-simulations.html), [extended narrow band FLIP](https://takahirosato.bitbucket.io/publications/exnbflip/index.html) with [APIC](https://dl.acm.org/citation.cfm?id=2766996) transfer.
+\li Spatially adaptive long-term semi-lagrangian method by [Sato et al.](https://takahirosato.bitbucket.io/publications/sa_backwardflip/index.html)
+
+\section limitations Limitations
+
+At the cost of flexible usability, Shiokaze heavily depends on virtual function calls. For this reason, you may experience some amount of overhead compared to a highly performance-optimized implementation written by other people. Shiokaze currently only supports Linux and macOS platforms - not Windows. This is because we are not familar with Windows, we are too busy to maintain reliability among three multiple operating systems, and Shiokaze relies much on the UNIX environment. Note that Shiokaze makes use of [Docker](https://www.docker.com) to deliver a build environment. This should make it possible to run on Windows as well (not verified). Shiokaze also lacks a Python support. This is our future work.
+
+\section contributors Contributors
+
+\li [Ryoichi Ando](http://research.nii.ac.jp/~rand/)
+\li [Hikaru Ibayashi](http://www-scf.usc.edu/~ibayashi/)
+\li [Takahiro Sato](https://takahirosato.bitbucket.io)
+\li [Takeo Igarashi](http://www-ui.is.s.u-tokyo.ac.jp/~takeo/)
+\li [Nils Thuerey](https://ge.in.tum.de/about/n-thuerey/)
+\li [Chris Wojtan](http://pub.ist.ac.at/group_wojtan/)
+\li [Christopher Batty](https://cs.uwaterloo.ca/~c2batty/)
+
+\section acknowledgements Acknowledgements
+
+Shiokaze is currently being actively developed and maintained at [National Institute of Informatics](https://www.nii.ac.jp/) by [Ryoichi Ando](http://research.nii.ac.jp/~rand/). The authors of Shiokaze wish that more people get in touch with Shiokaze and they find it useful. Therefore, we wish that Shiokaze is cited in your research paper if used. Bibliography of Shiokaze is:
+
+\include shiokaze-bib.bib
+
+\~japanese
+
+\mainpage 導入
+
+\section overview 概要
+
+\image html screenshot.jpg
+
+潮風フレームワーク(潮風)は、流体力学の専門知識が無い人でも、コンピューターグラフィックスの新しい流体シミュレーションの研究を簡単に始められることを目的に開発されました。どうしてそんな事が可能でしょうか？それは潮風フレームワークは次の特徴を持っているからです。
+
+\li たくさんの独立した動的ライブラリで構成されており、潮風は必要に応じてそれらを動的に読み込みます。
+\li それぞれのライブラリは完全に独立した別々の問題を扱います。
+\li 実行時にどのライブラリを読み込むか選択できるので、異なる実装の切り替えが簡単になります。
+\li コードの一部だけを取り出し、あなたの(流体とは全く関係ない)独自のプロジェクトに組み込めやすいように設計されています。
+\li 全てのコードは MIT あるいは CC, Apache, public domain でライセンスされています。
+\li シミュレーションの設定を、コマンドラインあるいはシーンファイルで動的に変えることができます。
+\li 様々なアルゴリズムの実装が提供されており、異なるアルゴリズムとの比較やテストが容易にできるよう設計されています。
+\li 潮風は [Docker](https://www.docker.com) イメージとして提供されるので、コンパイルに失敗せず、すぐに実行することができます。
+
+<HR>
+
+\section motivation 潮風の開発のきっかけ
+
+コンピューターグラフィックスにおける流体力学(CG流体)の研究を行うには、必ずしもCG流体の全てを詳しく理解する必要はありません。それは、CG流体の研究は、たくさんの異なるアルゴリズムで構成されており、その一つを改良するだけでも、十分な新規性が認められるからです。例えば、CG流体では圧力のポアソン方程式の計算に膨大な時間がかかり、この点を改善できれば、大きな貢献となります。また、液体シミュレーションではトポロジーの変化を伴う界面の変形を追跡する必要があり、この追跡を正確に計算できれば、それも大きな貢献となります。しかし、CG流体の研究を行うには、シミュレーションから可視化までの実装や、様々な既存手法との比較が必要になります。これらの実装は、多大な時間と労力がかかり、CG流体の研究の障壁の一つとなっています。潮風を使えば、この障壁を減らすことができます。例えば、圧力のポアソン方程式を高速に解けるアイデアを思いついたとき、潮風を使えば、連立一次方程式のアルゴリズムの実装だけに集中できます。既存手法との比較や可視化は、簡単なコマンドラインで即座に実行可能です。開発者は、潮風の登場によって、CG流体の敷居を大きく下げ、誰でもCG流体の面白さに触れられることを願っています。
+
+\section features 特徴
+
+潮風は、現在次の機能を提供します:
+
+\li アダプティブなタイムステップ
+\li 圧力ソルバ
+\li [Batty et al.](https://dl.acm.org/citation.cfm?id=1276502) らの手法による壁面と自由境界の圧力ソルバのための2次精度境界条件
+\li 偏微分方程式を用いたレベルセットの2次精度境界条件の再初期化
+\li 並列 Fast marching 法を用いたレベルセットの初期化
+\li 壁面と自由境界の2次精度の境界条件を備えた[流れ関数ソルバ](http://pub.ist.ac.at/group_wojtan/projects/2015_Ando_ASFSfLS/index.html)
+\li セミラグランジュ法による移流
+\li MacCormack法による移流
+\li 6次精度 WENO 補間
+\li 内蔵された行列とベクトル演算
+\li タイルベースの疎なグリッドと線形グリッド
+\li ビット演算を用いたフラッドフィルを備えたナローバンドレベルセット法
+\li コンベックスハルを使った点群のレベルセット生成と [Zhu and Bridson](https://dl.acm.org/citation.cfm?id=1073298) らの手法を用いた点群のレベルセット生成
+\li [Marching Cubes](http://paulbourke.net/geometry/polygonise/) と [Dominik Wodniok](http://dominikwodniok.de/) の [Dual Marching Cubes](https://github.com/dominikwodniok/dualmc) を用いたレベルセットからサーフェスメッシュの生成
+\li 近傍探索のためのグリッドハッシュ
+\li メッシュの読み込み ([RPly](http://w3.impa.br/~diego/software/rply/)) と書き出し
+\li 2次元と3次元の煙ソルバ
+\li 2次元と3次元の液体ソルバ
+\li [SDFGen](https://github.com/christopherbatty/SDFGen) を用いたメッシュからレベルセットの生成
+\li 共役勾配法
+\li [Robert Bridson](https://www.cs.ubc.ca/~rbridson/fluidsimulation/) のコードより提供される修正不完全コレスキー分解前処理付共役勾配法
+\li [AMGCL](https://github.com/ddemidov/amgcl) を用いた代数的前処理付共役勾配法
+\li 共有グリッドの機能
+\li [APIC](https://dl.acm.org/citation.cfm?id=2766996) による物理量転写を備えた [FLIP](https://dl.acm.org/citation.cfm?id=1073298), [narrow band FLIP](https://wwwcg.in.tum.de/research/research/publications/2016/narrow-band-flip-for-liquid-simulations.html), [extended narrow band FLIP](https://takahirosato.bitbucket.io/publications/exnbflip/index.html) の実装
+\li [Sato et al.](https://takahirosato.bitbucket.io/publications/sa_backwardflip/index.html) らの提案した Spatially adaptive long-term semi-lagrangian 法の実装
+
+\section limitations 制約
+
+潮風は、柔軟性のある利便性と引き換えに仮想関数を多用しているため、パフォーマンスにはルーチンコールにオーバーヘッドがあります。そのため、パフォーマンスに最適化された他者のソルバと比べてある程度の遅延が認められます。また潮風は現在、Linux と macOS プラットフォームのみに対応しており、Windows には対応していません。これは、私達が Windows 環境に不慣れなこと、3つの異なるプラットフォームで信頼性を維持する余裕がないこと、そして潮風は UNIX 環境に大きく依存していることに起因しています。しかし、[Docker](https://www.docker.com) をインストールすれば、Windows でも問題無く実行出来ます (非検証)。潮風はまた、Python に対応していません。これは、将来の課題となっています。
+
+\section contributors 貢献者
+
+\li [安東遼一](http://research.nii.ac.jp/~rand/)
+\li [尉林暉](http://www-scf.usc.edu/~ibayashi/)
+\li [佐藤雄大](https://takahirosato.bitbucket.io)
+\li [五十嵐健夫](http://www-ui.is.s.u-tokyo.ac.jp/~takeo/)
+\li [Nils Thuerey](https://ge.in.tum.de/about/n-thuerey/)
+\li [Chris Wojtan](http://pub.ist.ac.at/group_wojtan/)
+\li [Christopher Batty](https://cs.uwaterloo.ca/~c2batty/)
+
+\section acknowledgements 謝辞
+
+潮風は現在[国立情報学研究所](https://www.nii.ac.jp/)にて、[安東遼一](http://research.nii.ac.jp/~rand/)によって開発が活発に行われています。開発者は、より多くの方に潮風を使って頂けることを望んでいます。もし、潮風が研究に使われた時、論文で潮風を引用して頂ければ幸いです。潮風の Bibliography は以下の通りです。
+
+\include shiokaze-bib.bib
+
+**/
