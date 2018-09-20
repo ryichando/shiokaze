@@ -114,7 +114,7 @@ docker run -p 8080:80 --rm -ti ryichando/shiokaze /bin/bash
 このコマンドで、潮風のコンパイル環境が自動的にダウンロードされ、Docker コンテナが作成され、ログインされます。注意事項として、--rm オプションでは、作成された Docker コンテナはログアウトすると消去されます。つまり、コンテナ内のファイルは全て失われてしまいます。もし、将来的にコンテナで作業をしたい場合は、--rm オプションを外すか、-v ${PWD}:/var/www/html オプションを追加して下さい。このオプションでは、ホストのカレントディレクトリをコンテナの作業ディレクトリにマッピングします。次に、次のコマンドを実行してソースコードをダウンロードします:
 
 ~~~{.sh}
-git clone https://bitbucket.org/ryichando/shiokaze.git
+git clone https://github.com/ryichando/shiokaze.git
 ~~~
 
 最後に、次のコマンドを実行して潮風をコンパイルします。
@@ -140,7 +140,7 @@ cd shiokaze
 まず、潮風のソースコードを以下のコマンドを実行してダウンロードします。
 
 ~~~{.sh}
-git clone https://bitbucket.org/ryichando/shiokaze.git
+git clone https://github.com/ryichando/shiokaze.git
 ~~~
 
 \subsection compiling_macos macOS
