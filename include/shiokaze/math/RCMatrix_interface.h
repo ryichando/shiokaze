@@ -257,7 +257,7 @@ public:
 	 \~japanese @brief std::vector へ変換する。
 	 @param[out] v 出力のベクトル。
 	 */
-	void convert_to( std::vector<T> &v ) {
+	void convert_to( std::vector<T> &v ) const {
 		v.resize(size());
 		for( N i=0; i<v.size(); ++i ) v[i] = at(i);
 	}

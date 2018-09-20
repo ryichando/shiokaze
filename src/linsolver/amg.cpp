@@ -52,7 +52,7 @@ private:
 		config.get_double("Residual",m_param.residual,"Tolerable residual");
 		config.get_unsigned("MaxIterations",m_param.max_iterations,"Maximal iteration count");
 	}
-	virtual unsigned solve( const RCMatrix_ptr<N,T> &A, const RCMatrix_vector_ptr<N,T> b, RCMatrix_vector_ptr<N,T> x ) const override {
+	virtual unsigned solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
 		//
 		std::vector<N> rowstart;
 		std::vector<N> index;
@@ -68,7 +68,7 @@ private:
 		index.resize(rowstart[rows]);
 		N j (0);
 		for( N i=0; i<rows; i++) {
-			A->for_each(i,[&]( N column, T v ) {
+			A->const_for_each(i,[&]( N column, T v ) {
 				index[j] = column;
 				value[j] = v;
 				++ j;

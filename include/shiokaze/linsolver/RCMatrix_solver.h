@@ -47,7 +47,7 @@ public:
 	 @param[in] b 右側のベクトル。
 	 @param[in] x 解となるベクトル。
 	 */
-	virtual unsigned solve( const RCMatrix_ptr<N,T> &A, const RCMatrix_vector_ptr<N,T> b, RCMatrix_vector_ptr<N,T> x ) const = 0;
+	virtual unsigned solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const = 0;
 	/**
 	 \~english @brief Solve a linear system of the form: Ax = b. Provided to preserve std::vector compatibility.
 	 @param[in] A Sparse Row Compressed Matrix.
@@ -58,11 +58,11 @@ public:
 	 @param[in] b 右側のベクトル。
 	 @param[in] x 解となるベクトル。
 	 */
-	inline unsigned solve( const RCMatrix_ptr<N,T> &A, const std::vector<T> &b, std::vector<T> &x ) const {
+	inline unsigned solve( const RCMatrix_interface<N,T> *A, const std::vector<T> &b, std::vector<T> &x ) const {
 		//
 		auto _b = A->allocate_vector(); _b->convert_from(b);
 		auto _x = A->allocate_vector(b.size());
-		unsigned count = solve(A,_b,_x);
+		unsigned count = solve(A,_b.get(),_x.get());
 		_x->convert_to(x);
 		return count;
 	}

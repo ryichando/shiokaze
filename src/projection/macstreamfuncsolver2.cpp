@@ -411,7 +411,7 @@ private:
 			});
 			//
 			std::vector<double> compressed_result;
-			m_solver->solve(compressed_Lhs,compressed_rhs,compressed_result);
+			m_solver->solve(compressed_Lhs.get(),compressed_rhs,compressed_result);
 			//
 			if( m_param.diff_solve ) {
 				m_parallel.for_each(Lhs->rows(),[&]( size_t row ) {
@@ -568,7 +568,7 @@ private:
 		//
 		// Solve the linear system
 		auto result = m_factory->allocate_vector();
-		m_solver->solve(Lhs,rhs,result);
+		m_solver->solve(Lhs.get(),rhs.get(),result.get());
 		//
 		// Re-arrange to the array
 		auto pressure_acessor = pressure->get_serial_accessor();

@@ -37,45 +37,37 @@ private:
 		config.get_double("Residual",m_param.residual,"Tolerable residual");
 		config.get_unsigned("MaxIterations",m_param.max_iterations,"Maximal iteration count");
 	}
-	virtual unsigned solve( const RCMatrix_ptr<N,T> &A, const RCMatrix_vector_ptr<N,T> b, RCMatrix_vector_ptr<N,T> x ) const override {
+	virtual unsigned solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
 		//
-		auto cg = []( std::function<void( RCMatrix_vector_ptr<N,T> x, RCMatrix_vector_ptr<N,T> result)> A,
-					  RCMatrix_vector_ptr<N,T> b, RCMatrix_vector_ptr<N,T> x, unsigned max_iterations, T tolerance_factor ) {
-			//
-			size_t n (b->size()), iterations_out(0);
-			T residual_0, residual_1, delta;
-			auto r = b->allocate_vector(n), z = b->allocate_vector(n), p = b->allocate_vector(n);
-			//
-			r->copy(b.get());
-			residual_0 = r->abs_max();
-			z->copy(r.get()); p->copy(z.get()); delta = r->dot(z.get());
-			if(delta < std::numeric_limits<T>::epsilon()) return N();
-			//
-			N iteration (0);
-			for( ; iteration<max_iterations; ++iteration ) {
-				//
-				A(p,z); // z = A * p
-				T alpha = delta / p->dot(z.get());
-				x->add_scaled(alpha,p.get()); // x += alpha * p;
-				r->add_scaled(-alpha,z.get()); // r -= alpha * z;
-				residual_1 = r->abs_max();
-				T relative_residual_out = residual_1 / residual_0;
-				if( relative_residual_out <= tolerance_factor ) {
-					iterations_out = iteration+1;
-					break;
-				}
-				z->copy(r.get());
-				T beta = r->dot(z.get());
-				z->add_scaled(beta/delta,p.get()); p.swap(z); // p = z + ( beta / delta ) * p;
-				delta = beta;
-			}
-			return iteration;
-		};
-		//
+		size_t n (b->size()), iterations_out(0);
+		T residual_0, residual_1, delta;
+		auto r = b->allocate_vector(n), z = b->allocate_vector(n), p = b->allocate_vector(n);
 		const auto A_fixed = A->make_fixed();
-		return cg([&]( RCMatrix_vector_ptr<N,T> x, RCMatrix_vector_ptr<N,T> result ) {
-			A_fixed->multiply(x.get(),result.get());
-		},b,x,m_param.max_iterations,m_param.residual);
+		//
+		r->copy(b);
+		residual_0 = r->abs_max();
+		z->copy(r.get()); p->copy(z.get()); delta = r->dot(z.get());
+		if(delta < std::numeric_limits<T>::epsilon()) return N();
+		//
+		N iteration (0);
+		for( ; iteration<m_param.max_iterations; ++iteration ) {
+			//
+			A_fixed->multiply(p.get(),z.get()); // z = A * p
+			T alpha = delta / p->dot(z.get());
+			x->add_scaled(alpha,p.get()); // x += alpha * p;
+			r->add_scaled(-alpha,z.get()); // r -= alpha * z;
+			residual_1 = r->abs_max();
+			T relative_residual_out = residual_1 / residual_0;
+			if( relative_residual_out <= m_param.residual ) {
+				iterations_out = iteration+1;
+				break;
+			}
+			z->copy(r.get());
+			T beta = r->dot(z.get());
+			z->add_scaled(beta/delta,p.get()); p.swap(z); // p = z + ( beta / delta ) * p;
+			delta = beta;
+		}
+		return iteration;
 	}
 	//
 	struct Parameters {

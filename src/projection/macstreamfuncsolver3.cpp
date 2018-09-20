@@ -665,11 +665,11 @@ private:
 				}
 			});
 			//
-			RCMatrix_utility<size_t,double>::report(compressed_Lhs,"Lhs");
+			RCMatrix_utility<size_t,double>::report(compressed_Lhs.get(),"Lhs");
 			//
 			timer.tick(); console::dump( "Solving the linear system...");
 			std::vector<double> compressed_result;
-			unsigned count = m_solver->solve(compressed_Lhs,compressed_rhs,compressed_result);
+			unsigned count = m_solver->solve(compressed_Lhs.get(),compressed_rhs,compressed_result);
 			console::write(get_argument_name()+"_number_projection_iteration", count);
 			console::dump( "Done. Took %d iterations. Took %s\n", count, timer.stock("linsolve").c_str());
 			//
@@ -842,12 +842,12 @@ private:
 		//
 		console::dump( "Done. Took %s\n", timer.stock("build_highres_linsystem").c_str());
 		//
-		RCMatrix_utility<size_t,double>::report(Lhs,"Lhs");
+		RCMatrix_utility<size_t,double>::report(Lhs.get(),"Lhs");
 		//
 		// Solve the linear system
 		timer.tick(); console::dump( "Solving the linear system...");
 		auto result = m_factory->allocate_vector();
-		unsigned count = m_solver->solve(Lhs,rhs,result);
+		unsigned count = m_solver->solve(Lhs.get(),rhs.get(),result.get());
 		console::write(get_argument_name()+"_number_volume_correction_projection_iteration", count);
 		console::dump( "Done. Took %d iterations. Took %s\n", count, timer.stock("linsolve").c_str());
 		//

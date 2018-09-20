@@ -190,7 +190,7 @@ private:
 		//
 		// Solve the linear system
 		auto result = m_factory->allocate_vector(index);
-		m_solver->solve(Lhs,rhs,result);
+		m_solver->solve(Lhs.get(),rhs.get(),result.get());
 		//
 		// Re-arrange to the array
 		auto pressure_acessor = m_pressure.get_serial_accessor();

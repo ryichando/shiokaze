@@ -56,23 +56,6 @@ public:
 	 @param[in] matrix 検証する行列。
 	 @return 一様ノルム。
 	 */
-	static T symmetricity_error ( std::shared_ptr<RCMatrix_interface<N,T> > matrix ) {
-		return symmetricity_error(matrix.get());
-	}
-	/**
-	 \~english @brief Report matrix properties.
-	 @param[in] matrix Matrix to examine.
-	 @param[in] name Name of the matrix used in the reporting text.
-	 \~japanese @brief 行列の性質について調べて報告する。
-	 @param[in] matrix 調べる行列。
-	 @param[in] name 報告文で使われる行列の名前。
-	 */
-	static void report( std::shared_ptr<RCMatrix_interface<N,T> > matrix, std::string name ) {
-		report(matrix.get(),name);
-	}
-	//
-private:
-	//
 	static T symmetricity_error ( const RCMatrix_interface<N,T> *matrix ) {
 		T max_error (0.0);
 		for( N row=0; row<matrix->rows(); ++row ) {
@@ -86,7 +69,14 @@ private:
 		}
 		return max_error;
 	}
-	//
+	/**
+	 \~english @brief Report matrix properties.
+	 @param[in] matrix Matrix to examine.
+	 @param[in] name Name of the matrix used in the reporting text.
+	 \~japanese @brief 行列の性質について調べて報告する。
+	 @param[in] matrix 調べる行列。
+	 @param[in] name 報告文で使われる行列の名前。
+	 */
 	static void report( const RCMatrix_interface<N,T> *matrix, std::string name ) {
 		//
 		N active(0), max_row(0), min_row(std::numeric_limits<N>::max()), active_rows(0);
@@ -125,6 +115,7 @@ private:
 		console::dump( "Matrix max(symmetricity error) = %.2e\n", symmetricity_error(matrix) );
 		console::dump( "<<< =========================\n" );
 	}
+	//
 };
 //
 SHKZ_END_NAMESPACE

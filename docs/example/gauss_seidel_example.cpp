@@ -15,7 +15,7 @@ private:
 		config.get_double("Residual",m_param.residual,"Tolerable residual");
 		config.get_unsigned("MaxIterations",m_param.max_iterations,"Maximal iteration count");
 	}
-	virtual unsigned solve( const RCMatrix_ptr<N,T> &A, const RCMatrix_vector_ptr<N,T> b, RCMatrix_vector_ptr<N,T> x ) const override {
+	virtual unsigned solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
 		//
 		T relative_error (1.0), initial_error (0.0);
 		unsigned iteration_count (0);
@@ -63,5 +63,5 @@ extern "C" const char *license() {
 bld.shlib(source = 'gauss_seidel.cpp',
 			cxxflags = ['-DINDEX_TYPE=size_t','-DFLOAT_TYPE=double'],
 			target = bld.get_target_name(bld,'gauss_seidel'),
-			use = bld.get_target_name(bld,'core'))]
+			use = bld.get_target_name(bld,'core'))
 //! [wscript]

@@ -212,12 +212,12 @@ private:
 			console::write(get_argument_name()+"_volume_correct_rhs", rhs_correct);
 		}
 		//
-		RCMatrix_utility<size_t,double>::report(Lhs,"Lhs");
+		RCMatrix_utility<size_t,double>::report(Lhs.get(),"Lhs");
 		//
 		// Solve the linear system
 		timer.tick(); console::dump( "Solving the linear system...");
 		auto result = m_factory->allocate_vector(index);
-		unsigned count = m_solver->solve(Lhs,rhs,result);
+		unsigned count = m_solver->solve(Lhs.get(),rhs.get(),result.get());
 		console::write(get_argument_name()+"_number_projection_iteration", count);
 		console::dump( "Done. Took %d iterations. Took %s\n", count, timer.stock("linsolve").c_str());
 		//
