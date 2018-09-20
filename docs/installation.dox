@@ -18,7 +18,7 @@ docker run -p 8080:80 --rm -ti ryichando/shiokaze /bin/bash
 This will automatically download a Docker image of Shiokaze build environment, create a container, and log in. Note that --rm option tells Docker that a created container will be destroyed when logged out, which means that all the files in the container will be lost. If you intend to incrementally work on the container, please remove --rm option or append -v ${PWD}:/var/www/html option, which maps currently directory on the host to the working directory in the container. Next, run
 
 ~~~{.sh}
-git clone https://bitbucket.org/ryichando/shiokaze.git
+git clone https://github.com/ryichando/shiokaze.git
 ~~~
 
 to get the source of code of Shiokaze at the working directory. Next, run
@@ -44,7 +44,7 @@ After a moment, visit http://localhost:8080/shiokaze/log_waterdrop/mesh_img/ to 
 Source code of Shiokaze can be obtained by:
 
 ~~~{.sh}
-git clone https://bitbucket.org/ryichando/shiokaze.git
+git clone https://github.com/ryichando/shiokaze.git
 ~~~
 
 \subsection compiling_macos macOS
