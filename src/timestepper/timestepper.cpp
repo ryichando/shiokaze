@@ -95,10 +95,8 @@ public:
 		m_current_CFL = dt * max_unit_u;
 		++ m_step;
 		//
-		if( console::get_root_path().size() ) {
-			console::write("timestepper_dt",dt);
-			console::write("timestepper_CFL",m_current_CFL);
-		}
+		console::write("timestepper_dt",dt);
+		console::write("timestepper_CFL",m_current_CFL);
 		//
 		console::set_time(m_time);
 		//
