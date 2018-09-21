@@ -37,7 +37,7 @@ SHKZ_BEGIN_NAMESPACE
 class mysvg {
 public:
 	/**
-	 \~english @brief Write SVG header.
+	 \~english @brief Draw SVG header.
 	 @param[in] fp Pointer to an instance of FILE.
 	 \~japanese @brief SVG ヘッダーを書く。
 	 @param[in] fp FILE インスタンスへのポインター。
@@ -49,7 +49,7 @@ public:
 		std::fprintf( fp, "xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">\n" );
 	}
 	/**
-	 \~english @brief Write SVG footer.
+	 \~english @brief Draw SVG footer.
 	 @param[in] fp Pointer to an instance of FILE.
 	 \~japanese @brief SVG フッターを書く。
 	 @param[in] fp FILE インスタンスへのポインター。
@@ -58,14 +58,14 @@ public:
 		std::fprintf( fp, "</svg>\n" );
 	}
 	/**
-	 \~english @brief Write a closed polygon.
+	 \~english @brief Draw a closed polygon.
 	 @param[in] fp Pointer to an instance of FILE.
 	 @param[in] polygon Polygon to write.
-	 @param[in] color RGB color of the polygon.
-	 \~japanese @brief 閉じたポリゴンを書く。
+	 @param[in] color Normalized RGB color of the polygon.
+	 \~japanese @brief 閉じたポリゴンを描く。
 	 @param[in] fp FILE インスタンスへのポインター。
 	 @param[in] polygon 書き出すポリゴン。
-	 @param[in] color ポリゴンの RGB カラー。
+	 @param[in] color ポリゴンの正規化された RGB カラー。
 	 */
 	static void write_polygon( std::FILE *fp, const std::vector<vec2d> &polygon, double color[3] ) {
 		unsigned rgb[3];
@@ -77,15 +77,15 @@ public:
 		std::fprintf(fp, "/>\n");
 	}
 	/**
-	 \~english @brief Write a line.
+	 \~english @brief Draw a line.
 	 @param[in] fp Pointer to an instance of FILE.
 	 @param[in] pos Line to write.
-	 @param[in] color RGB color of the polygon.
+	 @param[in] color Normalized RGB color of the polygon.
 	 @param[in] width Width of the line.
-	 \~japanese @brief 閉じたポリゴンを書く。
+	 \~japanese @brief 線を描く。
 	 @param[in] fp FILE インスタンスへのポインター。
 	 @param[in] pos 線。
-	 @param[in] color 線の RGB カラー。
+	 @param[in] color 線の正規化された RGB カラー。
 	 @param[in] width 線の太さ。
 	 */
 	static void write_line( std::FILE *fp, vec2d pos[2], double color[3], double width ) {
@@ -95,18 +95,18 @@ public:
 					 pos[0][0], pos[0][1], pos[1][0], pos[1][1], rgb[0], rgb[1], rgb[2], width );
 	}
 	/**
-	 \~english @brief Write a circle.
+	 \~english @brief Draw a circle.
 	 @param[in] fp Pointer to an instance of FILE.
 	 @param[in] pos Center of the circle.
 	 @param[in] r Radius of the circle.
-	 @param[in] line_color RGB color of the contour of the circle.
-	 @param[in] fill_color Filling RGB color of the circle.
-	 \~japanese @brief 閉じたポリゴンを書く。
+	 @param[in] line_color Normalized RGB color of the contour of the circle.
+	 @param[in] fill_color Filling Normalized RGB color of the circle.
+	 \~japanese @brief 円を描く。
 	 @param[in] fp FILE インスタンスへのポインター。
 	 @param[in] pos 円の中心。
 	 @param[in] r 円の半径。
-	 @param[in] line_color 輪郭の色。
-	 @param[in] fill_color 塗る潰しの色。
+	 @param[in] line_color 輪郭の正規化された RGB 色。
+	 @param[in] fill_color 塗る潰しの正規化された RGB 色。
 	 */
 	static void write_circle( std::FILE *fp, vec2d pos, double r, double width, double line_color[3], double fill_color[3] ) {
 		unsigned line_rgb[3], fill_rgb[3];
