@@ -60,7 +60,7 @@ protected:
 	virtual void configure ( configuration &config ) override {
 		cmdparser parser(config.get_dictionary());
 		arg_str = parser.get_arg_string();
-		if( console::system("gnuplot > /dev/null 2>&1") == 0 ) {
+		if( console::system("gnuplot -V > /dev/null 2>&1") == 0 ) {
 			plot_template = "cd %s/record; ./plot.sh > /dev/null 2>&1";
 		} else {
 			plot_template = "";
