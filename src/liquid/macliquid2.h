@@ -96,6 +96,7 @@ protected:
 	virtual void inject_external_force( macarray2<double> &velocity, double dt );
 	virtual void set_volume_correction( macproject2_interface *macproject );
 	virtual void extend_both();
+	virtual bool inject_liquid( array2<double> &fluid, macarray2<double> &velocity );
 };
 //
 SHKZ_END_NAMESPACE

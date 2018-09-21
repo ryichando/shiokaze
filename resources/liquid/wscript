@@ -63,3 +63,13 @@ def build(bld):
 			target = 'glugging3'+bld.env.suffix,
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'injection2.cpp',
+			target = 'injection2'+bld.env.suffix,
+			cxxflags = ['-Wno-return-type-c-linkage'],
+			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'injection3.cpp',
+			target = 'injection3'+bld.env.suffix,
+			cxxflags = ['-Wno-return-type-c-linkage'],
+			use = bld.get_target_name(bld,'core'))

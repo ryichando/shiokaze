@@ -199,6 +199,47 @@ void macliquid3::extend_both() {
 	console::dump( "Done. Count=%d. Took %s\n", final_width, timer.stock("extend_velocity").c_str());
 }
 //
+bool macliquid3::inject_liquid( array3<double> &fluid, macarray3<double> &velocity ) {
+	//
+	auto inject_func = reinterpret_cast<void(*)( const vec3d &p, double time, double &fluid, vec3d &velocity )>(m_dylib.load_symbol("inject"));
+	//
+	bool did_set (false);
+	if( inject_func ) {
+		scoped_timer timer(this);
+		timer.tick(); console::dump( "Injecting liquid...");
+		char half_width = fluid.get_levelset_halfwidth();
+		double time = m_timestepper->get_current_time();
+		std::vector<bool> did_set_threads(fluid.get_thread_num(),false);
+		fluid.parallel_all([&](int i, int j, int k, auto &it, int tn) {
+			vec3d p = m_dx*vec3i(i,j,k).cell(), dummy;
+			double f (1.0);
+			inject_func(p,time,f,dummy);
+			if( std::abs(f) < half_width*m_dx ) {
+				it.set(std::min(it(),f));
+				did_set_threads[tn] = true;
+			}
+		});
+		for( const auto e : did_set_threads ) if( e ) {
+			did_set = true;
+			break;
+		}
+		if( did_set ) {
+			fluid.flood_fill();
+			velocity.parallel_all([&](int dim, int i, int j, int k, auto &it, int tn) {
+				vec3d p = m_dx*vec3d(i,j,k).face(dim);
+				double f (1.0);
+				vec3d u;
+				inject_func(p,time,f,u);
+				if( f < half_width*m_dx ) {
+					it.set(u[dim]);
+				}
+			});
+		}
+		console::dump( "Done. Took %s\n", timer.stock("inject_liquid").c_str());
+	}
+	return did_set;
+}
+//
 void macliquid3::idle() {
 	//
 	scoped_timer timer(this);
@@ -208,6 +249,11 @@ void macliquid3::idle() {
 	double CFL = m_timestepper->get_current_CFL();
 	unsigned step = m_timestepper->get_step_count();
 	timer.tick(); console::dump( ">>> %s step started (dt=%.2e,CFL=%.2f)...\n", dt, CFL, console::nth(step).c_str());
+	//
+	// Inject liquid
+	if(inject_liquid(m_fluid,m_velocity)) {
+		m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
+	}
 	//
 	// Extend both the velocity field and the level set
 	extend_both();

@@ -64,10 +64,24 @@ void macflipliquid2::idle() {
 	shared_macarray2<double> momentum(m_shape);
 	shared_macarray2<double> mass(m_shape);
 	//
+	// Inject liquid
+	shared_array2<double> inject_fluid(m_shape);
+	inject_fluid->set_as_levelset(m_dx);
+	shared_macarray2<double> inject_velocity(m_shape);
+	bool injected = inject_liquid(inject_fluid(),inject_velocity());
+	if( injected ) {
+		m_flip->seed(inject_fluid(),inject_velocity());
+		auto m_velocity_accessor = m_velocity.get_serial_accessor();
+		inject_velocity->const_serial_actives([&]( int dim, int i, int j, const auto &it ) {
+			m_velocity_accessor.set(dim,i,j,it());
+		});
+	}
+	//
 	// Advect FLIP particles and get the levelset after the advection
 	m_flip->advect(m_velocity,m_timestepper->get_current_time(),dt);
 	m_flip->get_levelset(m_fluid);
 	m_macsurfacetracker->assign(m_solid,m_fluid);
+	if( injected ) m_initial_volume = m_gridutility->get_area(m_solid,m_fluid);
 	//
 	// Grid velocity advection
 	m_macadvection->advect_vector(m_velocity,m_velocity,dt);
