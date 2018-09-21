@@ -225,8 +225,8 @@ public:
 	};
 	virtual void dilate( std::function<void(int i, int j, int k, void *value_ptr, bool &active, const bool &filled, int thread_index)> func, const parallel_driver &parallel ) override {
 		//
-		auto simple_encode = [&]( int i, int j, int k ) {
-			return i + j * m_nx + k * (m_nx*m_ny);
+		auto simple_encode = [&]( const vec3i &pi ) {
+			return pi[0] + pi[1] * m_nx + pi[2] * (m_nx*m_ny);
 		};
 		auto simple_decode = [&]( size_t n, int &i, int &j, int &k ) {
 			size_t plane = m_nx*m_ny;
@@ -238,6 +238,9 @@ public:
 		std::vector<std::vector<size_t> > dilate_coords(parallel.get_maximal_threads());
 		parallel.for_each(m_bx*m_by*m_bz,[&]( size_t n, int thread_index ) {
 			if( m_tiles[n] ) {
+				unsigned Zx = m_tiles[n]->m_Zx;
+				unsigned Zy = m_tiles[n]->m_Zy;
+				unsigned Zz = m_tiles[n]->m_Zz;
 				const int query[][DIM3] = {{+1,0,0},{-1,0,0},{0,+1,0},{0,-1,0},{0,0,+1},{0,0,-1}};
 				for( int nq=0; nq<6; nq++ ) {
 					int bi, bj, bk;
@@ -248,39 +251,81 @@ public:
 					if( ! shape3(m_bx,m_by,m_bz).out_of_bounds(nbi,nbj,nbk)) {
 						size_t m = encode(nbi,nbj,nbk);
 						if( nq == 0 ) {
-							for( size_t k=0; k<m_Z; ++k ) for( size_t j=0; j<m_Z; ++j ) {
-								if( m_tiles[n]->get(m_Z-1,j,k)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(0,j,k)) dilate_coords[thread_index].push_back(simple_encode(m_Z*(bi+1),bj*m_Z+j,bk*m_Z+k));
+							for( size_t k=0; k<Zz; ++k ) for( size_t j=0; j<Zy; ++j ) {
+								if( m_tiles[n]->get(Zx-1,j,k)) {
+									if( ! m_tiles[m] || ! m_tiles[m]->get(0,j,k)) {
+										vec3i pi (
+											m_tiles[n]->m_oi+Zx,
+											m_tiles[n]->m_oj+j,
+											m_tiles[n]->m_ok+k
+										);
+										dilate_coords[thread_index].push_back(simple_encode(pi));
+									}
 								}
 							}
 						} else if( nq == 1 ) {
-							for( size_t k=0; k<m_Z; ++k ) for( size_t j=0; j<m_Z; ++j ) {
+							for( size_t k=0; k<Zz; ++k ) for( size_t j=0; j<Zy; ++j ) {
 								if( m_tiles[n]->get(0,j,k)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(m_Z-1,j,k)) dilate_coords[thread_index].push_back(simple_encode(bi*m_Z-1,bj*m_Z+j,bk*m_Z+k));
+									if( ! m_tiles[m] || ! m_tiles[m]->get(m_tiles[m]->m_Zx-1,j,k)) {
+										vec3i pi (
+											m_tiles[n]->m_oi-1,
+											m_tiles[n]->m_oj+j,
+											m_tiles[n]->m_ok+k
+										);
+										dilate_coords[thread_index].push_back(simple_encode(pi));
+									}
 								}
 							}
 						} else if( nq == 2 ) {
-							for( size_t k=0; k<m_Z; ++k ) for( size_t i=0; i<m_Z; ++i ) {
-								if( m_tiles[n]->get(i,m_Z-1,k)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(i,0,k)) dilate_coords[thread_index].push_back(simple_encode(bi*m_Z+i,m_Z*(bj+1),bk*m_Z+k));
+							for( size_t k=0; k<Zz; ++k ) for( size_t i=0; i<Zx; ++i ) {
+								if( m_tiles[n]->get(i,Zy-1,k)) {
+									if( ! m_tiles[m] || ! m_tiles[m]->get(i,0,k)) {
+										vec3i pi (
+											m_tiles[n]->m_oi+i,
+											m_tiles[n]->m_oj+Zy,
+											m_tiles[n]->m_ok+k
+										);
+										dilate_coords[thread_index].push_back(simple_encode(pi));
+									}
 								}
 							}
 						} else if( nq == 3 ) {
-							for( size_t k=0; k<m_Z; ++k ) for( size_t i=0; i<m_Z; ++i ) {
+							for( size_t k=0; k<Zz; ++k ) for( size_t i=0; i<Zx; ++i ) {
 								if( m_tiles[n]->get(i,0,k)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(i,m_Z-1,k)) dilate_coords[thread_index].push_back(simple_encode(bi*m_Z+i,bj*m_Z-1,bk*m_Z+k));
+									if( ! m_tiles[m] || ! m_tiles[m]->get(i,m_tiles[m]->m_Zy-1,k)) {
+										vec3i pi (
+											m_tiles[n]->m_oi+i,
+											m_tiles[n]->m_oj-1,
+											m_tiles[n]->m_ok+k
+										);
+										dilate_coords[thread_index].push_back(simple_encode(pi));
+									}
 								}
 							}
 						} else if( nq == 4 ) {
-							for( size_t i=0; i<m_Z; ++i ) for( size_t j=0; j<m_Z; ++j ) {
-								if( m_tiles[n]->get(i,j,m_Z-1)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(i,j,0)) dilate_coords[thread_index].push_back(simple_encode(bi*m_Z+i,bj*m_Z+j,m_Z*(bk+1)));
+							for( size_t i=0; i<Zx; ++i ) for( size_t j=0; j<Zy; ++j ) {
+								if( m_tiles[n]->get(i,j,Zz-1)) {
+									if( ! m_tiles[m] || ! m_tiles[m]->get(i,j,0)) {
+										vec3i pi (
+											m_tiles[n]->m_oi+i,
+											m_tiles[n]->m_oj+j,
+											m_tiles[n]->m_ok+Zz
+										);
+										dilate_coords[thread_index].push_back(simple_encode(pi));
+									}
 								}
 							}
 						} else if( nq == 5 ) {
-							for( size_t i=0; i<m_Z; ++i ) for( size_t j=0; j<m_Z; ++j ) {
+							for( size_t i=0; i<Zx; ++i ) for( size_t j=0; j<Zy; ++j ) {
 								if( m_tiles[n]->get(i,j,0)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(i,j,m_Z-1)) dilate_coords[thread_index].push_back(simple_encode(bi*m_Z+i,bj*m_Z+j,m_Z*bk-1));
+									if( ! m_tiles[m] || ! m_tiles[m]->get(i,j,m_tiles[m]->m_Zz-1)) {
+										vec3i pi (
+											m_tiles[n]->m_oi+i,
+											m_tiles[n]->m_oj+j,
+											m_tiles[n]->m_ok-1
+										);
+										dilate_coords[thread_index].push_back(simple_encode(pi));
+									}
 								}
 							}
 						}
@@ -294,7 +339,7 @@ public:
 				std::vector<vec3i> active_coords;
 				m_tiles[n]->dilate(shape3(m_nx,m_ny,m_nz),thread_index,active_coords);
 				for( const auto &e : active_coords ) {
-					dilate_coords[thread_index].push_back(simple_encode(e[0],e[1],e[2]));
+					dilate_coords[thread_index].push_back(simple_encode(e));
 				}
 			}
 		});
