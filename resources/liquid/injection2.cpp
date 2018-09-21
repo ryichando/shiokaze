@@ -29,19 +29,35 @@
 //
 SHKZ_USING_NAMESPACE
 //
+static unsigned scene (0);
+//
+extern "C" void configure( configuration &config ) {
+	configuration::auto_group group(config,"Injection 2D","Injection");
+	config.get_unsigned("Scene",scene,"Scene number");
+}
+//
 extern "C" double fluid( const vec2d &p ) {
 	return p[1]-0.12;
 }
 //
 extern "C" void inject( const vec2d &p, double time, double &fluid, vec2d &velocity ) {
 	if( time < 1.0 ) {
-		fluid = (p-vec2d(0.5,0.37)).len()-0.05;
-		velocity = vec2d(0.0,-1.0);
+		if( scene == 0 ) {
+			fluid = (p-vec2d(0.5,0.37)).len()-0.05;
+			velocity = vec2d(0.0,-1.0);
+		} else {
+			fluid = (p-vec2d(0.1,0.37)).len()-0.05;
+			velocity = vec2d(1.0,0.0);
+		}
 	}
 }
 //
 extern "C" double solid( const vec2d &p ) {
-	return 0.5-(p-vec2d(0.5,0.5)).len();
+	if( scene == 0 ) {
+		return 0.5-(p-vec2d(0.5,0.5)).len();
+	} else {
+		return 1.0;
+	}
 }
 //
 extern "C" const char *license() {

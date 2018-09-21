@@ -34,15 +34,17 @@ static double radius (0.5);
 static double thickness (0.03);
 static double height (0.3);
 static bool container (true);
+static unsigned mode (0);
 //
 extern "C" void configure( configuration &config ) {
-	configuration::auto_group group(config,"Waterdrop Scene 3D","Waterdrop");
+	configuration::auto_group group(config,"Injection 3D","Injection");
 	config.get_bool("Container",container,"Whether to place container");
 	if( container ) {
 		config.get_double("ContainerRadius",radius,"Radius of the solid hemisphere container");
 		config.get_double("ContainerThickness",thickness,"Thickness of the solid hemisphere container");
 		config.get_double("ContainerHeight",height,"Height of the solid hemisphere container");
 	}
+	config.get_unsigned("Mode",mode,"Injection mode");
 }
 //
 extern "C" double fluid( const vec3d &p ) {
@@ -51,8 +53,13 @@ extern "C" double fluid( const vec3d &p ) {
 //
 extern "C" void inject( const vec3d &p, double time, double &fluid, vec3d &velocity ) {
 	if( time < 1.0 ) {
-		fluid = (p-vec3d(0.5,0.4,0.5)).len()-0.05;
-		velocity = vec3d(0.0,-1.0,0.0);
+		if( mode == 0 ) {
+			fluid = (p-vec3d(0.5,0.4,0.5)).len()-0.05;
+			velocity = vec3d(0.0,-1.0,0.0);
+		} else {
+			fluid = (p-vec3d(0.15,0.4,0.5)).len()-0.05;
+			velocity = vec3d(1.0,0.0,0.0);
+		}
 	}
 }
 //
