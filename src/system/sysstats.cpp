@@ -60,11 +60,11 @@ protected:
 	virtual void configure ( configuration &config ) override {
 		cmdparser parser(config.get_dictionary());
 		arg_str = parser.get_arg_string();
-	#ifdef __APPLE__
-		plot_template = "";
-	#else
-		plot_template = "cd %s/record; ./plot.sh > /dev/null 2>&1";
-	#endif
+		if( console::system("gnuplot > /dev/null 2>&1") == 0 ) {
+			plot_template = "cd %s/record; ./plot.sh > /dev/null 2>&1";
+		} else {
+			plot_template = "";
+		}
 		config.get_string("PlotTemplate",plot_template,"Plot command template");
 	}
 	//
