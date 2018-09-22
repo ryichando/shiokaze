@@ -162,7 +162,7 @@ bool macliquid2::inject_liquid( double dt, array2<double> &fluid, macarray2<doub
 	auto inject_func = reinterpret_cast<void(*)( const vec2d &p, double time, double &fluid, vec2d &velocity )>(m_dylib.load_symbol("inject"));
 	//
 	bool did_set (false);
-	amount_injected = 0.0;/
+	amount_injected = 0.0;
 	if( inject_func ) {
 		char half_width = fluid.get_levelset_halfwidth();
 		double time = m_timestepper->get_current_time();
