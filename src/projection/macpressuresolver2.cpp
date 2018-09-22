@@ -49,8 +49,6 @@ private:
 						const array2<double> &solid,
 						const array2<double> &fluid) override {
 		//
-		dt = std::min(m_param.max_dt,std::max(m_param.min_dt,dt));
-		//
 		shared_macarray2<double> areas(velocity.shape());
 		shared_macarray2<double> rhos(velocity.shape());
 		//
@@ -229,8 +227,6 @@ private:
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_bool("DrawPressure",m_param.draw_pressure,"Whether to draw pressure");
-		config.get_double("MinDt",m_param.min_dt,"Minimal internal timestep");
-		config.get_double("MaxDt",m_param.max_dt,"Maximal internal timestep");
 		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tenstion coefficient");
 		config.get_double("Gain",m_param.gain,"Rate for volume correction");
 		config.set_default_bool("ReportProgress",false);
@@ -254,8 +250,6 @@ private:
 		double gain {1.0};
 		bool ignore_solid {false};
 		bool draw_pressure {true};
-		double min_dt {1e-5};
-		double max_dt {1.0};
 	};
 	Parameters m_param;
 	//

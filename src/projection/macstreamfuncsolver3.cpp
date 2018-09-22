@@ -64,7 +64,6 @@ private:
 		scoped_timer timer(this);
 		//
 		timer.tick(); console::dump( ">>> Streamfunc projection started (%dx%dx%d)...\n", m_shape[0], m_shape[1], m_shape[2] );
-		dt = std::min(m_param.max_dt,std::max(m_param.min_dt,dt));
 		//
 		shared_macarray3<double> areas(m_shape);
 		shared_macarray3<double> rhos(m_shape);
@@ -730,7 +729,6 @@ private:
 		scoped_timer timer(this);
 		//
 		timer.tick(); console::dump( ">>> Volume Corrective Projection started...\n" );
-		dt = std::min(m_param.max_dt,std::max(m_param.min_dt,dt));
 		//
 		// Make accessors
 		shared_array3<double> pressure(m_shape);
@@ -882,8 +880,6 @@ private:
 	//
 	virtual void configure( configuration &config ) override {
 		//
-		config.get_double("MinDt",m_param.min_dt,"Minimal internal timestep");
-		config.get_double("MaxDt",m_param.max_dt,"Maximal internal timestep");
 		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tension force coefficient");
 		config.get_double("CorrectionGain",m_param.gain,"Volume correctino gain");
 		config.get_bool("DiffSolve",m_param.diff_solve,"Whether we should perform difference-based linear system solve");
@@ -906,8 +902,6 @@ private:
 		double surftens_k {0.0};
 		double gain {1.0};
 		bool diff_solve {true};
-		double min_dt {1e-5};
-		double max_dt {1.0};
 	};
 	Parameters m_param;
 	//

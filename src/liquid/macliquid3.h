@@ -74,6 +74,7 @@ protected:
 	double m_half_dx;
 	//
 	bool m_force_exist;
+	bool m_previous_injected;
 	double m_initial_volume;
 	//
 	environment_setter arg_shape{this,"shape",&m_shape};
@@ -112,7 +113,7 @@ protected:
 	virtual void inject_external_force( macarray3<double> &velocity, double dt );
 	virtual void set_volume_correction( macproject3_interface *macproject );
 	virtual void extend_both();
-	virtual bool inject_liquid( array3<double> &fluid, macarray3<double> &velocity );
+	virtual bool inject_liquid( double dt, array3<double> &fluid, macarray3<double> &velocity, double &amount_injected ) const;
 	virtual void export_mesh() const;
 	virtual void do_export_mesh( unsigned frame ) const;
 	virtual void do_export_solid_mesh() const;

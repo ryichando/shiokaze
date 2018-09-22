@@ -32,8 +32,8 @@
 SHKZ_BEGIN_NAMESPACE
 //
 /** @file */
-/// \~english @brief Class that computes the gradient of physical quantities.
-/// \~japanese @brief 物理量の勾配を計算するクラス。
+/// \~english @brief Class that computes the derivative of physical quantities at arbitrary position.
+/// \~japanese @brief 物理量の任意の位置で勾配を計算するクラス。
 class array_derivative2 {
 public:
 	/**

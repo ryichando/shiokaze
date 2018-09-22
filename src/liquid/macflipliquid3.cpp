@@ -80,20 +80,29 @@ void macflipliquid3::idle() {
 	shared_array3<double> inject_fluid(m_shape);
 	inject_fluid->set_as_levelset(m_dx);
 	shared_macarray3<double> inject_velocity(m_shape);
-	bool injected = inject_liquid(inject_fluid(),inject_velocity());
+	double amount_injected;
+	bool injected = inject_liquid(dt,inject_fluid(),inject_velocity(),amount_injected);
 	if( injected ) {
 		m_flip->seed(inject_fluid(),inject_velocity());
+		m_flip->get_levelset(m_fluid);
 		auto m_velocity_accessor = m_velocity.get_serial_accessor();
 		inject_velocity->const_serial_actives([&]( int dim, int i, int j, int k, const auto &it ) {
 			m_velocity_accessor.set(dim,i,j,k,it());
 		});
+		if( m_previous_injected ) {
+			m_initial_volume += amount_injected;
+		} else {
+			m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
+			m_previous_injected = true;
+		}
+	} else {
+		m_previous_injected = false;
 	}
 	//
 	// Advect FLIP particles and get the levelset after the advection
 	m_flip->advect(m_velocity,m_timestepper->get_current_time(),dt);
 	m_flip->get_levelset(m_fluid);
 	m_macsurfacetracker->assign(m_solid,m_fluid);
-	if( injected ) m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
 	//
 	// Grid velocity advection
 	m_macadvection->advect_vector(m_velocity,m_velocity,dt,"velocity");

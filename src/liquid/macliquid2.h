@@ -84,6 +84,7 @@ protected:
 	double m_dx;
 	double m_initial_volume;
 	bool m_force_exist;
+	bool m_previous_injected;
 	//
 	struct Parameters {
 		vec2d gravity;
@@ -96,7 +97,7 @@ protected:
 	virtual void inject_external_force( macarray2<double> &velocity, double dt );
 	virtual void set_volume_correction( macproject2_interface *macproject );
 	virtual void extend_both();
-	virtual bool inject_liquid( array2<double> &fluid, macarray2<double> &velocity );
+	virtual bool inject_liquid( double dt, array2<double> &fluid, macarray2<double> &velocity, double &amount_injected ) const;
 };
 //
 SHKZ_END_NAMESPACE

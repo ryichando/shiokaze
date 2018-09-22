@@ -73,7 +73,7 @@ def common_configure(conf,target):
 	conf.load('compiler_cxx')
 	#
 	conf.define('SHKZ_SUFFIX',suffix)
-	conf.define('NUM_THREAD',min(32,num_cores))
+	conf.define('NUM_THREAD',num_cores)
 	#
 	if use_opengl:
 		conf.define('USE_OPENGL',1)

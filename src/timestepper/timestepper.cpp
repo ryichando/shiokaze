@@ -35,9 +35,10 @@ public:
 	//
 	timestepper () {
 		//
+		m_should_export_video = false;
 		m_FPS = 120.0;
 		m_CFL = 3.0;
-		m_maximal_substeps = 10;
+		m_maximal_substeps = 5;
 		m_simulation_time0 = 0.0;
 		m_simulation_time_one_video_frame = m_simulation_time_one_video_frame_prev = 0.0;
 		m_simulation_time_per_step_prev = m_simulation_time_per_step = 0.0;
@@ -57,10 +58,14 @@ public:
 		double max_dt = std::max( m_min_dt, 1.0 / m_FPS );
 		//
 		double dt;
-		if( max_unit_u ) {
-			dt = std::min( max_dt, m_CFL / max_unit_u );
+		if( m_use_fixed_time_step ) {
+			dt = max_dt;
 		} else {
-			dt = m_min_dt;
+			if( max_unit_u ) {
+				dt = std::min( max_dt, m_CFL / max_unit_u );
+			} else {
+				dt = m_min_dt;
+			}
 		}
 		//
 		assert( m_accumulated_time < 1.0 / m_FPS );	
@@ -144,6 +149,7 @@ protected:
 	//
 	virtual void configure( configuration &config ) override {
 		//
+		config.get_bool("UseFixedTimeStep",m_use_fixed_time_step,"Should use fixed time step");
 		config.get_double("FPS",m_FPS,"Frame per second");
 		config.get_double("CFL",m_CFL,"Target CFL number");
 		config.get_unsigned("MaxSubsteps",m_maximal_substeps,"Maximal substeps");
@@ -162,7 +168,6 @@ protected:
 		m_simulation_time_per_step_prev = m_simulation_time_per_step = m_simulation_time0;
 		//
 		m_current_CFL = 0.0;
-		m_should_export_video = false;
 		console::set_time(0.0);
 	}
 	//
@@ -176,7 +181,7 @@ private:
 	double m_simulation_time_per_step_prev;
 	double m_simulation_time_per_step;
 	double m_current_CFL;
-	bool m_should_export_video;
+	bool m_should_export_video, m_use_fixed_time_step;
 	int m_frame;
 	unsigned m_maximal_frame;
 	unsigned m_maximal_substeps;

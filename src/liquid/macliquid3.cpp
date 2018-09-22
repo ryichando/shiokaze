@@ -28,6 +28,7 @@
 #include <shiokaze/array/shared_array3.h>
 #include <shiokaze/array/array_upsampler3.h>
 #include <shiokaze/array/macarray_extrapolator3.h>
+#include <shiokaze/array/array_gradient3.h>
 #include <shiokaze/utility/utility.h>
 #include <shiokaze/array/array_utility3.h>
 #include <shiokaze/core/console.h>
@@ -101,6 +102,7 @@ void macliquid3::post_initialize() {
 	//
 	// Initialize arrays
 	m_force_exist = false;
+	m_previous_injected = false;
 	m_velocity.initialize(m_shape);
 	m_external_force.initialize(m_shape);
 	m_solid.initialize(m_shape.nodal());
@@ -199,29 +201,49 @@ void macliquid3::extend_both() {
 	console::dump( "Done. Count=%d. Took %s\n", final_width, timer.stock("extend_velocity").c_str());
 }
 //
-bool macliquid3::inject_liquid( array3<double> &fluid, macarray3<double> &velocity ) {
+bool macliquid3::inject_liquid( double dt, array3<double> &fluid, macarray3<double> &velocity, double &amount_injected ) const {
 	//
 	auto inject_func = reinterpret_cast<void(*)( const vec3d &p, double time, double &fluid, vec3d &velocity )>(m_dylib.load_symbol("inject"));
 	//
 	bool did_set (false);
+	amount_injected = 0.0;
 	if( inject_func ) {
 		scoped_timer timer(this);
 		timer.tick(); console::dump( "Injecting liquid...");
 		char half_width = fluid.get_levelset_halfwidth();
 		double time = m_timestepper->get_current_time();
 		std::vector<bool> did_set_threads(fluid.get_thread_num(),false);
+		std::vector<double> amount_injected_threads(fluid.get_thread_num(),0.0);
 		fluid.parallel_all([&](int i, int j, int k, auto &it, int tn) {
-			vec3d p = m_dx*vec3i(i,j,k).cell(), dummy;
+			vec3d p = m_dx*vec3i(i,j,k).cell(), u;
 			double f (1.0);
-			inject_func(p,time,f,dummy);
+			inject_func(p,time,f,u);
 			if( std::abs(f) < half_width*m_dx ) {
 				it.set(std::min(it(),f));
 				did_set_threads[tn] = true;
+				if( f < 0.0 ) {
+					for( int dim : DIMS3 ) for( int dir=-1; dir<=1; dir+=2 ) {
+						vec3d pn = m_dx*vec3i(i+dir*(dim==0),j+dir*(dim==1),k+dir*(dim==2)).cell(), un;
+						double fn;
+						inject_func(pn,time,fn,un);
+						if( fn >= 0.0 ) {
+							double gn = dir*(fn-f)/m_dx;
+							double u_middle = 0.5*(un+u)[dim];
+							double flux = dt * (m_dx*m_dx) * u_middle * gn;
+							if( flux > 0.0 ) {
+								amount_injected_threads[tn] += flux;
+							}
+						}
+					}
+				}
 			}
 		});
 		for( const auto e : did_set_threads ) if( e ) {
 			did_set = true;
 			break;
+		}
+		for( const auto e : amount_injected_threads ) {
+			amount_injected += e;
 		}
 		if( did_set ) {
 			fluid.flood_fill();
@@ -235,7 +257,7 @@ bool macliquid3::inject_liquid( array3<double> &fluid, macarray3<double> &veloci
 				}
 			});
 		}
-		console::dump( "Done. Took %s\n", timer.stock("inject_liquid").c_str());
+		console::dump( "Done. Amount=%.2e. Took %s\n", amount_injected, timer.stock("inject_liquid").c_str());
 	}
 	return did_set;
 }
@@ -251,8 +273,16 @@ void macliquid3::idle() {
 	timer.tick(); console::dump( ">>> %s step started (dt=%.2e,CFL=%.2f)...\n", dt, CFL, console::nth(step).c_str());
 	//
 	// Inject liquid
-	if(inject_liquid(m_fluid,m_velocity)) {
-		m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
+	double amount_injected;
+	if(inject_liquid(dt,m_fluid,m_velocity,amount_injected)) {
+		if( m_previous_injected ) {
+			m_initial_volume += amount_injected;
+		} else {
+			m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
+			m_previous_injected = true;
+		}
+	} else {
+		m_previous_injected = false;
 	}
 	//
 	// Extend both the velocity field and the level set

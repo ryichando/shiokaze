@@ -50,8 +50,6 @@ private:
 						const array2<double> &solid,
 						const array2<double> &fluid) override {
 		//
-		dt = std::min(m_param.max_dt,std::max(m_param.min_dt,dt));
-		//
 		shared_macarray2<double> areas(m_shape);
 		shared_macarray2<double> rhos(m_shape);
 		shared_macarray2<double> E_array(m_shape);
@@ -604,8 +602,6 @@ private:
 	virtual void configure( configuration &config ) override {
 		//
 		config.get_bool("DrawStreamfunc",m_param.draw_streamfunc);
-		config.get_double("MinDt",m_param.min_dt,"Minimal internal timestep");
-		config.get_double("MaxDt",m_param.max_dt,"Maximal internal timestep");
 		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tension force coefficient");
 		config.get_double("CorrectionGain",m_param.gain,"Volume correctino gain");
 		config.get_bool("DiffSolve",m_param.diff_solve,"Whether we should perform difference-based linear system solve");
@@ -631,8 +627,6 @@ private:
 		double gain {1.0};
 		bool diff_solve {true};
 		bool draw_streamfunc {true};
-		double min_dt {1e-5};
-		double max_dt {1.0};
 	};
 	Parameters m_param;
 	//

@@ -54,7 +54,6 @@ private:
 		scoped_timer timer(this);
 		//
 		timer.tick(); console::dump( ">>> Pressure Projection started...\n" );
-		dt = std::min(m_param.max_dt,std::max(m_param.min_dt,dt));
 		//
 		shared_array3<double> pressure(m_shape);
 		shared_macarray3<double> areas(velocity.shape());
@@ -252,8 +251,6 @@ private:
 	}
 	//
 	virtual void configure( configuration &config ) override {
-		config.get_double("MinDt",m_param.min_dt,"Minimal internal timestep");
-		config.get_double("MaxDt",m_param.max_dt,"Maximal internal timestep");
 		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tenstion coefficient");
 		config.get_double("Gain",m_param.gain,"Rate for volume correction");
 		config.set_default_bool("ReportProgress",false);
@@ -277,8 +274,6 @@ private:
 		double eps_fluid {1e-2};
 		double eps_solid {1e-2};
 		bool ignore_solid {false};
-		double min_dt {1e-5};
-		double max_dt {1.0};
 	};
 	Parameters m_param;
 	//
