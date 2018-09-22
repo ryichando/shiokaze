@@ -44,7 +44,7 @@ extern "C" void inject( const vec2d &p, double time, double &fluid, vec2d &veloc
 	if( time < 1.0 ) {
 		if( scene == 0 ) {
 			fluid = (p-vec2d(0.5,0.37)).len()-0.05;
-			velocity = vec2d(0.0,-1.0);
+			velocity = vec2d(0.0,-0.75);
 		} else {
 			fluid = (p-vec2d(0.1,0.37)).len()-0.05;
 			velocity = vec2d(1.0,0.0);

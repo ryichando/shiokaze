@@ -55,7 +55,7 @@ extern "C" void inject( const vec3d &p, double time, double &fluid, vec3d &veloc
 	if( time < 1.0 ) {
 		if( mode == 0 ) {
 			fluid = (p-vec3d(0.5,0.4,0.5)).len()-0.05;
-			velocity = vec3d(0.0,-1.0,0.0);
+			velocity = vec3d(0.0,-0.75,0.0);
 		} else {
 			fluid = (p-vec3d(0.15,0.4,0.5)).len()-0.05;
 			velocity = vec3d(1.0,0.0,0.0);

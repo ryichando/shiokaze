@@ -218,7 +218,7 @@ bool macliquid3::inject_liquid( double dt, array3<double> &fluid, macarray3<doub
 			vec3d p = m_dx*vec3i(i,j,k).cell(), u;
 			double f (1.0);
 			inject_func(p,time,f,u);
-			if( std::abs(f) < half_width*m_dx ) {
+			if( std::abs(f) < 2.0*half_width*m_dx ) {
 				it.set(std::min(it(),f));
 				did_set_threads[tn] = true;
 				if( f < 0.0 ) {
@@ -252,7 +252,7 @@ bool macliquid3::inject_liquid( double dt, array3<double> &fluid, macarray3<doub
 				double f (1.0);
 				vec3d u;
 				inject_func(p,time,f,u);
-				if( f < half_width*m_dx ) {
+				if( f < m_dx ) {
 					it.set(u[dim]);
 				}
 			});
