@@ -103,7 +103,7 @@ public:
 	 \~japanese @brief 処理を並列に行う。
 	 @param[in] functions 並列に行う処理関数のリスト。
 	 */
-	inline void run( const std::vector<std::function<void()> > &functions ) {
+	void run( const std::vector<std::function<void()> > &functions ) {
 		if( m_maximal_threads > 1 ) {
 			m_parallel_dispatcher->run(functions);
 		} else {
@@ -118,7 +118,7 @@ public:
 	 @param[in] size ループの大きさ。
 	 @param[in] func 実際のループ処理を行う関数。
 	 */
-	inline void for_each( size_t size, std::function<void(size_t n, int thread_index)> func ) const {
+	void for_each( size_t size, std::function<void(size_t n, int thread_index)> func ) const {
 		//
 		if( size ) {
 			int num_threads = m_maximal_threads;
@@ -152,7 +152,7 @@ public:
 	 @param[in] size ループの大きさ。
 	 @param[in] func 実際のループ処理を行う関数。
 	 */
-	inline void for_each( size_t size, std::function<void(size_t n)> func ) const {
+	void for_each( size_t size, std::function<void(size_t n)> func ) const {
 		for_each(size,[&]( size_t n, int thread_n ) {
 			func(n);
 		});
@@ -167,7 +167,7 @@ public:
 	 @param[in] ordering ループの順番。
 	 @param[in] func 実際のループを処理する関数。
 	 */
-	inline void for_each2( const shape2 &shape, std::function<void(int i, int j, int thread_index)> func ) const {
+	void for_each2( const shape2 &shape, std::function<void(int i, int j, int thread_index)> func ) const {
 		for_each(shape.count(),[&]( size_t n, int thread_index ) {
 			int i = n % shape.w;
 			int j = n / shape.w;
@@ -182,7 +182,7 @@ public:
 	 @param[in] shape ２次元の形状。
 	 @param[in] func 実際のループを処理する関数。
 	 */
-	inline void for_each2( const shape2 &shape, std::function<void(int i, int j)> func ) const {
+	void for_each2( const shape2 &shape, std::function<void(int i, int j)> func ) const {
 		for_each2(shape,[&]( int i, int j, int thread_index ) {
 			func(i,j);
 		});
@@ -195,7 +195,7 @@ public:
 	 @param[in] shape 3次元の形状。
 	 @param[in] func 実際のループを処理する関数。
 	 */
-	inline void for_each3( const shape3 &shape, std::function<void(int i, int j, int k, int thread_index)> func ) const {
+	void for_each3( const shape3 &shape, std::function<void(int i, int j, int k, int thread_index)> func ) const {
 		size_t plane_count = shape.w * shape.h;
 		for_each(shape.count(),[&]( size_t n, int thread_index ) {
 			int k = n / plane_count;
@@ -213,7 +213,7 @@ public:
 	 @param[in] shape 3次元の形状。
 	 @param[in] func 実際のループを処理する関数。
 	 */
-	inline void for_each3( const shape3 &shape, std::function<void(int i, int j, int k)> func ) const {
+	void for_each3( const shape3 &shape, std::function<void(int i, int j, int k)> func ) const {
 		for_each3(shape,[&]( int i, int j, int k, int thread_index ) {
 			func(i,j,k);
 		});
