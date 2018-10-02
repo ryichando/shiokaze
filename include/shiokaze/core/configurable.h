@@ -89,17 +89,15 @@ public:
 		return *reinterpret_cast<const T *>(environment.at(key));
 	}
 	/**
-	 \~english @brief Run load - configure - initialize processes for an input instance.
-	 @param[in] instance Pointer to an instance of configurable.
-	 \~japanese @brief 入力のインスタンスに対して、load - configure - initialize のプロセスを呼ぶ。
-	 @param[in] instance configurable のインスタンスへのポインター。
+	 \~english @brief Run load - configure - initialize processes.
+	 \~japanese @brief load - configure - initialize のプロセスを呼ぶ。
 	 */
-	static void setup_now( configurable *instance ) {
-		assert(instance->not_recursive());
+	virtual void setup_now() {
+		assert(not_recursive());
 		configuration& config = get_global_configuration();
-		instance->load(config);
-		instance->configure(config);
-		instance->initialize(environment_map());
+		load(config);
+		configure(config);
+		initialize(environment_map());
 	}
 	/**
 	 \~english @brief Check if this instance is not derived from recursive_configurable.
@@ -224,16 +222,14 @@ public:
 		m_recursive_children.erase(find(m_recursive_children.begin(),m_recursive_children.end(),child));
 	}
 	/**
-	 \~english @brief Run recursive_load - recursive_configure - recursive_initialize processes for an input instance.
-	 @param[in] instance Pointer to in instance of configurable.
-	 \~japanese @brief 入力のインスタンスに対して、recursive_load - recursive_configure - recursive_initialize のプロセスを呼ぶ。
-	 @param[in] instance configurable のインスタンスへのポインター。
+	 \~english @brief Run recursive_load - recursive_configure - recursive_initialize processes.
+	 \~japanese @brief recursive_load - recursive_configure - recursive_initialize のプロセスを呼ぶ。
 	 */
-	static void setup_now( recursive_configurable *instance ) {
+	virtual void setup_now() override {
 		configuration& config = get_global_configuration();
-		instance->recursive_load(config);
-		instance->recursive_configure(config);
-		instance->recursive_initialize();
+		recursive_load(config);
+		recursive_configure(config);
+		recursive_initialize();
 	}
 	/**
 	 \~english @brief Check if this instance is not derived from recursive_configurable.

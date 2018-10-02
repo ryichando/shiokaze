@@ -84,7 +84,7 @@ public:
 	 @param[in] argname このインスタンスの変数名.
 	 */
 	recursive_configurable_driver ( std::string name, std::string argname="" ) : m_name(name), m_argname(argname) {
-		configurable::setup_now(this);
+		setup_now();
 	}
 	/**
 	 \~english @brief Constructor for recursive_configurable_driver.

@@ -57,7 +57,8 @@ public:
 	 @param[in] splitter_name 並列化分散コアの名前。"sequential_splitter" がデフォルトとして設定される。
 	 */
 	parallel_driver ( recursive_configurable *parent, std::string parallel_name=shkz_default_parallel_name, std::string splitter_name=shkz_default_splitter_name ) : m_parallel_name(parallel_name), m_splitter_name(splitter_name) {
-		parent->add_child(this);
+		if( parent ) parent->add_child(this);
+		else setup_now();
 	}
 	/**
 	 \~english @brief Constructor for parallel_driver.
@@ -67,9 +68,7 @@ public:
 	 @param[in] parallel_name 並列化エンジンのコア名前。"stdthread" がデフォルトとして設定される。
 	 @param[in] splitter_name 並列化分散コアの名前。"sequential_splitter" がデフォルトとして設定される。
 	 */
-	parallel_driver ( std::string parallel_name=shkz_default_parallel_name, std::string splitter_name=shkz_default_splitter_name ) : m_parallel_name(parallel_name), m_splitter_name(splitter_name) {
-		configurable::setup_now(this);
-	}
+	parallel_driver ( std::string parallel_name=shkz_default_parallel_name, std::string splitter_name=shkz_default_splitter_name ) : parallel_driver(nullptr,parallel_name,splitter_name) {}
 	/**
 	 \~english @brief Get the number of maximal threads set.
 	 @return Number of threads set.

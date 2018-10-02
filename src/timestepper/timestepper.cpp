@@ -35,15 +35,6 @@ public:
 	//
 	timestepper () {
 		//
-		m_should_export_video = false;
-		m_FPS = 120.0;
-		m_CFL = 3.0;
-		m_maximal_substeps = 5;
-		m_simulation_time0 = 0.0;
-		m_simulation_time_one_video_frame = m_simulation_time_one_video_frame_prev = 0.0;
-		m_simulation_time_per_step_prev = m_simulation_time_per_step = 0.0;
-		m_min_dt = 1.0 / ((double)m_maximal_substeps * m_FPS);
-		//
 	#ifdef USE_OPENGL
 		m_maximal_frame = 0;
 	#else
@@ -173,7 +164,7 @@ protected:
 	//
 private:
 	//
-	double m_time, m_FPS, m_CFL, m_min_dt;
+	double m_time, m_FPS {120.0}, m_CFL {3.0}, m_min_dt {0.1/120.0};
 	double m_accumulated_time;
 	double m_simulation_time0;
 	double m_simulation_time_one_video_frame_prev;
@@ -181,10 +172,10 @@ private:
 	double m_simulation_time_per_step_prev;
 	double m_simulation_time_per_step;
 	double m_current_CFL;
-	bool m_should_export_video, m_use_fixed_time_step;
+	bool m_should_export_video {false}, m_use_fixed_time_step {false};
 	int m_frame;
 	unsigned m_maximal_frame;
-	unsigned m_maximal_substeps;
+	unsigned m_maximal_substeps {5};
 	unsigned m_step;
 	//
 };

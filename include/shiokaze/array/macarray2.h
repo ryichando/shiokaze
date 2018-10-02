@@ -50,7 +50,7 @@ public:
 	 */
 	macarray2 ( recursive_configurable *parent, const shape2 &shape, vec2<T> value=vec2<T>(), std::string core_name="") : m_shape(shape), m_array_0(this,shape.face(0),value[0],core_name), m_array_1(this,shape.face(1),value[1],core_name) {
 			if( parent ) parent->add_child(this);
-			else recursive_configurable::setup_now(this);
+			else setup_now();
 	}
 	/**
 	 \~english @brief Constructor for macarray2.

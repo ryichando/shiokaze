@@ -55,7 +55,7 @@ public:
 	bitarray3( recursive_configurable *parent, const shape3 &shape, std::string core_name="" ) :
 		m_core_name(core_name), m_shape(shape) {
 			if( parent ) parent->add_child(this);
-			else recursive_configurable::setup_now(this);
+			else setup_now();
 		}
 	/**
 	 \~english @brief Constructor for bitarray3.
@@ -117,7 +117,7 @@ public:
 	 */
 	bitarray3( const bitarray3 &array ) {
 		m_core_name = array.m_core_name;
-		recursive_configurable::setup_now(this);
+		setup_now();
 		copy(array);
 	}
 	/**

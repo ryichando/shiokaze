@@ -49,7 +49,7 @@ public:
 	array2( recursive_configurable *parent, const shape2 &shape, T value=T(), std::string core_name="" ) :
 		m_core_name(core_name), m_shape(shape), m_background_value(value) {
 			if( parent ) parent->add_child(this);
-			else recursive_configurable::setup_now(this);
+			else setup_now();
 	}
 	/**
 	 \~english @brief Constructor for array2.
@@ -113,7 +113,7 @@ public:
 	 */
 	array2( const array2 &array ) {
 		m_core_name = array.m_core_name;
-		recursive_configurable::setup_now(this);
+		setup_now();
 		copy(array);
 	}
 	/**
