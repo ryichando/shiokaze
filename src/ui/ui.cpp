@@ -459,6 +459,14 @@ void ui::run () {
 		//
 		// Exit loop if requested
 		if( instance->should_quit()) break;
+		//
+		// Trick for macOS Mojave
+		static bool first_time (true);
+		if( first_time ) {
+			::glfwHideWindow(window);
+			::glfwShowWindow(window);
+			first_time = false;
+		}
 	}
 	//		
 	::glfwTerminate();
