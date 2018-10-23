@@ -721,13 +721,13 @@ void macnbflip3::get_levelset( array3<double> &fluid ) const {
 //
 std::vector<macflip3_interface::particle3> macnbflip3::get_particles() const {
 	std::vector<macflip3_interface::particle3> result;
-	serial::for_each(m_particles.size(),[&]( size_t n ) {
+	for( size_t n=0; n<m_particles.size(); ++n ) {
 		macflip3_interface::particle3 particle;
 		particle.p = m_particles[n].p;
 		particle.r = m_particles[n].r;
 		particle.bullet = m_particles[n].bullet;
 		result.push_back(particle);
-	});
+	}
 	return result;
 }
 //
@@ -792,14 +792,14 @@ void macnbflip3::export_mesh_and_ballistic_particles( int frame, std::string dir
 	FILE *fp = fopen(particle_path.c_str(),"wb");
 	unsigned size = ballistic_points.size();
 	fwrite(&size,1,sizeof(unsigned),fp);
-	serial::for_each(size,[&]( size_t n ) {
+	for( size_t n=0; n<size; ++n ) {
 		float position[3] = { (float)ballistic_points[n].p.v[0],
 							  (float)ballistic_points[n].p.v[1],
 							  (float)ballistic_points[n].p.v[2] };
 		float radius = ballistic_points[n].r;
 		fwrite(position,3,sizeof(float),fp);
 		fwrite(&radius,1,sizeof(float),fp);
-	});
+	}
 	fclose(fp);
 	console::dump( "Done. Size=%d. Took %s\n", size, timer.stock("write_ballistic").c_str());
 }

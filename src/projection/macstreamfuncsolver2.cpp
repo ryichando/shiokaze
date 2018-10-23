@@ -253,7 +253,7 @@ private:
 				}
 			};
 			//
-			serial::for_each2(m_shape.nodal(),[&]( int i, int j ) {
+			m_shape.nodal().for_each([&]( int i, int j ) {
 				if( markable(vec2i(i,j)) ) {
 					recursive_mark(vec2i(i,j),++corner_indices);
 				}

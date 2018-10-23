@@ -97,10 +97,10 @@ void macliquid2::post_initialize () {
 	m_initial_volume = m_gridutility->get_area(m_solid,m_fluid);
 	//
 	shared_macarray2<double> velocity_actives(m_velocity.type());
-	serial::for_each( DIM2, [&]( size_t dim ) {
+	for( int dim : DIMS2 ) {
 		velocity_actives()[dim].activate_inside_as(m_fluid);
 		velocity_actives()[dim].activate_inside_as(m_fluid,vec2i(dim==0,dim==1));
-	});
+	}
 	m_velocity.copy_active_as(velocity_actives());
 	//
 	double max_u = m_macutility->compute_max_u(m_velocity);

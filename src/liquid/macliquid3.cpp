@@ -118,10 +118,10 @@ void macliquid3::post_initialize() {
 	m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
 	//
 	shared_macarray3<double> velocity_actives(m_velocity.type());
-	serial::for_each( DIM3, [&]( size_t dim ) {
+	for( int dim : DIMS3 ) {
 		velocity_actives()[dim].activate_inside_as(m_fluid);
 		velocity_actives()[dim].activate_inside_as(m_fluid,vec3i(dim==0,dim==1,dim==2));
-	});
+	}
 	m_velocity.copy_active_as(velocity_actives());
 	//
 	console::dump( "Done. Volume = %.3f. Took %s.\n", m_initial_volume, timer.stock("initialize_compute_volume").c_str());

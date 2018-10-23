@@ -643,14 +643,14 @@ void macnbflip2::get_levelset( array2<double> &fluid ) const {
 //
 std::vector<macflip2_interface::particle2> macnbflip2::get_particles() const {
 	std::vector<macflip2_interface::particle2> result;
-	serial::for_each(m_particles.size(),[&]( size_t n ) {
+	for( size_t n=0; n<m_particles.size(); ++n ) {
 		macflip2_interface::particle2 particle;
 		particle.p = m_particles[n].p;
 		particle.r = m_particles[n].r;
 		particle.bullet = m_particles[n].bullet;
 		particle.bullet_time = m_particles[n].bullet_time;
 		result.push_back(particle);
-	});
+	}
 	return result;
 }
 //

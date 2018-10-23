@@ -41,7 +41,7 @@ private:
 			//
 			g.color4(1.0,1.0,1.0,0.5);
 			auto velocity_acessor = cell_velocity->get_const_accessor();
-			serial::for_each2(velocity.shape(),[&](int i, int j) {
+			velocity.shape().for_each([&](int i, int j) {
 				vec2d p0 = m_dx*vec2i(i,j).cell();
 				vec2d p1 = p0+m_dx*velocity_acessor(i,j);
 				graphics_utility::draw_arrow(g,p0.v,p1.v);

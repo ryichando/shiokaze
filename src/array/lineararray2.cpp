@@ -256,7 +256,7 @@ private:
 			*(m_fill_mask+n/8) |= 1UL << n%8;
 		};
 		size_t count = shape2(m_nx,m_ny).count();
-		serial::for_each(m_bit_mask_size,[&]( size_t n8 ) {
+		for( size_t n8=0; n8<m_bit_mask_size; ++n8 ) {
 			if( *(m_bit_mask+n8) ) {
 				for( size_t n=8*n8; n < 8*(n8+1); ++n ) if ( n < count ) {
 					int i, j; decode(n,i,j);
@@ -277,7 +277,7 @@ private:
 					}
 				}
 			}
-		});
+		};
 	}
 	//
 	virtual void const_parallel_inside ( std::function<void(int i, int j, const void *value_ptr, const bool &active, int thread_index )> func, const parallel_driver &parallel ) const override {
@@ -302,19 +302,23 @@ private:
 		//
 		if( m_fill_mask ) {
 			size_t count = shape2(m_nx,m_ny).count();
-			serial::interruptible_for_each(m_bit_mask_size,[&]( size_t n8 ) {
+			for( size_t n8=0; n8<m_bit_mask_size; ++n8 ) {
 				unsigned char &mask = *(m_fill_mask+n8);
 				if( mask ) {
+					bool do_break (false);
 					for( size_t n=8*n8; n < 8*(n8+1); ++n ) if ( n < count ) {
 						if( (mask >> n%8) & 1U ) {
 							int i, j; decode(n,i,j);
 							bool active = ((*(m_bit_mask+n/8)) >> n%8) & 1U;
-							if(func(i,j,m_buffer ? m_buffer+n*m_element_size : nullptr,active)) return true;
+							if(func(i,j,m_buffer ? m_buffer+n*m_element_size : nullptr,active)) {
+								do_break = true;
+								break;
+							}
 						}
 					}
+					if( do_break ) break;
 				}
-				return false;
-			});
+			}
 		}
 	}
 	//

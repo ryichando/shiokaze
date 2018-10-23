@@ -468,7 +468,7 @@ void ui::run () {
 			first_time = false;
 		}
 	}
-	//		
+	//
 	::glfwTerminate();
 #endif
 }

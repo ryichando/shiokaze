@@ -345,7 +345,7 @@ public:
 		m_fill_mask.resize(m_bx*m_by,false);
 		std::stack<size_t> start_queue;
 		//
-		serial::for_each(m_bx*m_by,[&]( size_t n ) {
+		for( size_t n=0; n<m_bx*m_by; ++n ) {
 			if( m_tiles[n] ) {
 				int bi, bj;
 				decode(n,bi,bj);
@@ -367,7 +367,7 @@ public:
 					}
 				}
 			}
-		});
+		}
 		//
 		std::stack<vec2i> queue;
 		auto markable = [&]( vec2i ni ) {
@@ -424,9 +424,9 @@ public:
 	}
 	virtual void const_serial_inside ( std::function<bool(int i, int j, const void *value_ptr, const bool &active )> func ) const override {
 		//
-		serial::for_each(m_bx*m_by,[&]( size_t n ) {
+		for( size_t n=0; n<m_bx*m_by; ++n ) {
 			if( m_tiles[n] ) {
-				if(m_tiles[n]->const_loop_inside(func)) return true;
+				if(m_tiles[n]->const_loop_inside(func)) break;
 			} else if( block_filled(n) ) {
 				int bi, bj;
 				decode(n,bi,bj);
@@ -434,12 +434,17 @@ public:
 				int oj = m_Z*bj;
 				unsigned Zx = std::min(m_nx-oi,m_Z);
 				unsigned Zy = std::min(m_ny-oj,m_Z);
+				bool do_break (false);
 				for( int jj=0; jj<Zy; ++jj ) for( int ii=0; ii<Zx; ++ii ) {
-					if( func(oi+ii,oj+jj,nullptr,false)) return true;
+					if( func(oi+ii,oj+jj,nullptr,false)) {
+						do_break = true;
+						goto loop_escape;
+					}
 				}
+loop_escape:
+				if( do_break ) break;
 			}
-			return false;
-		});
+		}
 	}
 	//
 	void parallel_loop_actives_body ( int bi, int bj, std::function<void(int i, int j, void *value_ptr, bool &active, const bool &filled )> func ) {
@@ -764,7 +769,7 @@ private:
 				*(m_fill_mask+n/8) |= 1UL << n%8;
 			};
 			size_t count = local_shape.count();
-			serial::for_each(m_bit_mask_size,[&]( size_t n8 ) {
+			for( size_t n8=0; n8<m_bit_mask_size; ++n8 ) {
 				if( *(m_bit_mask+n8) ) {
 					for( size_t n=8*n8; n < 8*(n8+1); ++n ) if ( n < count ) {
 						int bi, bj; decode(n,bi,bj);
@@ -785,7 +790,7 @@ private:
 						}
 					}
 				}
-			});
+			}
 			//
 		}
 		bool const_loop_inside( std::function<bool(int i, int j, const void *value_ptr, const bool &active )> func ) const {

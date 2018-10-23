@@ -108,7 +108,7 @@ private:
 		auto levelset_accessor = levelset.get_const_accessor();
 		//
 		// Paint fluid
-		serial::for_each2(levelset.shape()-shape2(1,1),[&](int i, int j) {
+		(levelset.shape()-shape2(1,1)).for_each([&](int i, int j) {
 			vec2d p[8];	int pnum; double v[2][2]; vec2d vertices[2][2];
 			for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
 				v[ni][nj] = levelset_accessor(i+ni,j+nj);
@@ -123,7 +123,7 @@ private:
 		});
 		//
 		// Draw contour
-		serial::for_each2(levelset.shape()-shape2(1,1),[&](int i, int j) {
+		(levelset.shape()-shape2(1,1)).for_each([&](int i, int j) {
 			//
 			// Check the nearst possible surfaces
 			vec2d lines[8];	int pnum; double v[2][2]; vec2d vertices[2][2];
@@ -168,7 +168,7 @@ private:
 		double det = maxv-minv;
 		if( std::abs(det) > 1e-2 ) {
 			auto q_accessor = q.get_const_accessor();
-			serial::for_each2(q.shape()-shape2(1,1),[&](int i, int j) {
+			(q.shape()-shape2(1,1)).for_each([&](int i, int j) {
 				auto set_color = [&](unsigned i, unsigned j) {
 					if( q.active(i,j)) {
 						double v = q_accessor(i,j);
@@ -203,7 +203,7 @@ private:
 		double det = maxv-minv;
 		if( std::abs(det) > 1e-2 ) {
 			auto q_accessor = q.get_const_accessor();
-			serial::for_each2(q.shape()-shape2(1,1),[&](int i, int j) {
+			(q.shape()-shape2(1,1)).for_each([&](int i, int j) {
 				auto set_color = [&](unsigned i, unsigned j) {
 					if( q.active(i,j)) {
 						double normp = q(i,j) ? 2.0*(q(i,j)-minv)/det-1.0 : 0.0;

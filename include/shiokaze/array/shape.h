@@ -370,6 +370,28 @@ struct shape2 {
 		return w == 0 && h == 0;
 	}
 	/**
+	 \~english @brief Perform a two dimensional serial loop operation.
+	 @param[in] func Function that processes a loop.
+	 \~japanese @brief 2次元の逐次処理を行う。
+	 @param[in] func 実際のループを処理する関数。
+	 */
+	void for_each( std::function<void(int i, int j)> func ) const {
+		for( int j=0; j<h; ++j ) for( int i=0; i<w; ++i ) {
+			func(i,j);
+		}
+	}
+	/**
+	 \~english @brief Perform a serial loop operation.
+	 @param[in] func Function that processes a loop. If the function return \c true, the loop interrupts.
+	 \~japanese @brief 逐次処理を行う。
+	 @param[in] func 実際のループを処理する関数。もし関数が \c true を返すと、ループ処理を中断する。
+	 */
+	void interruptible_for_each( std::function<bool(int i, int j)> func ) const {
+		for( int j=0; j<h; ++j ) for( int i=0; i<w; ++i ) {
+			if(func(i,j)) return;
+		}
+	}
+	/**
 	 \~english @brief Width of the shape.
 	 \~japanese @brief 形状の幅。
 	 */
@@ -755,6 +777,28 @@ struct shape3 {
 	 */
 	bool empty() const {
 		return w == 0 && h == 0 && d == 0;
+	}
+	/**
+	 \~english @brief Perform a three dimensional serial loop operation.
+	 @param[in] func Function that processes a loop.
+	 \~japanese @brief 3次元の逐次処理を行う。
+	 @param[in] func 実際のループを処理する関数。
+	 */
+	void for_each( std::function<void(int i, int j, int k)> func ) const {
+		for( int k=0; k<d; ++k ) for( int j=0; j<h; ++j ) for( int i=0; i<w; ++i ) {
+			func(i,j,k);
+		}
+	}
+	/**
+	 \~english @brief Perform a serial loop operation.
+	 @param[in] func Function that processes a loop. If the function return \c true, the loop interrupts.
+	 \~japanese @brief 逐次処理を行う。
+	 @param[in] func 実際のループを処理する関数。もし関数が \c true を返すと、ループ処理を中断する。
+	 */
+	void interruptible_for_each( std::function<bool(int i, int j, int k)> func ) const {
+		for( int k=0; k<d; ++k ) for( int j=0; j<h; ++j ) for( int i=0; i<w; ++i ) {
+			if(func(i,j,k)) return;
+		}
 	}
 	/**
 	 \~english @brief Width of the shape.

@@ -629,7 +629,7 @@ void macbackwardflip2::draw( const graphics_engine &g ) const {
 		g.line_width(2.0);
 		const layer2 &layer = m_buffers[std::min(m_buffers.size(),(size_t)m_param.max_velocity_layers)-1];
 		auto u_reconstructed_accessor = layer.u_reconstructed->get_const_accessor();
-		serial::for_each2(m_shape,[&]( int i, int j ) {
+		m_shape.for_each([&]( int i, int j ) {
 			vec2d u;
 			for( unsigned dim : DIMS2 ) {
 				u[dim] = 0.5 * (u_reconstructed_accessor(dim,i,j)+u_reconstructed_accessor(dim,i+(dim==0),j+(dim==1)));
