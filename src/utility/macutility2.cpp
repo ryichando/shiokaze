@@ -72,10 +72,13 @@ private:
 						vec2d normal = vec2d(derivative)/m_dx;
 						if( normal.norm2() ) {
 							vec2d u = macarray_interpolator2::interpolate<double>(velocity_save_accessors[tn],vec2i(i,j).cell());
-							it.set((u-normal*(u*normal))[dim]);
+							if( u * normal < 0.0 ) {
+								it.set((u-normal*(u*normal))[dim]);
+							}
 						}
 					}
-					if( pi[dim]==0 || pi[dim]==m_shape[dim] ) it.set(0.0);
+					if( pi[dim]==0 && it() < 0.0 ) it.set(0.0);
+					if( pi[dim]==m_shape[dim] && it() > 0.0 ) it.set(0.0);
 				});
 			}
 		}

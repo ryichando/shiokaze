@@ -861,14 +861,15 @@ private:
 		velocity.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn ) {
 			double rho = rho_accessors[tn](dim,i,j,k);
 			if( area_accessors[tn](dim,i,j,k) && rho ) {
+				velocity[dim].subtract(i,j,k, dt * (
+					+ pressure_acessors[tn](m_shape.clamp(i,j,k))
+					- pressure_acessors[tn](m_shape.clamp(i-(dim==0),j-(dim==1),k-(dim==2)))
+					) / (rho*m_dx));
+				//
 				vec3i pi(i,j,k);
-				if( pi[dim] == 0 || pi[dim] == velocity.shape()[dim] ) it.set(0.0);
-				else {
-					velocity[dim].subtract(i,j,k, dt * (
-						+ pressure_acessors[tn](m_shape.clamp(i,j,k))
-						- pressure_acessors[tn](m_shape.clamp(i-(dim==0),j-(dim==1),k-(dim==2)))
-						) / (rho*m_dx));
-				}
+				if( pi[dim] == 0 && it() < 0.0 ) it.set(0.0);
+				else if( pi[dim] == velocity.shape()[dim] && it() > 0.0 ) it.set(0.0);
+				//
 			} else {
 				it.set_off();
 			}

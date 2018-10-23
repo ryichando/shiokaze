@@ -77,10 +77,13 @@ private:
 						vec3d normal = vec3d(derivative)/m_dx;
 						if( normal.norm2() ) {
 							vec3d u = macarray_interpolator3::interpolate<double>(velocity_save_accessors[tn],vec3i(i,j,k).cell());
-							it.set((u-normal*(u*normal))[dim]);
+							if( u * normal < 0.0 ) {
+								it.set((u-normal*(u*normal))[dim]);
+							}
 						}
 					}
-					if( pi[dim]==0 || pi[dim]==m_shape[dim] ) it.set(0.0);
+					if( pi[dim]==0 && it() < 0.0 ) it.set(0.0);
+					if( pi[dim]==m_shape[dim] && it() > 0.0 ) it.set(0.0);
 				});
 			}
 		}

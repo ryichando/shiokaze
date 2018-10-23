@@ -210,8 +210,8 @@ private:
 					) / (rho*m_dx));
 				}
 			} else {
-				if( pi[dim] == 0 && fluid_accessors[tn](pi) < 0.0 ) it.set(0.0);
-				else if( pi[dim] == velocity.shape()[dim] && fluid_accessors[tn](pi-vec2i(dim==0,dim==1)) < 0.0 ) it.set(0.0);
+				if( pi[dim] == 0 && fluid_accessors[tn](pi) < 0.0 && it() < 0.0 ) it.set(0.0);
+				else if( pi[dim] == velocity.shape()[dim] && fluid_accessors[tn](pi-vec2i(dim==0,dim==1)) < 0.0 && it() > 0.0 ) it.set(0.0);
 				else it.set_off();
 			}
 		});

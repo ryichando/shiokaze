@@ -452,7 +452,8 @@ private:
 				else it.set(0.0);
 				//
 				vec2i pi(i,j);
-				if( pi[dim] == 0 || pi[dim] == velocity.shape()[dim] ) it.set(0.0);
+				if( pi[dim] == 0 && it() < 0.0 ) it.set(0.0);
+				else if( pi[dim] == velocity.shape()[dim] && it() > 0.0 ) it.set(0.0);
 			} else {
 				it.set_off();
 			}
