@@ -336,7 +336,7 @@ public:
 	 @return アクティブなら \c true 非アクティブなら \c false。
 	 */
 	bool operator()( const vec2i &pi, void *cache=nullptr ) const {
-		return (*this)(pi,cache);
+		return (*this)(pi[0],pi[1],cache);
 	}
 	/**
 	 \~english @brief Set a position on grid inactive.
