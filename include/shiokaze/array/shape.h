@@ -588,7 +588,7 @@ struct shape3 {
 	 \~japanese @brief この形状の次元に関する数字を得る。
 	 @param[out] gn 幅、高さ、奥行きの順番で数字を格納する一次元配列。
 	 */
-	void get( unsigned gn[DIM2] ) const {
+	void get( unsigned gn[DIM3] ) const {
 		gn[0] = w;
 		gn[1] = h;
 		gn[2] = d;
