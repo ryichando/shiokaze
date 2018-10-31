@@ -611,7 +611,7 @@ loop_escape:
 	}
 	//
 	virtual void parallel_actives ( std::function<void(int i, int j, int k, void *value_ptr, bool &active, const bool &filled, int thread_index )> func, const parallel_driver &parallel ) override {
-		parallel.for_each3(shape3(m_bx,m_by,m_bz),[&](int bi, int bj, int bk, int thread_index) {
+		parallel.for_each(shape3(m_bx,m_by,m_bz),[&](int bi, int bj, int bk, int thread_index) {
 			parallel_loop_actives_body(bi,bj,bk,[&](int i, int j, int k, void *value_ptr, bool &active, const bool &filled){
 				func(i,j,k,value_ptr,active,filled,thread_index);
 			});
@@ -623,7 +623,7 @@ serial_actives_end: ;
 	}
 	//
 	virtual void const_parallel_actives ( std::function<void(int i, int j, int k, const void *value_ptr, const bool &filled, int thread_index )> func, const parallel_driver &parallel ) const override {
-		parallel.for_each3(shape3(m_bx,m_by,m_bz),[&](int bi, int bj, int bk, int thread_index) {
+		parallel.for_each(shape3(m_bx,m_by,m_bz),[&](int bi, int bj, int bk, int thread_index) {
 			parallel_const_loop_actives_body(bi,bj,bk,[&](int i, int j, int k, const void *value_ptr, const bool &filled) {
 				func(i,j,k,value_ptr,filled,thread_index);
 			});
@@ -635,7 +635,7 @@ const_serial_actives_end: ;
 	}
 	//
 	virtual void parallel_all ( std::function<void(int i, int j, int k, void *value_ptr, bool &active, const bool &filled, int thread_index )> func, const parallel_driver &parallel ) override {
-		parallel.for_each3(shape3(m_bx,m_by,m_bz),[&](int bi, int bj, int bk, int thread_index) {
+		parallel.for_each(shape3(m_bx,m_by,m_bz),[&](int bi, int bj, int bk, int thread_index) {
 			parallel_loop_all_body(bi,bj,bk,[&](int i, int j, int k, void *value_ptr, bool &active, const bool &filled) {
 				func(i,j,k,value_ptr,active,filled,thread_index);
 			});
@@ -647,7 +647,7 @@ serial_all_end: ;
 	}
 	//
 	virtual void const_parallel_all ( std::function<void(int i, int j, int k, const void *value_ptr, const bool &active, const bool &filled, int thread_index )> func, const parallel_driver &parallel ) const override {
-		parallel.for_each3(shape3(m_bx,m_by,m_bz),[&](int bi, int bj, int bk, int thread_index) {
+		parallel.for_each(shape3(m_bx,m_by,m_bz),[&](int bi, int bj, int bk, int thread_index) {
 			parallel_const_loop_all_body(bi,bj,bk,[&](int i, int j, int k, const void *value_ptr, const bool &active, const bool &filled) {
 				func(i,j,k,value_ptr,active,filled,thread_index);
 			});

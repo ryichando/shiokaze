@@ -182,7 +182,7 @@ private:
 		auto face_area_matrix = [&]() {
 			std::vector<double> A(face_size,0.0);
 			for( int dim : DIMS3 ) {
-				m_parallel.for_each3(areas()[dim].shape(),[&]( int i, int j, int k, int tn ) {
+				m_parallel.for_each(areas()[dim].shape(),[&]( int i, int j, int k, int tn ) {
 					unsigned row = Xf(i,j,k,dim,vec3i(0,1,2));
 					double area = areas()[dim](i,j,k);
 					A[row] = area;
@@ -204,7 +204,7 @@ private:
 		auto face_mass_matrix = [&]() {
 			std::vector<double> F(face_size,0.0);
 			for( int dim : DIMS3 ) {
-				m_parallel.for_each3(areas()[dim].shape(),[&]( int i, int j, int k, int tn ) {
+				m_parallel.for_each(areas()[dim].shape(),[&]( int i, int j, int k, int tn ) {
 					unsigned row = Xf(i,j,k,dim,vec3i(0,1,2));
 					 F[row] = rho_accessors[tn](dim,i,j,k);
 				});
@@ -222,7 +222,7 @@ private:
 			m_parallel.for_each(DIM3,[&]( size_t dim ) {
 				vec3i mp((dim+1)%DIM3,(dim+2)%DIM3,dim); // Let's pretend that we are solving for z
 				vec3i pm = inv_permutation(mp);
-				m_parallel.for_each3(shape3(m_shape[mp[0]]+1,m_shape[mp[1]]+1,m_shape[mp[2]]),[&]( int i, int j, int k, int tn ) {
+				m_parallel.for_each(shape3(m_shape[mp[0]]+1,m_shape[mp[1]]+1,m_shape[mp[2]]),[&]( int i, int j, int k, int tn ) {
 					unsigned row = Xp(i,j,k,dim,pm);
 					double rho_sum(0.0);
 					double sum(0.0);
@@ -242,7 +242,7 @@ private:
 		// This function computes corner diagonal mass term [V]
 		auto corner_mass_matrix = [&]( const std::vector<double> &E ) {
 			std::vector<double> V(corner_size,0.0);
-			m_parallel.for_each3(m_shape.nodal(),[&](int i, int j, int k) {
+			m_parallel.for_each(m_shape.nodal(),[&](int i, int j, int k) {
 				unsigned row = X(i,j,k,m_shape[0]+1,m_shape[1]+1);
 				double rho_sum(0.0);
 				double sum(0.0);
@@ -269,7 +269,7 @@ private:
 			m_parallel.for_each(DIM3,[&]( size_t dim ) {
 				vec3i mp((dim+1)%DIM3,(dim+2)%DIM3,dim); // Let's pretend that we are solving for z
 				vec3i pm = inv_permutation(mp);
-				m_parallel.for_each3(shape3(m_shape[mp[0]],m_shape[mp[1]],m_shape[mp[2]]+1),[&]( int i, int j, int k ) {
+				m_parallel.for_each(shape3(m_shape[mp[0]],m_shape[mp[1]],m_shape[mp[2]]+1),[&]( int i, int j, int k ) {
 					unsigned row = Xf(i,j,k,dim,pm);
 					if( A[row] ) {
 						unsigned n_row;
@@ -315,14 +315,14 @@ private:
 			//
 			// Mark solid corner
 			solid_corner.resize(corner_size,0);
-			m_parallel.for_each3(corner_remap->shape(),[&](int i, int j, int k) {
+			m_parallel.for_each(corner_remap->shape(),[&](int i, int j, int k) {
 				solid_corner[X(i,j,k,m_shape[0]+1,m_shape[1]+1)] = corner_remap()(i,j,k);
 			});
 			//
 			// Mark solid edge
 			solid_edge.resize(Lhs_size);
 			for( int dim : DIMS3 ) {
-				m_parallel.for_each3(m_shape.edge(dim),[&]( int i, int j, int k ) {
+				m_parallel.for_each(m_shape.edge(dim),[&]( int i, int j, int k ) {
 					unsigned row = Xp(i,j,k,dim,vec3i(0,1,2));
 					unsigned forward = solid_corner[X(i+(dim==0),j+(dim==1),k+(dim==2),m_shape[0]+1,m_shape[1]+1)];
 					unsigned backward = solid_corner[X(i,j,k,m_shape[0]+1,m_shape[1]+1)];
@@ -359,7 +359,7 @@ private:
 			});
 			//
 			for( int dim : DIMS3 ) {
-				m_parallel.for_each3(m_shape.edge(dim),[&]( int i, int j, int k ) {
+				m_parallel.for_each(m_shape.edge(dim),[&]( int i, int j, int k ) {
 					unsigned row = Xp(i,j,k,dim,vec3i(0,1,2));
 					char nfixed[2] = { fixed()(i+(dim==0),j+(dim==1),k+(dim==2)), fixed()(i,j,k) };
 					unsigned forward = corner_remap()(i+(dim==0),j+(dim==1),k+(dim==2));
@@ -381,7 +381,7 @@ private:
 			//
 			// Divergence operator for vector potential
 			D->initialize(corner_size,Lhs_size);
-			m_parallel.for_each3(m_shape.nodal(),[&](int i, int j, int k) {
+			m_parallel.for_each(m_shape.nodal(),[&](int i, int j, int k) {
 				unsigned row = X(i,j,k,m_shape[0]+1,m_shape[1]+1);
 				if( ! solid_corner[row]) {
 					vec3i pm(0,1,2);
@@ -581,7 +581,7 @@ private:
 		timer.tick(); console::dump( "Building [pu] = [rho][u]...");
 		std::vector<double> pu_vector(m_CZ_t->columns());
 		m_parallel.for_each(DIM3,[&]( size_t dim ) {
-			 m_parallel.for_each3(rhos()[dim].shape(),[&]( int i, int j, int k, int tn ) {
+			 m_parallel.for_each(rhos()[dim].shape(),[&]( int i, int j, int k, int tn ) {
 				unsigned row = Xf(i,j,k,dim,vec3i(0,1,2));
 				double rho = rho_accessors[tn](dim,i,j,k);
 				//
@@ -617,7 +617,7 @@ private:
 				}
 			}
 			//
-			m_parallel.for_each3(m_shape.nodal(),[&]( int i, int j, int k ) {
+			m_parallel.for_each(m_shape.nodal(),[&]( int i, int j, int k ) {
 				unsigned row = X(i,j,k,m_shape[0]+1,m_shape[1]+1);
 				if( Lhs_size+row < Lhs->rows() ) {
 					if( ! V.at(row) && m_vecpotential.at(Lhs_size+row) ) {

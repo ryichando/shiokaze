@@ -587,7 +587,7 @@ void macnbflip3::reseed( const macarray3<double> &velocity, size_t &reseeded, si
 	auto cell_bucket_accessors = cell_bucket->get_const_accessors();
 	//
 	// Particle reseeding...
-	m_parallel.for_each3(m_shape,[&]( int i, int j, int k, int tn ) {
+	m_parallel.for_each(m_shape,[&]( int i, int j, int k, int tn ) {
 		//
 		size_t num_added (0);
 		auto attempt_reseed = [&]( const vec3d &p ) {

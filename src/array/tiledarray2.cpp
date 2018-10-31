@@ -545,7 +545,7 @@ loop_escape:
 	}
 	//
 	virtual void parallel_actives ( std::function<void(int i, int j, void *value_ptr, bool &active, const bool &filled, int thread_index )> func, const parallel_driver &parallel ) override {
-		parallel.for_each2(shape2(m_bx,m_by),[&](int bi, int bj, int thread_index) {
+		parallel.for_each(shape2(m_bx,m_by),[&](int bi, int bj, int thread_index) {
 			parallel_loop_actives_body(bi,bj,[&](int i, int j, void *value_ptr, bool &active, const bool &filled ) {
 				return func(i,j,value_ptr,active,filled,thread_index);
 			});
@@ -556,7 +556,7 @@ loop_escape:
 serial_actives_end: ;
 	}
 	virtual void const_parallel_actives ( std::function<void(int i, int j, const void *value_ptr, const bool &filled, int thread_index )> func, const parallel_driver &parallel ) const override {
-		parallel.for_each2(shape2(m_bx,m_by),[&](int bi, int bj, int thread_index) {
+		parallel.for_each(shape2(m_bx,m_by),[&](int bi, int bj, int thread_index) {
 			parallel_const_loop_actives_body(bi,bj,[&](int i, int j, const void *value_ptr, const bool &filled) {
 				return func(i,j,value_ptr,filled,thread_index);
 			});
@@ -567,7 +567,7 @@ serial_actives_end: ;
 const_serial_actives_end: ;
 	}
 	virtual void parallel_all ( std::function<void(int i, int j, void *value_ptr, bool &active, const bool &filled, int thread_index )> func, const parallel_driver &parallel ) override {
-		parallel.for_each2(shape2(m_bx,m_by),[&](int bi, int bj, int thread_index) {
+		parallel.for_each(shape2(m_bx,m_by),[&](int bi, int bj, int thread_index) {
 			parallel_loop_all_body(bi,bj,[&](int i, int j, void *value_ptr, bool &active, const bool &filled ) {
 				return func(i,j,value_ptr,active,filled,thread_index);
 			});
@@ -578,7 +578,7 @@ const_serial_actives_end: ;
 serial_all_end: ;
 	}
 	virtual void const_parallel_all ( std::function<void(int i, int j, const void *value_ptr, const bool &active, const bool &filled, int thread_index )> func, const parallel_driver &parallel ) const override {
-		parallel.for_each2(shape2(m_bx,m_by),[&](int bi, int bj, int thread_index) {
+		parallel.for_each(shape2(m_bx,m_by),[&](int bi, int bj, int thread_index) {
 			parallel_const_loop_all_body(bi,bj,[&](int i, int j, const void *value_ptr, const bool &active, const bool &filled) {
 				return func(i,j,value_ptr,active,filled,thread_index);
 			});

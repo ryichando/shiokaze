@@ -139,7 +139,7 @@ private:
 		auto face_area_matrix = [&]() {
 			std::vector<double> A(face_size,0.0);
 			for( int dim : DIMS2 ) {
-				m_parallel.for_each2(areas()[dim].shape(),[&]( int i, int j, int tn ) {
+				m_parallel.for_each(areas()[dim].shape(),[&]( int i, int j, int tn ) {
 					unsigned row = Xf(i,j,dim);
 					double area = area_accessors[tn](dim,i,j);
 					A[row] = area;
@@ -161,7 +161,7 @@ private:
 		auto face_mass_matrix = [&]() {
 			std::vector<double> F(face_size);
 			for( int dim : DIMS2 ) {
-				m_parallel.for_each2(rhos()[dim].shape(),[&]( int i, int j, int tn ) {
+				m_parallel.for_each(rhos()[dim].shape(),[&]( int i, int j, int tn ) {
 					unsigned row = Xf(i,j,dim);
 					F[row] = rho_accessors[tn](dim,i,j);
 				});
@@ -176,7 +176,7 @@ private:
 				it.set(F[Xf(i,j,dim)]);
 			});
 			//
-			m_parallel.for_each2(m_shape.nodal(),[&]( int i, int j, int tn ) {
+			m_parallel.for_each(m_shape.nodal(),[&]( int i, int j, int tn ) {
 				unsigned row = Xp(i,j);
 				double rho_sum(0.0);
 				double sum(0.0);
@@ -196,7 +196,7 @@ private:
 			auto C = m_factory->allocate_matrix(face_size,Lhs_size);
 			for( int dim : DIMS2 ) {
 				double sign = dim == 0 ? 1.0 : -1.0;
-				m_parallel.for_each2(m_shape.face(dim),[&]( int i, int j, int tn ) {
+				m_parallel.for_each(m_shape.face(dim),[&]( int i, int j, int tn ) {
 					unsigned row = Xf(i,j,dim);
 					if( A[row] ) {
 						unsigned n_row;
@@ -261,7 +261,7 @@ private:
 			//
 			// Fix the non-flux boundary there
 			auto Z = m_factory->allocate_matrix(Lhs_size,Lhs_size+corner_indices);
-			m_parallel.for_each2(corner_remap->shape(),[&]( int i, int j, int tn ) {
+			m_parallel.for_each(corner_remap->shape(),[&]( int i, int j, int tn ) {
 				unsigned row = Xp(i,j);
 				if( corner_remap_accessors[tn](i,j)) {
 					Z->add_to_element(row,Lhs_size+corner_remap_accessors[tn](i,j)-1,1.0);
