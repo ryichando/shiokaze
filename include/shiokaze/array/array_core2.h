@@ -58,7 +58,7 @@ public:
 	 @param[out] nx Grid width.
 	 @param[out] ny Grid height.
 	 @param[out] element_size bytes per element
-	 \~japanese @brief グリッドを値でメモリに展開する。
+	 \~japanese @brief グリッドの情報を得る。
 	 @param[out] nx グリッドの幅。
 	 @param[out] ny グリッドの高さ。
 	 @param[out] element_size 要素のバイト数。
@@ -67,8 +67,10 @@ public:
 	/**
 	 \~english @brief Count the number of active cells.
 	 @param[in] parallel Instance to a parallel driver.
+	 @return Count of active cells.
 	 \~japanese @brief アクティブなセルの数を数える。
 	 @param[in] parallel 並列化ドライバーのインスタンス。
+	 @return アクティブセルの数。
 	 */
 	virtual size_t count( const parallel_driver &parallel ) const = 0;
 	/**
@@ -76,7 +78,7 @@ public:
 	 @param[in] array Source grid to copy.
 	 @param[in] copy_func Function that performs copy of an element.
 	 @param[in] parallel Instance to a parallel driver.
-	 \~japanese @brief アクティブなセルの数を数える。
+	 \~japanese @brief グリッドをコピーする。
 	 @param[in] array コピー元のグリッド。
 	 @param[in] copy_func 要素のコピーを実行する関数。
 	 @param[in] parallel 並列化ドライバーのインスタンス。
@@ -84,7 +86,9 @@ public:
 	virtual void copy( const array_core2 &array, std::function<void(void *target, const void *src)> copy_func, const parallel_driver *parallel ) = 0;
 	/**
 	 \~english @brief Generate a cache for this grid.
+	 @return Pointer to a generated instance of cache.
 	 \~japanese @brief このグリッドのキャッシュを生成する。
+	 @return 生成されたキャッシュのインスタンスへポインター。
 	 */
 	virtual void* generate_cache() const = 0;
 	/**

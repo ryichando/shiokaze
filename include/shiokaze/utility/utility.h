@@ -87,13 +87,13 @@ public:
 	/**
 	 \~english @brief Get the three dimensional box level set.
 	 @param[in] p Query position.
-	 @param[in] p0 Lower corner position of a box.
-	 @param[in] p1 Uppper corner position of a box.
+	 @param[in] p0 Lower left corner position of a box.
+	 @param[in] p1 Uppper right corner position of a box.
 	 @return Box level set value.
 	 \~japanese @brief 3次元のボックスのレベルセットを取得する。
 	 @param[in] p 調べる位置。
-	 @param[in] p0 ボックスの最下部の頂点の位置。
-	 @param[in] p1 ボックスの最上部の頂点の位置。
+	 @param[in] p0 ボックスの左最下部の頂点の位置。
+	 @param[in] p1 ボックスの右最上部の頂点の位置。
 	 @return ボックスのレベルセットの値。
 	 */
 	static double box( vec3d p, vec3d p0, vec3d p1 ) {
@@ -107,13 +107,13 @@ public:
 	/**
 	 \~english @brief Get the two dimensional box level set.
 	 @param[in] p Query position.
-	 @param[in] p0 Lower corner position of a box.
-	 @param[in] p1 Uppper corner position of a box.
+	 @param[in] p0 Lower left corner position of a box.
+	 @param[in] p1 Uppper right corner position of a box.
 	 @return Box level set value.
 	 \~japanese @brief 2次元のボックスのレベルセットを取得する。
 	 @param[in] p 調べる位置。
-	 @param[in] p0 ボックスの最下部の頂点の位置。
-	 @param[in] p1 ボックスの最上部の頂点の位置。
+	 @param[in] p0 ボックスの左最下部の頂点の位置。
+	 @param[in] p1 ボックスの右最上部の頂点の位置。
 	 @return ボックスのレベルセットの値。
 	 */
 	static double box( vec2d p, vec2d p0, vec2d p1 ) {
