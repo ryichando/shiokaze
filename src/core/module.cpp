@@ -52,17 +52,8 @@ struct record_set {
 };
 static record_set asset;
 static std::string simplify( std::string path ) {
-#if 0
-	std::string simple_path (path);
-	std::string remove_str0 ("symlink-");
-	std::string remove_str1 ("lib/libshiokaze_");
-	simple_path.replace(simple_path.find(remove_str0),remove_str0.length(),"");
-	simple_path.replace(simple_path.find(remove_str1),remove_str1.length(),"");
-	return simple_path;
-#else
 	std::string prefix ("libshiokaze_");
 	return path.substr(path.find(prefix)+prefix.length());
-#endif
 }
 //
 module::module() {}

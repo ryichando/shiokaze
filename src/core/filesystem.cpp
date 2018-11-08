@@ -75,11 +75,11 @@ static bool find_file( const boost::filesystem::path & dir_path,
 std::string filesystem::find_libpath( std::string name ) {
 	//
 #ifdef __APPLE__
-	static const std::string prefix ("dylib");
+	static const std::string extension ("dylib");
 #else
-	static const std::string prefix ("so");
+	static const std::string extension ("so");
 #endif
-	std::string libname = std::string("lib")+name+SHKZ_SUFFIX+"."+prefix;
+	std::string libname = std::string("lib")+name+SHKZ_SUFFIX+"."+extension;
 	boost::filesystem::path path;
 	if(find_file("build",libname,path)) {
 		return path.string();
