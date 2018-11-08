@@ -64,21 +64,6 @@ public:
 	 @param[in-out] p ポイントの位置。セグメントの一番近い点が出力される。
 	 */
 	virtual void distance( const vec2d &p0, const vec2d &p1, vec2d &p ) const = 0;
-	/**
-	 \~english @brief Compute the intersection between two segments.
-	 @param[in] p1 First end point of the first segment.
-	 @param[in] p2 Last end point of the first segment.
-	 @param[in] p3 First end point of the second segment.
-	 @param[in] p4 Last end point of the second segment.
-	 @param[out] out Intersection point.
-	 \~japanese @brief 2つのセグメントの交点を計算する。
-	 @param[in] p1 最初のセグメントの始点。
-	 @param[in] p2 最初のセグメントの終点。
-	 @param[in] p3 2番目のセグメントの始点。
-	 @param[in] p4 2番目のセグメントの終点。
-	 @param[out] out セグメントの交点。
-	 */
-	virtual bool intersection ( const vec2d &p1, const vec2d &p2, const vec2d &p3, const vec2d &p4, vec2d &out ) const = 0;
 };
 //
 using meshutility2_ptr = std::unique_ptr<meshutility2_interface>;
