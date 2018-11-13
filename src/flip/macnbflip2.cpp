@@ -821,7 +821,7 @@ void macnbflip2::advect_levelset( const macarray2<double> &velocity, double dt, 
 			auto sizing_array_accessors = m_sizing_array.get_const_accessors();
 			auto particle_levelset_accessors = particle_levelset->get_const_accessors();
 			//
-			m_fluid.dilate(2);
+			m_fluid.dilate(3);
 			m_fluid.parallel_actives([&](int i, int j, auto &it, int tn) {
 				double rate = sizing_array_accessors[tn](i,j);
 				double value = rate * std::min(fluid_accessors[tn](i,j),particle_levelset_accessors[tn](i,j)) + (1.0-rate) * save_fluid_accessors[tn](i,j);
