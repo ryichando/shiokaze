@@ -959,7 +959,7 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 			auto save_fluid_accessors = save_fluid->get_const_accessors();
 			auto fluid_accessors = m_fluid.get_const_accessors();
 			//
-			m_fluid.serial_actives([&]( int i, int j, int k, auto &it ) {
+			m_fluid.parallel_actives([&]( int i, int j, int k, auto &it ) {
 				if( solid_exist ) {
 					if( this->interpolate_solid(m_dx*vec3i(i,j,k).cell()) > 0.5*m_dx ) {
 						it.increment(erosion*m_dx);
@@ -998,6 +998,7 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 			auto sizing_array_accessors = m_sizing_array.get_const_accessors();
 			auto particle_levelset_accessors = particle_levelset->get_const_accessors();
 			//
+			m_fluid.dilate(2);
 			m_fluid.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 				double rate = sizing_array_accessors[tn](i,j,k);
 				double value = rate * std::min(fluid_accessors[tn](i,j,k),particle_levelset_accessors[tn](i,j,k)) + (1.0-rate) * save_fluid_accessors[tn](i,j,k);
