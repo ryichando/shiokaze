@@ -575,7 +575,7 @@ loop_escape:
 						m_tiles[n] = new chunk3(oi,oj,ok,Zx,Zy,Zz,m_element_size);
 						if( block_filled(n)) m_tiles[n]->fill_all();
 					}
-					m_tiles[n]->set(ii,jj,kk,m_element_size ? buffer : nullptr);
+					m_tiles[n]->set(ii,jj,kk,buffer);
 				}
 			}
 		}

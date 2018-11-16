@@ -513,7 +513,7 @@ loop_escape:
 						m_tiles[n] = new chunk2(oi,oj,Zx,Zy,m_element_size);
 						if( block_filled(n)) m_tiles[n]->fill_all();
 					}
-					m_tiles[n]->set(ii,jj,m_element_size ? buffer : nullptr);
+					m_tiles[n]->set(ii,jj,buffer);
 				}
 			}
 			if( m_tiles[n] ) assert(m_tiles[n]->debug_verify_active_count());
