@@ -28,6 +28,7 @@
 #include <shiokaze/math/vec.h>
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 //
 SHKZ_BEGIN_NAMESPACE
 //
