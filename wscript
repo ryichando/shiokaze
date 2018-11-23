@@ -40,7 +40,7 @@ def options(opt):
 	#
 	opt.greeting('Shiokaze Framework')
 	opt.message('A research-oriented fluid solver for computer graphics.')
-	opt.message('Designed and developd by Ryoichi Ando <rand@nii.ac.jp>')
+	opt.message('Designed and developed by Ryoichi Ando <rand@nii.ac.jp>')
 	#
 	opt.load('compiler_c')
 	opt.load('compiler_cxx')
