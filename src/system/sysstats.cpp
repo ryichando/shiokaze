@@ -39,7 +39,7 @@ public:
 	}
 	//
 	virtual void plot_graph() const override {
-		if( plot_template.size()) {
+		if( plot_template.size() && console::get_root_path().size() ) {
 			scoped_timer timer{this};
 			global_timer::pause();
 			std::string record_path = console::get_root_path() + "/record";

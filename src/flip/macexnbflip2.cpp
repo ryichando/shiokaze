@@ -86,6 +86,7 @@ void macexnbflip2::internal_sizing_func(array2<double> &sizing_array,
 		pointwise_gaussian_blur(velocity_array(),gaussian_blured_velocity_array(),m_param.radius);
 		//
 		// 3. Take diff between 1 and 2
+		gaussian_blured_velocity_array->set_touch_only_actives(true);
 		diff->copy(gaussian_blured_velocity_array());
 		diff() -= velocity_array();
 	}
