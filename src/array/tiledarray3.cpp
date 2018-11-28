@@ -928,7 +928,7 @@ private:
 		}
 		bool loop_all( std::function<bool(int i, int j, int k, void *value_ptr, bool &active, const bool &filled )> func ) {
 			//
-			for( int kk=0; kk<m_Zy; ++kk ) for( int jj=0; jj<m_Zy; ++jj ) for( int ii=0; ii<m_Zx; ++ii ) {
+			for( int kk=0; kk<m_Zz; ++kk ) for( int jj=0; jj<m_Zy; ++jj ) for( int ii=0; ii<m_Zx; ++ii ) {
 				size_t n = encode(ii,jj,kk);
 				unsigned char &mask = *(m_bit_mask+n/8);
 				bool active = (mask >> n%8) & 1U;
