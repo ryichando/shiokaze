@@ -90,12 +90,9 @@ void macflipsmoke3::idle() {
 	m_flip->splat(momentum(),mass());
 	//
 	// Overwrite grid velocity
-	auto mass_accessors = mass->get_const_accessors();
-	auto momentum_accessors = momentum->get_const_accessors();
-	//
 	m_velocity.parallel_actives([&]( int dim, int i, int j, int k, auto &it, int tn) {
-		double m = mass_accessors[tn](dim,i,j,k);
-		if( m ) it.set(momentum_accessors[tn](dim,i,j,k) / m);
+		double m = mass()[dim](i,j,k);
+		if( m ) it.set(momentum()[dim](i,j,k) / m);
 	});
 	//
 	// Save the current velocity

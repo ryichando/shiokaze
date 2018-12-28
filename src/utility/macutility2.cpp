@@ -59,19 +59,16 @@ private:
 		shared_macarray2<double> velocity_save(velocity);
 		if( levelset_exist(solid) ) {
 			//
-			auto solid_accessors = solid.get_const_accessors();
-			auto velocity_save_accessors = velocity_save->get_const_accessors();
-			//
 			for( int dim : DIMS2 ) {
 				velocity.parallel_actives([&](int dim, int i, int j, auto &it, int tn) {
 					vec2i pi(i,j);
 					vec2d p(vec2i(i,j).face(dim));
-					if( interpolate<double>(solid_accessors[tn],p) < 0.0 ) {
+					if( interpolate<double>(solid,p) < 0.0 ) {
 						double derivative[DIM2];
 						array_derivative2::derivative(solid,p,derivative);
 						vec2d normal = vec2d(derivative)/m_dx;
 						if( normal.norm2() ) {
-							vec2d u = macarray_interpolator2::interpolate<double>(velocity_save_accessors[tn],vec2i(i,j).cell());
+							vec2d u = macarray_interpolator2::interpolate<double>(velocity_save(),vec2i(i,j).cell());
 							if( u * normal < 0.0 ) {
 								it.set((u-normal*(u*normal))[dim]);
 							}
@@ -99,12 +96,11 @@ private:
 				areas[dim].set_as_fillable(0.0,1.0);
 			});
 			//
-			auto solid_accessors = solid.get_const_accessors();
 			areas.parallel_actives([&](int dim, int i, int j, auto &it, int tn) {
 				double area;
 				vec2i pi(i,j);
 				if( pi[dim] == 0 || pi[dim] == solid.shape()[dim] ) area = 0.0;
-				else area = 1.0-utility::fraction(solid_accessors[tn](i,j),solid_accessors[tn](i+(dim!=0),j+(dim!=1)));
+				else area = 1.0-utility::fraction(solid(i,j),solid(i+(dim!=0),j+(dim!=1)));
 				if( area && area < m_param.eps_solid ) area = m_param.eps_solid;
 				it.set(area);
 			});
@@ -116,14 +112,13 @@ private:
 		} else {
 			//
 			areas.clear(1.0);
-			auto accessor = areas.get_serial_accessor();
 			for( int i=0; i<m_shape.w; ++i ) {
-				accessor.set(1,i,0,0.0);
-				accessor.set(1,i,m_shape.h,0.0);
+				areas[1].set(i,0,0.0);
+				areas[1].set(i,m_shape.h,0.0);
 			}
 			for( int j=0; j<m_shape.h; ++j ) {
-				accessor.set(0,0,j,0.0);
-				accessor.set(0,m_shape.w,j,0.0);
+				areas[0].set(0,j,0.0);
+				areas[0].set(m_shape.w,j,0.0);
 			}
 		}
 	}
@@ -138,12 +133,11 @@ private:
 				rhos[dim].set_as_fillable(0.0,1.0);
 			});
 			//
-			auto fluid_accessors = fluid.get_const_accessors();
 			rhos.parallel_actives([&](int dim, int i, int j, auto &it, int tn) {
 				//
 				double rho = utility::fraction(
-					fluid_accessors[tn](m_shape.clamp(i,j)),
-					fluid_accessors[tn](m_shape.clamp(i-(dim==0),j-(dim==1)))
+					fluid(m_shape.clamp(i,j)),
+					fluid(m_shape.clamp(i-(dim==0),j-(dim==1)))
 				);
 				if( rho && rho < m_param.eps_fluid ) rho = m_param.eps_fluid;
 				it.set(rho);
@@ -163,10 +157,9 @@ private:
 		if( levelset_exist(solid) ) {
 			//
 			shared_macarray2<double> tmp_areas(density.type());
-			auto tmp_areas_accessors = tmp_areas->get_const_accessors();
 			compute_area_fraction(solid,tmp_areas());
 			density.parallel_actives([&](int dim, int i, int j, auto &it, int tn) {
-				it.multiply(tmp_areas_accessors[tn](dim,i,j));
+				it.multiply(tmp_areas()[dim](i,j));
 			});
 		}
 	}
@@ -178,17 +171,13 @@ private:
 		compute_area_fraction(solid,tmp_areas());
 		compute_fluid_fraction(fluid,tmp_rhos());
 		//
-		auto area_accessors = tmp_areas->get_const_accessors();
-		auto fluid_accessors = tmp_rhos->get_const_accessors();
-		auto velocity_accessors = velocity.get_const_accessors();
-		//
-		std::vector<double> results (velocity_accessors.size(),0.0);
+		std::vector<double> results (velocity.get_thread_num(),0.0);
 		velocity.const_parallel_actives([&]( int dim, int i, int j, const auto &it, int tn ) {
-			double area = area_accessors[tn](dim,i,j);
+			double area = tmp_areas()[dim](i,j);
 			if( area ) {
-				double rho = fluid_accessors[tn](dim,i,j);
+				double rho = tmp_rhos()[dim](i,j);
 				if( rho ) {
-					double u = velocity_accessors[tn](dim,i,j);
+					double u = velocity[dim](i,j);
 					double dA = (m_dx*m_dx) * (area*rho);
 					results[tn] += 0.5*(u*u)*dA;
 				}

@@ -39,4 +39,3 @@ def build(bld):
 	bld.shlib(source = 'macstreamfuncsolver3.cpp',
 			target = bld.get_target_name(bld,'macstreamfuncsolver3'),
 			use = bld.get_target_name(bld,'core'))
-	#

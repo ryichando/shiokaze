@@ -59,14 +59,6 @@ private:
 		shared_macarray3<double> areas(velocity.shape());
 		shared_macarray3<double> rhos(velocity.shape());
 		//
-		// Make accessors
-		auto fluid_accessors = fluid.get_const_accessors();
-		auto solid_accessors = solid.get_const_accessors();
-		auto pressure_acessors = pressure->get_const_accessors();
-		auto rho_accessors = rhos->get_const_accessors();
-		auto area_accessors = areas->get_const_accessors();
-		auto velocity_accessors = velocity.get_const_accessors();
-		//
 		// Pre-compute solid cut "areas" and fluid density "rhos" for each cell face
 		timer.tick(); console::dump( "Precomputing solid and fluid fractions...");
 		m_macutility->compute_area_fraction(solid,areas());
@@ -83,24 +75,23 @@ private:
 			shared_array3<double> curvature(fluid.shape());
 			curvature->parallel_op([&]( int i, int j, int k, auto &it, int tn ) {
 				double value = (
-					+fluid_accessors[tn](m_shape.clamp(i-1,j,k))+fluid_accessors[tn](m_shape.clamp(i+1,j,k))
-					+fluid_accessors[tn](m_shape.clamp(i,j-1,k))+fluid_accessors[tn](m_shape.clamp(i,j+1,k))
-					+fluid_accessors[tn](m_shape.clamp(i,j,k-1))+fluid_accessors[tn](m_shape.clamp(i,j,k+1))
-					-6.0*fluid_accessors[tn](i,j,k)
+					+fluid(m_shape.clamp(i-1,j,k))+fluid(m_shape.clamp(i+1,j,k))
+					+fluid(m_shape.clamp(i,j-1,k))+fluid(m_shape.clamp(i,j+1,k))
+					+fluid(m_shape.clamp(i,j,k-1))+fluid(m_shape.clamp(i,j,k+1))
+					-6.0*fluid(i,j,k)
 				) / (m_dx*m_dx);
 				it.set(value);
 			});
 			//
-			auto curvature_acessors = curvature->get_const_accessors();
 			velocity.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn ) {
-				double rho = rho_accessors[tn](dim,i,j,k);
+				double rho = rhos()[dim](i,j,k);
 				// Embed ordinary 2nd order surface tension force
 				if( rho && rho < 1.0 ) {
-					double sgn = fluid_accessors[tn](m_shape.clamp(i,j,k)) < 0.0 ? -1.0 : 1.0;
+					double sgn = fluid(m_shape.clamp(i,j,k)) < 0.0 ? -1.0 : 1.0;
 					double theta = sgn < 0 ? 1.0-rho : rho;
 					double face_c = 
-						theta*curvature_acessors[tn](m_shape.clamp(i,j,k))
-						+(1.0-theta)*curvature_acessors[tn](m_shape.clamp(i-(dim==0),j-(dim==1),k-(dim==2)));
+						theta*curvature()(m_shape.clamp(i,j,k))
+						+(1.0-theta)*curvature()(m_shape.clamp(i-(dim==0),j-(dim==1),k-(dim==2)));
 					it.increment( -sgn * dt / (m_dx*rho) * kappa * face_c );
 				}
 			});
@@ -113,11 +104,10 @@ private:
 		// Label cell indices
 		size_t index (0);
 		shared_array3<size_t> index_map(fluid.shape());
-		auto index_map_accessor = index_map->get_serial_accessor();
 		const auto mark_body = [&]( int i, int j, int k ) {
 			//
 			bool inside (false);
-			if( fluid_accessors[0](i,j,k) < 0.0 ) {
+			if( fluid(i,j,k) < 0.0 ) {
 				//
 				vec3i query[] = {vec3i(i+1,j,k),vec3i(i-1,j,k),vec3i(i,j+1,k),vec3i(i,j-1,k),vec3i(i,j,k+1),vec3i(i,j,k-1)};
 				vec3i face[] = {vec3i(i+1,j,k),vec3i(i,j,k),vec3i(i,j+1,k),vec3i(i,j,k),vec3i(i,j,k+1),vec3i(i,j,k)};
@@ -125,9 +115,9 @@ private:
 				//
 				for( int nq=0; nq<6; nq++ ) {
 					if( ! m_shape.out_of_bounds(query[nq]) ) {
-						if( fluid_accessors[0](query[nq]) < 0.0 ) {
+						if( fluid(query[nq]) < 0.0 ) {
 							int dim = direction[nq];
-							if( area_accessors[0](dim,face[nq]) && rho_accessors[0](dim,face[nq]) ) {
+							if( areas()[dim](face[nq]) && rhos()[dim](face[nq]) ) {
 								inside = true;
 								break;
 							}
@@ -136,7 +126,7 @@ private:
 				}
 			}
 			if( inside ) {
-				index_map_accessor.set(i,j,k,index++);
+				index_map->set(i,j,k,index++);
 			}
 		};
 		if( fluid.get_background_value() < 0.0 ) {
@@ -153,14 +143,13 @@ private:
 		auto Lhs = m_factory->allocate_matrix(index,index);
 		auto rhs = m_factory->allocate_vector(index);
 		double assemble_time = utility::get_milliseconds();
-		auto index_map_accessors = index_map->get_const_accessors();
 		//
 		index_map->const_parallel_actives([&]( int i, int j, int k, const auto &it, int tn ) {
 			//
 			size_t n_index = it();
 			rhs->set(n_index,0.0);
 			//
-			if( fluid_accessors[tn](i,j,k) < 0.0 ) {
+			if( fluid(i,j,k) < 0.0 ) {
 				//
 				vec3i query[] = {vec3i(i+1,j,k),vec3i(i-1,j,k),vec3i(i,j+1,k),vec3i(i,j-1,k),vec3i(i,j,k+1),vec3i(i,j,k-1)};
 				vec3i face[] = {vec3i(i+1,j,k),vec3i(i,j,k),vec3i(i,j+1,k),vec3i(i,j,k),vec3i(i,j,k+1),vec3i(i,j,k)};
@@ -173,19 +162,19 @@ private:
 					int qi(query[nq][0]), qj(query[nq][1]), qk(query[nq][2]);
 					int fi(face[nq][0]), fj(face[nq][1]), fk(face[nq][2]);
 					if( ! m_shape.out_of_bounds(query[nq]) ) {
-						double area = area_accessors[tn](dim,face[nq]);
+						double area = areas()[dim](face[nq]);
 						if( area ) {
-							double rho = rho_accessors[tn](dim,face[nq]);
+							double rho = rhos()[dim](face[nq]);
 							if( rho ) {
 								double value = dt*area/(m_dx*m_dx*rho);
-								if( fluid_accessors[tn](query[nq]) < 0.0 ) {
-									assert(index_map_accessors[tn].active(query[nq]));
-									size_t m_index = index_map_accessors[tn](query[nq]);
+								if( fluid(query[nq]) < 0.0 ) {
+									assert(index_map->active(query[nq]));
+									size_t m_index = index_map()(query[nq]);
 									Lhs->add_to_element(n_index,m_index,-value);
 								}
 								diagonal += value;
 							}
-							rhs->add(n_index,-sgn[nq]*area*velocity_accessors[tn](dim,face[nq])/m_dx);
+							rhs->add(n_index,-sgn[nq]*area*velocity[dim](face[nq])/m_dx);
 						}
 					}
 				}
@@ -221,27 +210,26 @@ private:
 		console::dump( "Done. Took %d iterations. Took %s\n", count, timer.stock("linsolve").c_str());
 		//
 		// Re-arrange to the array
-		auto pressure_acessor = pressure->get_serial_accessor();
 		index_map->const_serial_actives([&](int i, int j, int k, const auto& it) {
-			pressure_acessor.set(i,j,k,result->at(it()));
+			pressure->set(i,j,k,result->at(it()));
 		});
 		//
 		// Update the full velocity
 		timer.tick(); console::dump( "Updating the velocity...");
 		velocity.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn ) {
-			double rho = rho_accessors[tn](dim,i,j,k);
+			double rho = rhos()[dim](i,j,k);
 			vec3i pi(i,j,k);
-			if( area_accessors[tn](dim,i,j,k) && rho ) {
+			if( areas()[dim](i,j,k) && rho ) {
 				if( pi[dim] == 0 || pi[dim] == velocity.shape()[dim] ) it.set(0.0);
 				else {
 					velocity[dim].subtract(i,j,k, dt * (
-						+ pressure_acessors[tn](i,j,k)
-						- pressure_acessors[tn](i-(dim==0),j-(dim==1),k-(dim==2))
+						+ pressure()(i,j,k)
+						- pressure()(i-(dim==0),j-(dim==1),k-(dim==2))
 						) / (rho*m_dx));
 				}
 			} else {
-				if( pi[dim] == 0 && fluid_accessors[tn](pi) < 0.0 ) it.set(0.0);
-				else if( pi[dim] == velocity.shape()[dim] && fluid_accessors[tn](pi-vec3i(dim==0,dim==1,dim==2)) < 0.0 ) it.set(0.0);
+				if( pi[dim] == 0 && fluid(pi) < 0.0 ) it.set(0.0);
+				else if( pi[dim] == velocity.shape()[dim] && fluid(pi-vec3i(dim==0,dim==1,dim==2)) < 0.0 ) it.set(0.0);
 				else it.set_off();
 			}
 		});

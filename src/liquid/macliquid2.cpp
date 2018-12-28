@@ -82,7 +82,6 @@ void macliquid2::post_initialize () {
 	//
 	// Initialize arrays
 	m_force_exist = false;
-	m_previous_injected = false;
 	m_velocity.initialize(m_shape);
 	m_external_force.initialize(m_shape);
 	m_solid.initialize(m_shape.nodal());
@@ -157,81 +156,10 @@ void macliquid2::extend_both() {
 	m_fluid.dilate(bandwidth_half+current_CFL);
 }
 //
-bool macliquid2::inject_liquid( double dt, array2<double> &fluid, macarray2<double> &velocity, double &amount_injected ) const {
-	//
-	auto inject_func = reinterpret_cast<void(*)( const vec2d &p, double time, double &fluid, vec2d &velocity )>(m_dylib.load_symbol("inject"));
-	//
-	bool did_set (false);
-	amount_injected = 0.0;
-	if( inject_func ) {
-		char half_width = fluid.get_levelset_halfwidth();
-		double time = m_timestepper->get_current_time();
-		std::vector<bool> did_set_threads(fluid.get_thread_num(),false);
-		std::vector<double> amount_injected_threads(fluid.get_thread_num(),0.0);
-		fluid.parallel_all([&](int i, int j, auto &it, int tn) {
-			vec2d p = m_dx*vec2i(i,j).cell(), u;
-			double f (1.0);
-			inject_func(p,time,f,u);
-			if( std::abs(f) < 2.0*half_width*m_dx ) {
-				it.set(std::min(it(),f));
-				did_set_threads[tn] = true;
-				if( f < 0.0 ) {
-					for( int dim : DIMS2 ) for( int dir=-1; dir<=1; dir+=2 ) {
-						vec2d pn = m_dx*vec2i(i+dir*(dim==0),j+dir*(dim==1)).cell(), un;
-						double fn;
-						inject_func(pn,time,fn,un);
-						if( fn >= 0.0 ) {
-							double gn = dir*(fn-f)/m_dx;
-							double u_middle = 0.5*(un+u)[dim];
-							double flux = dt * m_dx * u_middle * gn;
-							if( flux > 0.0 ) {
-								amount_injected_threads[tn] += flux;
-							}
-						}
-					}
-				}
-			}
-		});
-		for( const auto e : did_set_threads ) if( e ) {
-			did_set = true;
-			break;
-		}
-		for( const auto e : amount_injected_threads ) {
-			amount_injected += e;
-		}
-		if( did_set ) {
-			fluid.flood_fill();
-			velocity.parallel_all([&](int dim, int i, int j, auto &it, int tn) {
-				vec2d p = m_dx*vec2d(i,j).face(dim);
-				double f (1.0);
-				vec2d u;
-				inject_func(p,time,f,u);
-				if( f < m_dx ) {
-					it.set(u[dim]);
-				}
-			});
-		}
-	}
-	return did_set;
-}
-//
 void macliquid2::idle() {
 	//
 	// Compute the timestep size
 	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity)/m_dx);
-	//
-	// Inject liquid
-	double amount_injected;
-	if(inject_liquid(dt,m_fluid,m_velocity,amount_injected)) {
-		if( m_previous_injected ) {
-			m_initial_volume += amount_injected;
-		} else {
-			m_initial_volume = m_gridutility->get_area(m_solid,m_fluid);
-			m_previous_injected = true;
-		}
-	} else {
-		m_previous_injected = false;
-	}
 	//
 	// Extend both the velocity field and the level set
 	extend_both();

@@ -95,77 +95,41 @@ public:
 	}
 	/**
 	 \~english @brief Computes the the gradient of a physical quantity.
-	 @param[in] accessor Accessor of the grid.
+	 @param[in] array Grid.
 	 @param[in] p Position in index space.
 	 @param[out] result Gradient output.
 	 \~japanese @brief 勾配を計算する。
-	 @param[in] accessor グリッドのアクセッサー。
+	 @param[in] array グリッド。
 	 @param[in] p インデックス空間での位置。
 	 @param[out] result 勾配の出力。
 	 */
-	template<class T> static void derivative( typename array3<T>::const_accessor accessor, const vec3d &p, T result[DIM3] ) {
+	template<class T> static void derivative( const array3<T> &array, const vec3d &p, T result[DIM3] ) {
 		//
 		T values[8]; vec3i indices[8]; double coef[DIM3][8];
 		for( unsigned dim : DIMS3 ) result[dim] = T();
-		derivative_interpolate_coef(accessor.shape(),p,indices,coef);
+		derivative_interpolate_coef(array.shape(),p,indices,coef);
 		for( unsigned dim : DIMS3 ) {
 			for( unsigned n=0; n<8; ++n ) {
-				result[dim] += coef[dim][n] * accessor(indices[n][0],indices[n][1],indices[n][2]);
+				result[dim] += coef[dim][n] * array(indices[n][0],indices[n][1],indices[n][2]);
 			}
 		}
 	}
 	/**
 	 \~english @brief Computes the the gradient of a physical quantity.
-	 @param[in] accessor Accessor of the grid.
+	 @param[in] array Grid.
 	 @param[in] origin Origin.
 	 @param[in] dx Grid cell size.
 	 @param[in] p Position in physical space.
 	 @return Gradient output.
 	 \~japanese @brief 勾配を計算する。
-	 @param[in] accessor グリッドのアクセッサー。
-	 @param[in] origin 原点.
-	 @param[in] dx グリッドセルの大きさ.
-	 @param[in] p 物理空間の位置。
-	 @return 勾配の出力。
-	 */
-	template<class T> static void derivative( const array3<T> &array, const vec3d &p, T result[DIM3] ) {
-		auto accessor = array.get_const_accessor();
-		derivative<T>(accessor,p,result);
-	}
-	/**
-	 \~english @brief Computes the the gradient of a physical quantity.
-	 @param[in] accessor Accessor of the grid.
-	 @param[in] origin Origin.
-	 @param[in] dx Grid cell size.
-	 @param[in] p Position in physical space.
-	 @return Gradient output.
-	 \~japanese @brief 勾配を計算する。
-	 @param[in] accessor グリッドのアクセッサー。
-	 @param[in] origin 原点.
-	 @param[in] dx グリッドセルの大きさ.
-	 @param[in] p 物理空間の位置。
-	 @return 勾配の出力。
-	 */
-	template<class T> static vec3<T> derivative( typename macarray3<T>::const_accessor &accessor, const vec3d &origin, double dx, const vec3d &p ) {
-		return derivative<T>(accessor,(p-origin)/dx);
-	}
-	/**
-	 \~english @brief Computes the the gradient of a physical quantity.
-	 @param[in] array Reference to a grid.
-	 @param[in] origin Origin.
-	 @param[in] dx Grid cell size.
-	 @param[in] p Position in physical space.
-	 @return Gradient output.
-	 \~japanese @brief 勾配を計算する。
-	 @param[in] array グリッドの参照。
+	 @param[in] array グリッド。
 	 @param[in] origin 原点.
 	 @param[in] dx グリッドセルの大きさ.
 	 @param[in] p 物理空間の位置。
 	 @return 勾配の出力。
 	 */
 	template<class T> static vec3<T> derivative( const macarray3<T> &array, const vec3d &origin, double dx, const vec3d &p ) {
-		auto accessor = array.get_const_accessor();
-		return derivative<T>(accessor,origin,dx,p);
+		return derivative<T>(array,(p-origin)/dx);
 	}
 };
 //

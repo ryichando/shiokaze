@@ -144,13 +144,6 @@ public:
 		return m_fill_mask.empty() ? false : m_fill_mask[n];
 	}
 	//
-	virtual void* generate_cache() const override {
-		return nullptr;
-	}
-	//
-	virtual void destroy_cache( void *cache ) const override {
-	}
-	//
 	bool check_bound( int i, int j ) const {
 		if( i >= 0 && j >= 0 && i < m_nx && j < m_ny ) {
 			return true;
@@ -160,7 +153,7 @@ public:
 		}
 	}
 	//
-	virtual void set( int i, int j, std::function<void(void *value_ptr, bool &active)> func, void *cache=nullptr ) override {
+	virtual void set( int i, int j, std::function<void(void *value_ptr, bool &active)> func ) override {
 		//
 		assert(check_bound(i,j));
 		unsigned bi = i / m_Z;
@@ -188,7 +181,7 @@ public:
 			}
 		}
 	}
-	virtual const void * operator()( int i, int j, bool &filled, void *cache=nullptr ) const override {
+	virtual const void * operator()( int i, int j, bool &filled ) const override {
 		//
 		assert(check_bound(i,j));
 		unsigned bi = i / m_Z;

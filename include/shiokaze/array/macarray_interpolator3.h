@@ -36,70 +36,38 @@ SHKZ_BEGIN_NAMESPACE
 namespace macarray_interpolator3 {
 	/**
 	 \~english @brief Interpolate a physical quantity.
-	 @param[in] accessor Accessor of the grid.
+	 @param[in] array Grid.
 	 @param[in] p Position in index space.
 	 @return Interpolation result.
 	 \~japanese @brief 補間を計算する。
-	 @param[in] accessor グリッドのアクセッサー。
+	 @param[in] array グリッド。
 	 @param[in] p インデックス空間での位置。
 	 @return 補間値。
 	 */
-	template<class T> vec3<T> interpolate( typename macarray3<T>::const_accessor &accessor, const vec3d &p ) {
+	template<class T> vec3<T> interpolate( const macarray3<T> &array, const vec3d &p ) {
 		vec3<T> result;
 		for( int dim : DIMS3 ) {
 			const vec3d pos = vec3d(p[0]-0.5*(dim!=0),p[1]-0.5*(dim!=1),p[2]-0.5*(dim!=2));
-			result[dim] = array_interpolator3::interpolate<T>(accessor.get(dim),pos);
+			result[dim] = array_interpolator3::interpolate<T>(array[dim],pos);
 		}
 		return result;
 	}
 	/**
 	 \~english @brief Interpolate a physical quantity.
-	 @param[in] array Grid to interpolate.
-	 @param[in] p Position in index space.
-	 @return Interpolation result.
-	 \~japanese @brief 補間を計算する。
-	 @param[in] array 補間するグリッド。
-	 @param[in] p インデックス空間での位置。
-	 @return 補間値。
-	 */
-	template<class T> vec3<T> interpolate( const macarray3<T> &array, const vec3d &p ) {
-		auto accessor = array.get_const_accessor();
-		return interpolate<T>(accessor,p);
-	}
-	/**
-	 \~english @brief Interpolate a physical quantity.
-	 @param[in] accessor Accessor of the grid.
+	 @param[in] array Grid.
 	 @param[in] origin Origin in physical space.
 	 @param[in] dx Grid cell size.
 	 @param[in] p Position in physical space.
 	 @return Interpolation result.
 	 \~japanese @brief 補間を計算する。
-	 @param[in] accessor グリッドのアクセッサー。
-	 @param[in] origin 物理空間での原点.
-	 @param[in] dx グリッドセルの大きさ.
-	 @param[in] p 物理空間の位置。
-	 @return 補間値。
-	 */
-	template<class T> vec3<T> interpolate( typename macarray3<T>::const_accessor &accessor, const vec3d &origin, double dx, const vec3d &p ) {
-		return interpolate<T>(accessor,(p-origin)/dx);
-	}
-	/**
-	 \~english @brief Interpolate a physical quantity.
-	 @param[in] array Reference to a grid.
-	 @param[in] origin Origin in physical space.
-	 @param[in] dx Grid cell size.
-	 @param[in] p Position in physical space.
-	 @return Interpolation result.
-	 \~japanese @brief 補間を計算する。
-	 @param[in] array グリッドの参照。
+	 @param[in] array グリッド。
 	 @param[in] origin 物理空間での原点.
 	 @param[in] dx グリッドセルの大きさ.
 	 @param[in] p 物理空間の位置。
 	 @return 補間値。
 	 */
 	template<class T> vec3<T> interpolate( const macarray3<T> &array, const vec3d &origin, double dx, const vec3d &p ) {
-		auto accessor = array.get_const_accessor();
-		return interpolate<T>(accessor,origin,dx,p);
+		return interpolate<T>(array,(p-origin)/dx);
 	}
 };
 //

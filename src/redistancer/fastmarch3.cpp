@@ -269,15 +269,12 @@ private:
 		// Compute the closest distance
 		shared_array3<grid *> grids(phi_array.shape());
 		//
-		auto grids_accessors = grids->get_const_accessors();
-		auto phi_array_accessors = phi_array.get_const_accessors();
-		//
 		grids->activate_as(phi_array);
 		grids->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			//
 			double min_d = 1e9;
 			vec3d origin = dx*vec3d(i,j,k);
-			double sgn = (phi_array_accessors[tn](i,j,k) > 0.0 ? 1.0 : -1.0);
+			double sgn = (phi_array(i,j,k) > 0.0 ? 1.0 : -1.0);
 			auto ptr = it();
 			//
 			std::vector<size_t> face_neighbors = m_hashtable->get_cell_neighbors(vec3i(i,j,k),pointgridhash3_interface::USE_NODAL);
@@ -309,27 +306,26 @@ private:
 			it.set(new node3);
 		});
 		//
-		auto nodeArray_accessors = nodeArray->get_const_accessors();
 		nodeArray->const_parallel_actives([&](int i, int j, int k, const auto &it, int tn) {
 			//
 			vec3d p = dx*vec3d(i,j,k);
-			const auto ptr = nodeArray_accessors[tn](i,j,k);
-			const auto grid_ptr = grids_accessors[tn](i,j,k);
+			const auto ptr = nodeArray()(i,j,k);
+			const auto grid_ptr = grids()(i,j,k);
 			//
 			ptr->p = p;
 			if( grid_ptr ) {
 				ptr->fixed = grid_ptr->known;
 				ptr->levelset = grid_ptr->dist;
 			} else {
-				double sgn = (phi_array_accessors[tn](i,j,k)>0.0 ? 1.0 : -1.0);
+				double sgn = (phi_array(i,j,k)>0.0 ? 1.0 : -1.0);
 				ptr->fixed = false;
 				ptr->levelset = sgn * half_bandwidth;
 			}
 			//
 			int q[][DIM3] = {{i-1,j,k},{i+1,j,k},{i,j-1,k},{i,j+1,k},{i,j,k-1},{i,j,k+1}};
 			for( unsigned n=0; n<6; n++ ) {
-				if( ! nodeArray->shape().out_of_bounds(q[n]) && nodeArray_accessors[tn].active(q[n])) {
-					it()->p2p.push_back(nodeArray_accessors[tn](q[n]));
+				if( ! nodeArray->shape().out_of_bounds(q[n]) && nodeArray->active(q[n])) {
+					it()->p2p.push_back(nodeArray()(q[n]));
 				}
 			}
 		});
@@ -343,7 +339,7 @@ private:
 		fastMarch(nodes,half_bandwidth,-half_bandwidth,m_parallel);
 		//
 		phi_array.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
-			it.set(nodeArray_accessors[tn](i,j,k)->levelset);
+			it.set(nodeArray()(i,j,k)->levelset);
 		});
 		//
 		grids->serial_actives([&](auto &it) {

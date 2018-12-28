@@ -49,7 +49,7 @@ void macbackwardflip2::configure( configuration &config ) {
 	config.get_double("BFSpatialDensityThreshold",m_param.spatial_density_threshold,"Density cutoff for spatial adaptivity");
 	config.get_double("BFInjectDiff",m_param.inject_diff,"How much inject velocity differences");
 	config.get_bool("BFDrawBuffer",m_param.draw_buffer,"Whether to visualize internal information");
-	config.get_bool("BFPrintLog",m_param.printLog,"Whether to print log");
+	config.get_bool("BFPrintLog",m_param.print_log,"Whether to print log");
 	//
 	if( ! m_param.use_temporal_adaptivity ) m_param.use_accumulative_buffer = false;
 	config.get_bool("BFUseAccumulativeBuffer",m_param.use_accumulative_buffer,"Whether to use accumulative buffer");
@@ -99,7 +99,6 @@ void macbackwardflip2::post_initialize () {
 	double space = 1.0 / r_sample;
 	double mass = pow(space,DIM2);
 	//
-	auto seed_face_accessor = m_seed_face.get_serial_accessor();
 	m_seed_cell.serial_all([&](int i, int j, auto &it) {
 		//
 		// Seed tracking points
@@ -109,8 +108,8 @@ void macbackwardflip2::post_initialize () {
 			m_original_seed_mass.push_back(0.5);
 			it.ptr()->push_back(seed_index);
 			for( int dim : DIMS2 ) {
-				seed_face_accessor.ptr(dim,i,j)->push_back(seed_index);
-				seed_face_accessor.ptr(dim,i+(dim==0),j+(dim==1))->push_back(seed_index);
+				m_seed_face[dim].ptr(i,j)->push_back(seed_index);
+				m_seed_face[dim].ptr(i+(dim==0),j+(dim==1))->push_back(seed_index);
 			}
 			seed_index ++;
 		}
@@ -127,9 +126,9 @@ void macbackwardflip2::post_initialize () {
 				it.ptr()->push_back(seed_index);
 				for( int dim : DIMS2 ) {
 					if( unit_pos[dim] < 0.5 ) {
-						seed_face_accessor.ptr(dim,i,j)->push_back(seed_index);
+						m_seed_face[dim].ptr(i,j)->push_back(seed_index);
 					} else {
-						seed_face_accessor.ptr(dim,i+(dim==0),j+(dim==1))->push_back(seed_index);
+						m_seed_face[dim].ptr(i+(dim==0),j+(dim==1))->push_back(seed_index);
 					}
 				}
 				seed_index ++;
@@ -208,13 +207,10 @@ void macbackwardflip2::integrate_forward_tracers ( const macarray2<double> &velo
 		it.set(p);
 	});
 	//
-	auto m_forward_tracers_save_acccessors = m_forward_tracers_save->get_const_accessors();
-	auto m_forward_tracers_acccessors = m_forward_tracers.get_const_accessors();
-	//
 	m_g_integrated.parallel_all([&](int i, int j, auto &it, int tn) {
 		it.increment(getVector(0.5*(
-			m_forward_tracers_save_acccessors[tn](i,j)+
-			m_forward_tracers_acccessors[tn](i,j)
+			m_forward_tracers_save()(i,j)+
+			m_forward_tracers(i,j)
 		),g));
 	});
 }
@@ -397,21 +393,17 @@ bool macbackwardflip2::backtrace( const array2<double> &solid, const array2<doub
 		// Set spatial adaptivity
 		if( m_param.use_spatial_adaptivity ) {
 			//
-			auto velocity_accessors = m_velocity.get_const_accessors();
-			auto density_accessors = m_density.get_const_accessors();
-			//
 			m_spatial_adaptivity.parallel_all([&]( int i, int j, auto &it, int tn ) {
 				vec2d cell_u;
-				for( int dim : DIMS2 ) cell_u[dim] = 0.5*(velocity_accessors[tn](dim,i,j)+velocity_accessors[tn](dim,i+(dim==0),j+(dim==1)));
-				it.set(cell_u.norm2() > m_param.spatial_adaptive_rate*m_param.spatial_adaptive_rate || density_accessors[tn](i,j) > m_param.spatial_density_threshold);
+				for( int dim : DIMS2 ) cell_u[dim] = 0.5*(m_velocity[dim](i,j)+m_velocity[dim](i+(dim==0),j+(dim==1)));
+				it.set(cell_u.norm2() > m_param.spatial_adaptive_rate*m_param.spatial_adaptive_rate || m_density(i,j) > m_param.spatial_density_threshold);
 			});
 			//
-			auto seed_cell_accessors = m_seed_cell.get_const_accessors();
 			m_spatial_adaptivity.const_parallel_all([&](int i, int j, auto &it, int tn ) {
 				if( it() ) {
-					for( const unsigned &n : seed_cell_accessors[tn](i,j) ) if(m_tracer.mass[n]==0.5) m_tracer.mass[n] = 0.0;
+					for( const unsigned &n : m_seed_cell(i,j) ) if(m_tracer.mass[n]==0.5) m_tracer.mass[n] = 0.0;
 				} else {
-					for( const unsigned &n : seed_cell_accessors[tn](i,j) ) if(m_tracer.mass[n]<0.5) m_tracer.mass[n] = 0.0;
+					for( const unsigned &n : m_seed_cell(i,j) ) if(m_tracer.mass[n]<0.5) m_tracer.mass[n] = 0.0;
 				}
 			});
 		}
@@ -424,26 +416,21 @@ bool macbackwardflip2::backtrace( const array2<double> &solid, const array2<doub
 			if( has_fluid && array_interpolator2::interpolate(fluid,m_tracer.p[n]/m_dx-vec2d(0.5,0.5)) > 0.0 ) m_tracer.mass[n] = 0.0;
 		});
 		//
-		auto seed_face_accessors = m_seed_face.get_const_accessors();
 		auto compute_face_velocity = [&]( macarray2<double> &u_array ) {
-			//u_array.parallel_all([&]( int dim, int i, int j, auto &it, int tn ) {
 			for( int dim : DIMS2 ) for( int i=0; i<m_shape[0]+(dim==0); ++i ) for( int j=0; j<m_shape[1]+(dim==1); ++j ) {
 				double usum (0.0);
 				double wsum (0.0);
-				for( const unsigned &n : seed_face_accessors[0](dim,i,j) ) {
+				for( const unsigned &n : m_seed_face[dim](i,j) ) {
 					double m = m_tracer.mass.at(n);
 					usum += m*m_tracer.u.at(n)[dim];
 					wsum += m;
 				}
 				if( wsum ) {
-					//it.set( usum / wsum );
 					u_array[dim].set(i,j,usum / wsum);
 				} else {
-					//it.set(0.0);
 					u_array[dim].set(i,j,0.0);
 				}
 			}
-			//});
 		};
 		//
 		// Compute difference
@@ -457,7 +444,7 @@ bool macbackwardflip2::backtrace( const array2<double> &solid, const array2<doub
 		//
 		backtrace(m_tracer.p, m_tracer.u, m_tracer.mass, m_tracer.adaptivity_rate, m_exist_density ? &m_tracer.s : nullptr);
 		if( m_param.use_temporal_adaptivity ) {
-			if( m_param.printLog ) {
+			if( m_param.print_log ) {
 				printf( "-------------\n" );
 				for( unsigned level=0; level<m_param.max_temporal_adaptivity_level+1; ++level ) {
 					double temporal_adaptivity_sum (0.0), temporal_adaptivity_weight (0.0);
@@ -474,7 +461,7 @@ bool macbackwardflip2::backtrace( const array2<double> &solid, const array2<doub
 		}
 		//
 		if( m_param.use_spatial_adaptivity ) {
-			if( m_param.printLog ) {
+			if( m_param.print_log ) {
 				printf( "-------------\n" );
 				unsigned spatial_sum (0);
 				unsigned spatial_count (0);
@@ -488,11 +475,10 @@ bool macbackwardflip2::backtrace( const array2<double> &solid, const array2<doub
 		//
 		// Assign density if requested
 		if( m_exist_density ) {
-			auto seed_cell_accessors = m_seed_cell.get_const_accessors();
 			m_density_reconstructed.parallel_all([&](int i, int j, auto &it, int tn) {
 				double dsum (0.0);
 				double wsum (0.0);
-				for( const unsigned &n : seed_cell_accessors[tn](i,j) ) {
+				for( const unsigned &n : m_seed_cell(i,j) ) {
 					double w = m_tracer.mass[n];
 					if( w ) {
 						dsum += w*m_tracer.s[n];
@@ -628,11 +614,10 @@ void macbackwardflip2::draw( const graphics_engine &g ) const {
 		g.color4(1.0,0.3,0.3,0.5);
 		g.line_width(2.0);
 		const layer2 &layer = m_buffers[std::min(m_buffers.size(),(size_t)m_param.max_velocity_layers)-1];
-		auto u_reconstructed_accessor = layer.u_reconstructed->get_const_accessor();
 		m_shape.for_each([&]( int i, int j ) {
 			vec2d u;
 			for( unsigned dim : DIMS2 ) {
-				u[dim] = 0.5 * (u_reconstructed_accessor(dim,i,j)+u_reconstructed_accessor(dim,i+(dim==0),j+(dim==1)));
+				u[dim] = 0.5 * ((*layer.u_reconstructed)[dim](i,j)+(*layer.u_reconstructed)[dim](i+(dim==0),j+(dim==1)));
 			}
 			vec2d p0 = m_dx*vec2d(i+0.5,j+0.5);
 			vec2d p1 = p0+m_dx*u;

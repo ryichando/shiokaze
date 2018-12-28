@@ -72,7 +72,7 @@ private:
 		double spatial_adaptive_rate {0.5};
 		double spatial_density_threshold {0.01};
 		double inject_diff {0.9};
-		bool printLog {false};
+		bool print_log {false};
 	};
 	Parameters m_param;
 	//

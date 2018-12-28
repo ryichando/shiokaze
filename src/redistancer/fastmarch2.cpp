@@ -204,7 +204,6 @@ private:
 		//
 		// Generate contours
 		shared_array2<std::vector<vec2d> > contours(phi_array.shape()-shape2(1,1));
-		auto contours_accessors = contours->get_const_accessors();
 		contours->activate_as(phi_array);
 		contours->parallel_actives([&](int i, int j, auto &it, int tn) {
 			auto _do = [&]( int i, int j ) {
@@ -224,7 +223,7 @@ private:
 			};
 			for( int ii=0; ii<=1; ++ii ) for( int jj=0; jj<=1; ++jj ) {
 				if( i-ii >= 0 && j-jj >= 0 ) {
-					if( (ii==0 && jj==0) || ! contours_accessors[tn].active(i-ii,j-jj)) {
+					if( (ii==0 && jj==0) || ! contours->active(i-ii,j-jj)) {
 						_do(i-ii,j-jj);
 					}
 				}
@@ -234,22 +233,19 @@ private:
 		// Compute the closest distance
 		shared_array2<grid *> grids(phi_array.shape());
 		//
-		auto grid_accessors = grids->get_const_accessors();
-		auto phi_array_accessors = phi_array.get_const_accessors();
-		//
 		grids->activate_as(phi_array);
 		grids->parallel_actives([&](int i, int j, auto &it, int tn) {
 			//
 			double min_d = 1.0;
 			vec2d origin = dx*vec2d(i,j);
-			double sgn = (phi_array_accessors[tn](i,j)>0.0 ? 1.0 : -1.0);
+			double sgn = (phi_array(i,j)>0.0 ? 1.0 : -1.0);
 			auto ptr = it();
 			//
 			int w (1);
 			for( int ni=i-w; ni<=i+w-1; ++ni ) for( int nj=j-w; nj<=j+w-1; ++nj ) {
 				if( ! contours->shape().out_of_bounds(ni,nj)) {
 					if( contours->active(ni,nj) ) {
-						const std::vector<vec2d> &lines = contours_accessors[tn](ni,nj);
+						const std::vector<vec2d> &lines = contours()(ni,nj);
 						for( int m=0; m<lines.size(); m+=2 ) {
 							vec2d out = origin;
 							m_meshutility->distance(lines[m],lines[m+1],out);
@@ -280,26 +276,25 @@ private:
 			it.set(new node2);
 		});
 		//
-		auto nodeArray_accessors = nodeArray->get_const_accessors();
 		nodeArray->const_parallel_actives([&](int i, int j, const auto &it, int tn) {
 			//
 			vec2d p = dx*vec2d(i,j);
 			const auto ptr = it();
-			const auto grid_ptr = grid_accessors[tn](i,j);
+			const auto grid_ptr = grids()(i,j);
 			ptr->p = p;
 			if( grid_ptr ) {
 				ptr->fixed = grid_ptr->known;
 				ptr->levelset = grid_ptr->dist;
 			} else {
-				double sgn = (phi_array_accessors[tn](i,j)>0.0 ? 1.0 : -1.0);
+				double sgn = (phi_array(i,j)>0.0 ? 1.0 : -1.0);
 				ptr->fixed = false;
 				ptr->levelset = sgn * half_bandwidth;
 			}
 			//
 			int q[][DIM2] = {{i-1,j},{i+1,j},{i,j-1},{i,j+1}};
 			for( unsigned n=0; n<4; n++ ) {
-				if( ! nodeArray->shape().out_of_bounds(q[n]) && nodeArray_accessors[tn].active(q[n])) {
-					ptr->p2p.push_back(nodeArray_accessors[tn](q[n]));
+				if( ! nodeArray->shape().out_of_bounds(q[n]) && nodeArray->active(q[n])) {
+					ptr->p2p.push_back(nodeArray()(q[n]));
 				}
 			}
 		});
@@ -313,7 +308,7 @@ private:
 		fastMarch(nodes,half_bandwidth,-half_bandwidth,m_parallel);
 		//
 		phi_array.parallel_actives([&](int i, int j, auto &it, int tn) {
-			it.set(nodeArray_accessors[tn](i,j)->levelset);
+			it.set(nodeArray()(i,j)->levelset);
 		});
 		//
 		grids->serial_actives([&](const auto &it) {

@@ -44,9 +44,8 @@ private:
 		// Count the number of active cells
 		unsigned num_active_fluid (0);
 		if( levelset_exist(solid)) {
-			auto solid_accessor = solid.get_const_accessor();
 			fluid.const_serial_actives([&](int i, int j, int k, const auto &it) {
-				if( it() < 0.0 && interpolate<double>(solid_accessor,vec3i(i,j,k).cell()) > 0.0 ) num_active_fluid ++;
+				if( it() < 0.0 && interpolate<double>(solid,vec3i(i,j,k).cell()) > 0.0 ) num_active_fluid ++;
 			});
 		} else {
 			fluid.const_serial_actives([&](const auto &it) {

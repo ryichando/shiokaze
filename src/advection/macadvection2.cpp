@@ -66,27 +66,25 @@ private:
 		//
 		v_out.clear();
 		v_out.activate_as(v_in);
-		auto v_in_accessors = v_in.get_const_accessors();
 		//
 		shared_macarray2<vec2d> face_full_velocity(m_shape);
 		v_in.convert_to_full(face_full_velocity());
 		//
-		auto face_full_velocity_accessors = face_full_velocity->get_const_accessors();
 		v_out.parallel_actives([&](int dim, int i, int j, auto &it, int tn) {
 			//
-			const vec2d &u = face_full_velocity_accessors[tn](dim,i,j);
+			const vec2d &u = face_full_velocity()[dim](i,j);
 			//
 			if( ! u.empty() ) {
 				vec2d p = vec2d(i,j)-dt*u/m_dx;
 				double value;
 				if( weno_interpolation ) {
-					value = WENO2::interpolate(v_in_accessors[tn].get(dim),p);
+					value = WENO2::interpolate(v_in[dim],p);
 				} else {
-					value = array_interpolator2::interpolate<double>(v_in_accessors[tn].get(dim),p);
+					value = array_interpolator2::interpolate<double>(v_in[dim],p);
 				}
 				it.set(value);
 			} else {
-				it.set(v_in_accessors[tn](dim,i,j));
+				it.set(v_in[dim](i,j));
 			}
 		});
 		//
@@ -95,7 +93,7 @@ private:
 			minMax->activate_as(v_in);
 			minMax->parallel_actives([&](int dim, int i, int j, auto &it, int tn) {
 				//
-				const vec2d &u = face_full_velocity_accessors[tn](dim,i,j);
+				const vec2d &u = face_full_velocity()[dim](i,j);
 				//
 				if( ! u.empty() ) {
 					vec2d p = vec2d(i,j)-dt*u/m_dx;
@@ -105,7 +103,7 @@ private:
 					double min_value = std::numeric_limits<double>::max();
 					double max_value = std::numeric_limits<double>::min();
 					for( int n=0; n<4; ++n ) {
-						double value = v_in_accessors[tn](dim,indices[n]);
+						double value = v_in[dim](indices[n]);
 						min_value = std::min(min_value,value);
 						max_value = std::max(max_value,value);
 					}
@@ -116,7 +114,7 @@ private:
 				} else {
 					if( minMax ) {
 						double2 d2;
-						d2.v[0] = d2.v[1] = v_in_accessors[tn](dim,i,j);
+						d2.v[0] = d2.v[1] = v_in[dim](i,j);
 						it.set(d2);
 					}
 				}
@@ -136,18 +134,12 @@ private:
 			//
 			v_out.clear();
 			v_out.activate_as(v_in);
-			//
-			auto minMax_u_accessors = minMax_u->get_const_accessors();
-			auto v_in_accessors = v_in.get_const_accessors();
-			auto v_0_accessors = velocity_0->get_const_accessors();
-			auto v_1_accessors = velocity_1->get_const_accessors();
-			//
 			v_out.parallel_actives([&](int dim, int i, int j, auto &it, int tn) {
 				//
-				double min_value = minMax_u_accessors[tn](dim,i,j).v[0];
-				double max_value = minMax_u_accessors[tn](dim,i,j).v[1];
-				double vel0 = v_0_accessors[tn](dim,i,j);
-				double correction = 0.5*(v_in_accessors[tn](dim,i,j)-v_1_accessors[tn](dim,i,j));
+				double min_value = minMax_u()[dim](i,j).v[0];
+				double max_value = minMax_u()[dim](i,j).v[1];
+				double vel0 = velocity_0()[dim](i,j);
+				double correction = 0.5*(v_in[dim](i,j)-velocity_1()[dim](i,j));
 				if( vel0+correction < min_value ) it.set(min_value);
 				else if( vel0+correction > max_value ) it.set(max_value);
 				else it.set(vel0+correction);
@@ -162,26 +154,23 @@ private:
 		shared_array2<vec2d> full_velocity(m_shape);
 		v.convert_to_full(full_velocity());
 		//
-		auto full_velocity_accessors = full_velocity->get_const_accessors();
-		auto q_in_accessors = q_in.get_const_accessors();
-		//
 		q_out.clear();
 		q_out.activate_as(q_in);
 		q_out.parallel_actives([&](int i, int j, auto &it, int tn) {
 			//
-			const vec2d &u = full_velocity_accessors[tn](i,j);
+			const vec2d &u = full_velocity()(i,j);
 			//
 			if( ! u.empty() ) {
 				vec2d p = vec2d(i,j)-dt*u/m_dx;
 				double value;
 				if( weno_interpolation ) {
-					value = WENO2::interpolate(q_in_accessors[tn],p);
+					value = WENO2::interpolate(q_in,p);
 				} else {
-					value = array_interpolator2::interpolate<double>(q_in_accessors[tn],p);
+					value = array_interpolator2::interpolate<double>(q_in,p);
 				}
 				it.set(value);
 			} else {
-				it.set(q_in_accessors[tn](i,j));
+				it.set(q_in(i,j));
 			}
 		});
 		//
@@ -190,7 +179,7 @@ private:
 			minMax->activate_as(q_in);
 			minMax->parallel_actives([&](int i, int j, auto &it, int tn) {
 				//
-				const vec2d &u = full_velocity_accessors[tn](i,j);
+				const vec2d &u = full_velocity()(i,j);
 				//
 				if( ! u.empty() ) {
 					vec2d p = vec2d(i,j)-dt*u/m_dx;
@@ -200,7 +189,7 @@ private:
 					double min_value = std::numeric_limits<double>::max();
 					double max_value = std::numeric_limits<double>::min();
 					for( int n=0; n<4; ++n ) {
-						double value = q_in_accessors[tn](indices[n]);
+						double value = q_in(indices[n]);
 						min_value = std::min(min_value,value);
 						max_value = std::max(max_value,value);
 					}
@@ -210,7 +199,7 @@ private:
 					it.set(d2);
 				} else {
 					double2 d2;
-					d2.v[0] = d2.v[1] = q_in_accessors[tn](i,j);
+					d2.v[0] = d2.v[1] = q_in(i,j);
 					it.set(d2);
 				}
 			});
@@ -229,18 +218,12 @@ private:
 			//
 			q_out.clear();
 			q_out.activate_as(q_in);
-			//
-			auto minMax_q_accessors = minMax_q->get_const_accessors();
-			auto q_in_accessors = q_in.get_const_accessors();
-			auto q_0_accessors = q_0->get_const_accessors();
-			auto q_1_accessors = q_1->get_const_accessors();
-			//
 			q_out.parallel_actives([&](int i, int j, auto &it, int tn) {
 				//
-				double min_value = minMax_q_accessors[tn](i,j).v[0];
-				double max_value = minMax_q_accessors[tn](i,j).v[1];
-				double q0 = q_0_accessors[tn](i,j);
-				double correction = 0.5*(q_in_accessors[tn](i,j)-q_1_accessors[tn](i,j));
+				double min_value = minMax_q()(i,j).v[0];
+				double max_value = minMax_q()(i,j).v[1];
+				double q0 = q_0()(i,j);
+				double correction = 0.5*(q_in(i,j)-q_1()(i,j));
 				if( q0+correction < min_value ) it.set(min_value);
 				else if( q0+correction > max_value ) it.set(max_value);
 				else it.set(q0+correction);

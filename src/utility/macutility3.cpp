@@ -64,19 +64,16 @@ private:
 		//
 		if( levelset_exist(solid) ) {
 			//
-			auto solid_accessors = solid.get_const_accessors();
-			auto velocity_save_accessors = velocity_save->get_const_accessors();
-			//
 			for( int dim : DIMS3 ) {
 				velocity.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn) {
 					vec3i pi(i,j,k);
 					vec3d p(vec3i(i,j,k).face(dim));
-					if( interpolate<double>(solid_accessors[tn],p) < 0.0 ) {
+					if( interpolate<double>(solid,p) < 0.0 ) {
 						double derivative[DIM3];
 						array_derivative3::derivative(solid,p,derivative);
 						vec3d normal = vec3d(derivative)/m_dx;
 						if( normal.norm2() ) {
-							vec3d u = macarray_interpolator3::interpolate<double>(velocity_save_accessors[tn],vec3i(i,j,k).cell());
+							vec3d u = macarray_interpolator3::interpolate<double>(velocity_save(),vec3i(i,j,k).cell());
 							if( u * normal < 0.0 ) {
 								it.set((u-normal*(u*normal))[dim]);
 							}
@@ -116,7 +113,6 @@ private:
 				areas[dim].set_as_fillable(0.0,1.0);
 			});
 			//
-			auto solid_accessors = solid.get_const_accessors();
 			areas.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn) {
 				double area;
 				vec3i pi(i,j,k);
@@ -124,20 +120,20 @@ private:
 				else {
 					double quadsolid[2][2];
 					if( dim == 0 ) {
-						quadsolid[0][0] = solid_accessors[tn](i,j,k);
-						quadsolid[1][0] = solid_accessors[tn](i,j+1,k);
-						quadsolid[1][1] = solid_accessors[tn](i,j+1,k+1);
-						quadsolid[0][1] = solid_accessors[tn](i,j,k+1);
+						quadsolid[0][0] = solid(i,j,k);
+						quadsolid[1][0] = solid(i,j+1,k);
+						quadsolid[1][1] = solid(i,j+1,k+1);
+						quadsolid[0][1] = solid(i,j,k+1);
 					} else if( dim == 1 ) {
-						quadsolid[0][0] = solid_accessors[tn](i,j,k);
-						quadsolid[1][0] = solid_accessors[tn](i+1,j,k);
-						quadsolid[1][1] = solid_accessors[tn](i+1,j,k+1);
-						quadsolid[0][1] = solid_accessors[tn](i,j,k+1);
+						quadsolid[0][0] = solid(i,j,k);
+						quadsolid[1][0] = solid(i+1,j,k);
+						quadsolid[1][1] = solid(i+1,j,k+1);
+						quadsolid[0][1] = solid(i,j,k+1);
 					} else if( dim == 2 ) {
-						quadsolid[0][0] = solid_accessors[tn](i,j,k);
-						quadsolid[1][0] = solid_accessors[tn](i+1,j,k);
-						quadsolid[1][1] = solid_accessors[tn](i+1,j+1,k);
-						quadsolid[0][1] = solid_accessors[tn](i,j+1,k);
+						quadsolid[0][0] = solid(i,j,k);
+						quadsolid[1][0] = solid(i+1,j,k);
+						quadsolid[1][1] = solid(i+1,j+1,k);
+						quadsolid[0][1] = solid(i,j+1,k);
 					}
 					area = 1.0-utility::get_area(quadsolid);
 				}
@@ -152,18 +148,17 @@ private:
 		} else {
 			//
 			areas.clear(1.0);
-			auto accessor = areas.get_serial_accessor();
 			for( int j=0; j<m_shape.h; ++j ) for( int k=0; k<m_shape.d; ++k ) {
-				accessor.set(0,0,j,k,0.0);
-				accessor.set(0,m_shape.w,j,k,0.0);
+				areas[0].set(0,j,k,0.0);
+				areas[0].set(m_shape.w,j,k,0.0);
 			}
 			for( int i=0; i<m_shape.w; ++i ) for( int k=0; k<m_shape.d; ++k ) {
-				accessor.set(1,i,0,k,0.0);
-				accessor.set(1,i,m_shape.h,k,0.0);
+				areas[1].set(i,0,k,0.0);
+				areas[1].set(i,m_shape.h,k,0.0);
 			}
 			for( int i=0; i<m_shape.w; ++i ) for( int j=0; j<m_shape.h; ++j ) {
-				accessor.set(2,i,j,0,0.0);
-				accessor.set(2,i,j,m_shape.d,0.0);
+				areas[2].set(i,j,0,0.0);
+				areas[2].set(i,j,m_shape.d,0.0);
 			}
 		}
 	}
@@ -178,12 +173,11 @@ private:
 				rhos[dim].set_as_fillable(0.0,1.0);
 			});
 			//
-			auto fluid_accessors = fluid.get_const_accessors();
 			rhos.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn) {
 				//
 				double rho = utility::fraction(
-					fluid_accessors[tn](m_shape.clamp(i,j,k)),
-					fluid_accessors[tn](m_shape.clamp(i-(dim==0),j-(dim==1),k-(dim==2)))
+					fluid(m_shape.clamp(i,j,k)),
+					fluid(m_shape.clamp(i-(dim==0),j-(dim==1),k-(dim==2)))
 				);
 				if( rho && rho < m_param.eps_fluid ) rho = m_param.eps_fluid;
 				it.set(rho);
@@ -203,10 +197,9 @@ private:
 		if( levelset_exist(solid) ) {
 			//
 			shared_macarray3<double> tmp_areas(density.type());
-			auto tmp_areas_accessors = tmp_areas->get_const_accessors();
 			compute_area_fraction(solid,tmp_areas());
 			density.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn) {
-				it.multiply(tmp_areas_accessors[tn](dim,i,j,k));
+				it.multiply(tmp_areas()[dim](i,j,k));
 			});
 		}
 	}
@@ -218,17 +211,13 @@ private:
 		compute_area_fraction(solid,tmp_areas());
 		compute_fluid_fraction(fluid,tmp_rhos());
 		//
-		auto area_accessors = tmp_areas->get_const_accessors();
-		auto fluid_accessors = tmp_rhos->get_const_accessors();
-		auto velocity_accessors = velocity.get_const_accessors();
-		//
-		std::vector<double> results (velocity_accessors.size(),0.0);
+		std::vector<double> results(velocity.get_thread_num(),0.0);
 		velocity.const_parallel_actives([&]( int dim, int i, int j, int k, const auto &it, int tn ) {
-			double area = area_accessors[tn](dim,i,j,k);
+			double area = tmp_areas()[dim](i,j,k);
 			if( area ) {
-				double rho = fluid_accessors[tn](dim,i,j,k);
+				double rho = tmp_rhos()[dim](i,j,k);
 				if( rho ) {
-					double u = velocity_accessors[tn](dim,i,j,k);
+					double u = velocity[dim](i,j,k);
 					double dA = (m_dx*m_dx*m_dx) * (area*rho);
 					results[tn] += 0.5*(u*u)*dA;
 				}

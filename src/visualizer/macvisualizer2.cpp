@@ -40,10 +40,9 @@ private:
 			velocity.convert_to_full(*cell_velocity.get());
 			//
 			g.color4(1.0,1.0,1.0,0.5);
-			auto velocity_acessor = cell_velocity->get_const_accessor();
 			velocity.shape().for_each([&](int i, int j) {
 				vec2d p0 = m_dx*vec2i(i,j).cell();
-				vec2d p1 = p0+m_dx*velocity_acessor(i,j);
+				vec2d p1 = p0+m_dx*cell_velocity()(i,j);
 				graphics_utility::draw_arrow(g,p0.v,p1.v);
 			});
 		}
@@ -61,13 +60,12 @@ private:
 		double det = maxv-minv;
 		if( std::abs(det) > 1e-2 ) {
 			//
-			auto accessor = array.get_const_accessor();
 			g.line_width(2.0);
 			g.begin(graphics_engine::MODE::LINES);
 			array.const_serial_all([&]( int dim, int i, int j, const auto &it ) {
 				//
 				auto set_color = [&](unsigned i, unsigned j) {
-					double v = accessor(dim,i,j);
+					double v = array[dim](i,j);
 					double normp = v ? 2.0*(v-minv)/det-1.0 : 0.0;
 					g.color4(normp>0,0.3,normp<=0,std::abs(normp));
 				};

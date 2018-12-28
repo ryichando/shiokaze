@@ -1,8 +1,8 @@
 /*
-**	array_gradient3.h
+**	gridops3-example.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on Sep 22, 2018.
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on March 2, 2018.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -22,36 +22,36 @@
 **	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 //
-#ifndef SHKZ_ARRAY_GRADIENT3_H
-#define SHKZ_ARRAY_GRADIENT3_H
+#include <shiokaze/ui/drawable.h>
+#include <shiokaze/core/console.h>
+#include <shiokaze/array/shared_array3.h>
 //
-#include "array3.h"
-#include "macarray3.h"
+SHKZ_USING_NAMESPACE
 //
-SHKZ_BEGIN_NAMESPACE
-//
-/** @file */
-/// \~english @brief Class that computes the gradient of physical quantities.
-/// \~japanese @brief 物理量の勾配を計算するクラス。
-namespace array_gradient3 {
+class gridops3 : public runnable {
+private:
 	//
-	template<class T> void compute_gradient( const array3<T> &array, macarray3<T> &gradient, double dx ) {
-		for( int dim : DIMS3 ) {
-			gradient[dim].clear();
-			gradient[dim].activate_as(array,vec3i(0,0,0));
-			gradient[dim].activate_as(array,vec3i(dim==0,dim==1,dim==2));
-		}
-		shape3 shape = array.shape();
-		gradient.parallel_actives([&]( int dim, int i, int j, int k, auto &it, int tn ) {
-			it.set(
-				(array(shape.clamp(i,j,k))
-				-array(shape.clamp(i-(dim==0),j-(dim==1),k-(dim==2)))
-				)/dx);
-		});
+	LONG_NAME("Grid Operations 3D")
+	ARGUMENT_NAME("GridOpsExample")
+	//
+	virtual void run_onetime() override {
+		//
+		shape3 shape {81,62,42};
+		//
+		shared_array3<double> array0(shape);
+		shared_array3<double> array1(shape);
+		//
+		array0() = 4.0;
+		array1() = 3.0;
+		array0() -= array1();
 	}
+	//
 };
 //
-SHKZ_END_NAMESPACE
+extern "C" module * create_instance() {
+	return new gridops3;
+}
 //
-#endif
-//
+extern "C" const char *license() {
+	return "MIT";
+}

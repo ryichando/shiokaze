@@ -41,12 +41,11 @@ namespace array_gradient2 {
 			gradient[dim].activate_as(array,vec2i(0,0));
 			gradient[dim].activate_as(array,vec2i(dim==0,dim==1));
 		}
-		auto array_accessors = array.get_const_accessors();
 		shape2 shape = array.shape();
 		gradient.parallel_actives([&]( int dim, int i, int j, auto &it, int tn ) {
 			it.set(
-				(array_accessors[tn](shape.clamp(i,j))
-				-array_accessors[tn](shape.clamp(i-(dim==0),j-(dim==1)))
+				(array(shape.clamp(i,j))
+				-array(shape.clamp(i-(dim==0),j-(dim==1)))
 				)/dx);
 		});
 	}

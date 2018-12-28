@@ -271,10 +271,9 @@ public:
 		active_cells.erase( std::unique( active_cells.begin(), active_cells.end() ), active_cells.end() );
 		cell_array.clear(get_background_value());
 		cell_array.activate(active_cells);
-		auto accessors = get_const_accessors();
 		cell_array.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			vec3d v;
-			for( unsigned dim : DIMS3 ) v[dim] = 0.5*(accessors[tn](dim,i,j,k)+accessors[tn](dim,i+(dim==0),j+(dim==1),k+(dim==2)));
+			for( unsigned dim : DIMS3 ) v[dim] = 0.5*((*this)[dim](i,j,k)+(*this)[dim](i+(dim==0),j+(dim==1),k+(dim==2)));
 			it.set(v);
 		});
 	}
@@ -288,25 +287,24 @@ public:
 		//
 		face_array.clear();
 		face_array.activate_as(*this);
-		auto accessors = get_const_accessors();
 		face_array.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn) {
 			//
 			vec3d u;
 			for( int u_dim : DIMS3 ) {
-				if( u_dim == dim ) u[u_dim] = accessors[tn](u_dim,i,j,k);
+				if( u_dim == dim ) u[u_dim] = (*this)[u_dim](i,j,k);
 				else {
 					vec3d p = vec3d(i,j,k)+0.5*vec3d(u_dim==0,u_dim==1,u_dim==2)-0.5*vec3d(dim==0,dim==1,dim==2);
 					if( dim == 0 ) {
 						for( int jj=0; jj<2; ++jj ) for( int kk=0; kk<2; ++kk ) {
-							u[u_dim] += accessors[tn](u_dim,m_shape.clamp(i,p[1]+jj,p[2]+kk));
+							u[u_dim] += (*this)[u_dim](m_shape.clamp(i,p[1]+jj,p[2]+kk));
 						}
 					} else if( dim == 1 ) {
 						for( int ii=0; ii<2; ++ii ) for( int kk=0; kk<2; ++kk ) {
-							u[u_dim] += accessors[tn](u_dim,m_shape.clamp(p[0]+ii,j,p[2]+kk));
+							u[u_dim] += (*this)[u_dim](m_shape.clamp(p[0]+ii,j,p[2]+kk));
 						}
 					} else if( dim == 2  ) {
 						for( int ii=0; ii<2; ++ii ) for( int jj=0; jj<2; ++jj ) {
-							u[u_dim] += accessors[tn](u_dim,m_shape.clamp(p[0]+ii,p[1]+jj,k));
+							u[u_dim] += (*this)[u_dim](m_shape.clamp(p[0]+ii,p[1]+jj,k));
 						}
 					}
 					u[u_dim] /= 4.0;
@@ -466,387 +464,6 @@ public:
 	array3<T>& operator[](int dim) {
 		return dim==0 ? m_array_0 : (dim == 1 ? m_array_1 : m_array_2 );
 	}
-	/// \~english @brief Read-only value accessor.
-	/// \~japanese @brief 数値の取得のみを代理するアクセッサー。
-	class const_accessor {
-	friend class macarray3<T>;
-	public:
-		/**
-		 \~english @brief Get the value at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on z coordinate.
-		 @return Value at the input position.
-		 \~japanese @brief 入力位置で値を取得する。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 @return 入力位置での値。
-		 */
-		const T& operator()(int dim, int i, int j, int k) {
-			return get(dim)(i,j,k);
-		}
-		/**
-		 \~english @brief Get the value at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 @return Value at the input position.
-		 \~japanese @brief 入力位置で値を取得する。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 @return 入力位置での値。
-		 */
-		const T& operator()(int dim, const vec3i &pi) {
-			return get(dim)(pi);
-		}
-		/**
-		 \~english @brief Get the pointer to the value at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on y coordinate.
-		 @return Pointer to the value at the input position.
-		 \~japanese @brief 入力位置で値へのポインターを取得する。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 @return 入力位置で値へのポインター。
-		 */
-		const T* ptr(int dim, int i, int j, int k) { 
-			return get(dim).ptr(i,j,k);
-		}
-		/**
-		 \~english @brief Get the pointer to the value at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 @return Pointer to the value at the input position.
-		 \~japanese @brief 入力位置で値へのポインターを取得する。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 @return 入力位置で値へのポインター。
-		 */
-		const T* ptr(int dim, const vec3i &pi) { 
-			return get(dim).ptr(pi);
-		}
-		/**
-		 \~english @brief Get if the cell is active at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on y coordinate.
-		 @return \c true if the cell at the input position is active and \c false if not.
-		 \~japanese @brief 入力位置でセルがアクティブか得る。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 @return 入力位置でのセルがアクティブなら \c true そうでないなら \c false を返す。
-		 */
-		bool active(int dim, int i, int j, int k) {
-			return get(dim).active(i,j,k);
-		}
-		/**
-		 \~english @brief Get if the cell is active at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 @return \c true if the cell at the input position is active and \c false if not.
-		 \~japanese @brief 入力位置でセルがアクティブか得る。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 @return 入力位置でのセルがアクティブなら \c true そうでないなら \c false を返す。
-		 */
-		bool active(int dim, const vec3i &pi) {
-			return get(dim).active(pi);
-		}
-		/**
-		 \~english @brief Get if the cell is filled at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on y coordinate.
-		 @return \c true if the cell at the input position is filled and \c false if not.
-		 \~japanese @brief 入力位置でセルが塗りつぶされているか得る。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 @return 入力位置でのセルが塗りつぶされているなら \c true そうでないなら \c false を返す。
-		 */
-		bool filled(int dim, int i, int j, int k) {
-			return get(dim).filled(i,j,k);
-		}
-		/**
-		 \~english @brief Get if the cell is filled at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 @return \c true if the cell at the input position is filled and \c false if not.
-		 \~japanese @brief 入力位置でセルが塗りつぶされているか得る。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 @return 入力位置でのセルが塗りつぶされているなら \c true そうでないなら \c false を返す。
-		 */
-		bool filled(int dim, const vec3i &pi) {
-			return get(dim).filled(pi);
-		}
-		/**
-		 \~english @brief Get the shape of the associated grid.
-		 @return Shape of the grid.
-		 \~japanese @brief 関連付けされたグリッドの大きさを得る。
-		 @return グリッドの形。
-		 */
-		const shape3 shape() const {
-			return array->shape();
-		}
-		/**
-		 \~english @brief Get the shape of the associated staggered grid of a specified dimension.
-		 @return Shape of the grid.
-		 \~japanese @brief 関連付けされた次元のスタッガードグリッドの大きさを得る。
-		 @return グリッドの形。
-		 */
-		const shape3 shape(int dim) const {
-			return array->shape(dim);
-		}
-		/**
-		 \~english @brief Get a const_accessor of the associated staggered grid of a specified dimension.
-		 @return An instance of const_accessor.
-		 \~japanese @brief 関連付けされた次元のスタッガードグリッドの const_accessor を得る。
-		 @return const_accessor のインスタンス。
-		 */
-		typename array3<T>::const_accessor& get( int dim ) {
-			return dim == 0 ? accessor_0 : (dim == 1 ? accessor_1 : accessor_2);
-		}
-	protected:
-		const_accessor( const macarray3<T> &array ) : array(&array),
-			accessor_0(array[0].get_const_accessor()),
-			accessor_1(array[1].get_const_accessor()),
-			accessor_2(array[2].get_const_accessor()) {}
-		const macarray3 *array;
-		typename array3<T>::const_accessor accessor_0, accessor_1, accessor_2;
-	};
-	/// \~english @brief Writable value accessor.
-	/// \~japanese @brief 読み書きを代理するアクセッサー。
-	class serial_accessor : public const_accessor {
-	friend class macarray3<T>;
-	public:
-		/**
-		 \~english @brief Set the value at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on z coordinate.
-		 @param[in] value Value to set
-		 \~japanese @brief 入力位置で値をセットする。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 @param[in] value 設定する値。
-		 */
-		void set( int dim, int i, int j, int k, const T& value ) {
-			get(dim).set(i,j,k,value);
-		}
-		/**
-		 \~english @brief Set the value at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 @param[in] value Value to set
-		 \~japanese @brief 入力位置で値をセットする。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 @param[in] value 設定する値。
-		 */
-		void set( int dim, const vec3i &pi, const T& value ) {
-			set(dim,pi[0],pi[1],pi[2],value);
-		}
-		/**
-		 \~english @brief Inactivate cell at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on z coordinate.
-		 \~japanese @brief 入力位置でセルを非アクティブする。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 */
-		void set_off( int dim, int i, int j, int k ) {
-			get(dim).set_off(i,j,k);
-		}
-		/**
-		 \~english @brief Inactivate cell at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 \~japanese @brief 入力位置でセルを非アクティブする。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 */
-		void set_off( int dim, const vec3i &pi ) {
-			set_off(dim,pi[0],pi[1],pi[2]);
-		}
-		/**
-		 \~english @brief Get the pointer to the value at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on z coordinate.
-		 @return Pointer to the value at the input position.
-		 \~japanese @brief 入力位置で値へのポインターを得る。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 @return 入力位置での値へのポインター。
-		 */
-		T* ptr(int dim, int i, int j, int k) { 
-			return get(dim).ptr(i,j,k);
-		}
-		/**
-		 \~english @brief Get the pointer to the value at the input position.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 @return Pointer to the value at the input position.
-		 \~japanese @brief 入力位置で値へのポインターを得る。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 @return 入力位置での値へのポインター。
-		 */
-		T* ptr(int dim, const vec3i &pi) { 
-			return ptr(dim,pi[0],pi[1],pi[2]);
-		}
-		/**
-		 \~english @brief Increment value.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on z coordinate.
-		 @param[in] value Value to increment at the position.
-		 \~japanese @brief 値を加算する。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 @param[in] value この位置で加算する値。
-		 */
-		void increment( int dim, int i, int j, int k, const T& value ) {
-			get(dim).increment(i,j,k,value,const_accessor::cache);
-		}
-		/**
-		 \~english @brief Increment value.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 @param[in] value Value to increment at the position.
-		 \~japanese @brief 値を加算する。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 @param[in] value この位置で加算する値。
-		 */
-		void increment( int dim, const vec3i &pi, const T& value ) {
-			increment(dim,pi[0],pi[1],pi[2],value,const_accessor::cache);
-		}
-		/**
-		 \~english @brief Subtract value.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on z coordinate.
-		 @param[in] value Value to subtract at the position.
-		 \~japanese @brief 値を減算する。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 @param[in] value この位置で減算する値。
-		 */
-		void subtract( int dim, int i, int j, int k, const T& value ) {
-			get(dim).subtract(i,j,k,value,const_accessor::cache);
-		}
-		/**
-		 \~english @brief Subtract value.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 @param[in] value Value to subtract at the position.
-		 \~japanese @brief 値を減算する。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 @param[in] value この位置で減算する値。
-		 */
-		void subtract( int dim, const vec3i &pi, const T& value ) {
-			subtract(dim,pi[0],pi[1],pi[2],value,const_accessor::cache);
-		}
-		/**
-		 \~english @brief Multiply value.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on z coordinate.
-		 @param[in] value Value to multiply at the position.
-		 \~japanese @brief 値を乗算する。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 @param[in] value この位置で乗算する値。
-		 */
-		void multiply( int dim, int i, int j, int k, const T& value ) {
-			get(dim).multiply(i,j,k,value,const_accessor::cache);
-		}
-		/**
-		 \~english @brief Multiply value.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 @param[in] value Value to multiply at the position.
-		 \~japanese @brief 値を乗算する。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 @param[in] value この位置で乗算する値。
-		 */
-		void multiply( int dim, const vec3i &pi, const T& value ) {
-			multiply(dim,pi[0],pi[1],pi[2],value,const_accessor::cache);
-		}
-		/**
-		 \~english @brief Divide by value.
-		 @param[in] dim dimension of the grid.
-		 @param[in] i position on x coordiante.
-		 @param[in] j position on y coordinate.
-		 @param[in] k position on z coordinate.
-		 @param[in] value Value to divide at the position.
-		 \~japanese @brief 値で割り算をする。
-		 @param[in] dim グリッドの次元。
-		 @param[in] i x 座標上の位置。
-		 @param[in] j y 座標上の位置。
-		 @param[in] k z 座標上の位置。
-		 @param[in] value この位置で割り算する値。
-		 */
-		void divide( int dim, int i, int j, int k, const T& value ) {
-			get(dim).divide(i,j,k,value,const_accessor::cache);
-		}
-		/**
-		 \~english @brief Divide by value.
-		 @param[in] dim dimension of the grid.
-		 @param[in] pi position on grid.
-		 @param[in] value Value to divide at the position.
-		 \~japanese @brief 値で割り算をする。
-		 @param[in] dim グリッドの次元。
-		 @param[in] pi グリッドの位置。
-		 @param[in] value この位置で割り算する値。
-		 */
-		void divide( int dim, const vec3i &pi, const T& value ) {
-			divide(dim,pi[0],pi[1],pi[2],value,const_accessor::cache);
-		}
-		typename array3<T>::serial_accessor& get( int dim ) {
-			return dim == 0 ? accessor_0 : (dim == 1 ? accessor_1 : accessor_2);
-		}
-	protected:
-		serial_accessor( macarray3<T> &array ) : const_accessor(array),
-			accessor_0(array[0].get_serial_accessor()),
-			accessor_1(array[1].get_serial_accessor()),
-			accessor_2(array[2].get_serial_accessor()) {}
-		typename array3<T>::serial_accessor accessor_0, accessor_1, accessor_2;
-	};
 	/**
 	 \~english @brief Set the number of threads for parallel processing on this grid.
 	 @param[in] number Number of threads.
@@ -864,38 +481,6 @@ public:
 	 */
 	int get_thread_num() const {
 		return m_array_0.get_thread_num();
-	}
-	/**
-	 \~english @brief Generate an instance of const_accessor for this grid.
-	 @return Generated instance of const_accessor.
-	 \~japanese @brief このグリッドの const_accessor のインスタンスを生成する。
-	 @return 生成された const_accessor のインスタンス。
-	 */
-	const_accessor get_const_accessor() const {
-		return const_accessor(*this);
-	}
-	/**
-	 \~english @brief Generate list of instances of const_accessor for this grid.
-	 @return Generated list of instances of const_accessor.
-	 *
-	 The size of list is the number of threads assigned for this grid.
-	 \~japanese @brief このグリッドの const_accessor のインスタンスのリストを生成する。
-	 *
-	 リストの大きさは、このグリッドに関連付けされたスレッドの数。
-	 @return 生成された const_accessor のインスタンスのリスト。
-	 */
-	std::vector<const_accessor> get_const_accessors( int number=0 ) const {
-		if( ! number ) number = get_thread_num();
-		return std::vector<const_accessor>(number,*this);
-	}
-	/**
-	 \~english @brief Generate an instance of serial_accessor for this grid.
-	 @return Generated instance of serial_accessor.
-	 \~japanese @brief このグリッドの serial_accessor のインスタンスを生成する。
-	 @return 生成された serial_accessor のインスタンス。
-	 */
-	serial_accessor get_serial_accessor() {
-		return serial_accessor(*this);
 	}
 	//
 	enum { ACTIVES = true, ALL = false };

@@ -234,19 +234,16 @@ void macnbflip3::splat( macarray3<double> &momentum, macarray3<double> &mass ) c
 		timer.tick(); console::dump( "Splatting momentum...");
 		//
 		shared_macarray3<mass_momentum3> mass_and_momentum(momentum.shape());
-		auto mass_and_momentum_accessor = mass_and_momentum->get_serial_accessor();
-		auto mass_and_momentum_accessors = mass_and_momentum->get_const_accessors();
 		//
 		shared_bitarray3 cell_mask(m_shape);
-		auto cell_mask_accessor = cell_mask->get_serial_accessor();
 		for( size_t n=0; n<m_particles.size(); ++n ) {
-			cell_mask_accessor.set(m_shape.clamp(m_particles[n].p/m_dx));
+			cell_mask().set(m_shape.clamp(m_particles[n].p/m_dx));
 		}
 		cell_mask->const_serial_actives([&]( int i, int j, int k, auto &it ) {
 			const vec3i pi(i,j,k);
 			for( int dim : DIMS3 ) {
-				mass_and_momentum_accessor.set(dim,pi,{0.,0.});
-				mass_and_momentum_accessor.set(dim,pi+vec3i(dim==0,dim==1,dim==2),{0.,0.});
+				mass_and_momentum()[dim].set(pi,{0.,0.});
+				mass_and_momentum()[dim].set(pi+vec3i(dim==0,dim==1,dim==2),{0.,0.});
 			}
 		});
 		//
@@ -271,13 +268,13 @@ void macnbflip3::splat( macarray3<double> &momentum, macarray3<double> &mass ) c
 		mass.clear();
 		mass.activate_as(mass_and_momentum());
 		mass.parallel_actives([&]( int dim, int i, int j, int k, auto &it, int tn ) {
-			it.set(mass_and_momentum_accessors[tn](dim,i,j,k).mass);
+			it.set(mass_and_momentum()[dim](i,j,k).mass);
 		});
 		//
 		momentum.clear();
 		momentum.activate_as(mass_and_momentum());
 		momentum.parallel_actives([&]( int dim, int i, int j, int k, auto &it, int tn ) {
-			it.set(mass_and_momentum_accessors[tn](dim,i,j,k).momentum);
+			it.set(mass_and_momentum()[dim](i,j,k).momentum);
 		});
 		console::dump( "Done. Took %s\n", timer.stock("splat_momentum").c_str());
 		//
@@ -392,20 +389,18 @@ size_t macnbflip3::compute_narrowband() {
 		timer.tick(); console::dump( "Computing narrowband (%d cells wide)...", m_param.narrowband);
 		//
 		m_narrowband_mask.clear();
-		auto narrowband_mask_accessor = m_narrowband_mask.get_serial_accessor();
 		m_fluid.const_serial_actives([&](int i, int j, int k, auto &it) {
 			if( it() > 0 && this->interpolate_solid(m_dx*vec3i(i,j,k).cell()) > 0 ) {
-				narrowband_mask_accessor.set(i,j,k);
+				m_narrowband_mask.set(i,j,k);
 			}
 		});
-		auto fluid_accessors = m_fluid.get_const_accessors();
 		for( int n=0; n<m_param.narrowband; ++n ) {
 			m_narrowband_mask.dilate([&](int i, int j, int k, auto& it, int tn ) {
-				if(fluid_accessors[tn](i,j,k) < 0 && this->interpolate_solid(m_dx*vec3i(i,j,k).cell()) > 0.125*m_dx ) it.set();
+				if(m_fluid(i,j,k) < 0 && this->interpolate_solid(m_dx*vec3i(i,j,k).cell()) > 0.125*m_dx ) it.set();
 			});
 		}
 		m_fluid.const_serial_actives([&](int i, int j, int k, auto &it) {
-			if( it() > m_dx ) narrowband_mask_accessor.set_off(i,j,k);
+			if( it() > m_dx ) m_narrowband_mask.set_off(i,j,k);
 		});
 		count = m_narrowband_mask.count();
 		console::dump( "Done. Found %d cells. Took %s\n", count, timer.stock("compute_narrowband").c_str());
@@ -547,14 +542,9 @@ void macnbflip3::reseed( const macarray3<double> &velocity, size_t &reseeded, si
 	std::vector<std::vector<Particle> > new_particles_t(m_parallel.get_maximal_threads());
 	std::vector<char> remove_particles(m_particles.size(),0);
 	//
-	auto sizing_array_accessors = m_sizing_array.get_const_accessors();
-	auto narrowband_mask_accessors = m_narrowband_mask.get_const_accessors();
-	auto fluid_accessors = m_fluid.get_const_accessors();
-	//
 	// Bucket cell method to remove too dense particles
 	shared_array3<char> cell_bucket(m_shape);
 	if( m_particles.size()) {
-		auto cell_bucket_accessor = cell_bucket->get_serial_accessor();
 		cell_bucket->initialize(m_shape,0);
 		for( size_t n=0; n<m_particles.size(); ++n ) {
 			const Particle &p = m_particles[n];
@@ -562,8 +552,8 @@ void macnbflip3::reseed( const macarray3<double> &velocity, size_t &reseeded, si
 			int i (pi[0]), j (pi[1]), k(pi[2]);
 			m_shape.clamp(i,j,k);
 			if( ! p.bullet ) {
-				if( ! sizing_array_accessors[0](i,j,k) || cell_bucket_accessor(i,j,k) >= m_param.max_particles_per_cell || 
-					(! m_fluid_filled && ! narrowband_mask_accessors[0](i,j,k)) || p.sizing_value < 0.0 ) {
+				if( ! m_sizing_array(i,j,k) || cell_bucket()(i,j,k) >= m_param.max_particles_per_cell || 
+					(! m_fluid_filled && ! m_narrowband_mask(i,j,k)) || p.sizing_value < 0.0 ) {
 					if( p.live_count > m_param.minimal_live_count ) {
 						remove_particles[n] = 1;
 					}
@@ -573,7 +563,7 @@ void macnbflip3::reseed( const macarray3<double> &velocity, size_t &reseeded, si
 				remove_particles[n] = 1;
 			}
 			if( ! remove_particles[n] ) {
-				cell_bucket_accessor.increment(i,j,k,1);
+				cell_bucket().increment(i,j,k,1);
 			}
 		}
 		//
@@ -584,14 +574,11 @@ void macnbflip3::reseed( const macarray3<double> &velocity, size_t &reseeded, si
 	}
 	//
 	// Particle reseeding...
-	auto cell_bucket_accessors = cell_bucket->get_const_accessors();
-	//
-	// Particle reseeding...
 	m_parallel.for_each(m_shape,[&]( int i, int j, int k, int tn ) {
 		//
 		size_t num_added (0);
 		auto attempt_reseed = [&]( const vec3d &p ) {
-			if( cell_bucket_accessors[tn](i,j,k)+num_added < m_param.min_particles_per_cell ) {
+			if( cell_bucket()(i,j,k)+num_added < m_param.min_particles_per_cell ) {
 				//
 				double r = 0.25 * m_dx;
 				if( interpolate_fluid(p) < -r ) {
@@ -609,7 +596,7 @@ void macnbflip3::reseed( const macarray3<double> &velocity, size_t &reseeded, si
 						}
 					}
 					if( sparse && interpolate_solid(new_particle.p) > r ) {
-						double sizing_value = sizing_array_accessors[tn](m_sizing_array.shape().clamp(p/m_dx));
+						double sizing_value = m_sizing_array(m_sizing_array.shape().clamp(p/m_dx));
 						new_particle.mass = default_mass;
 						new_particle.velocity = macarray_interpolator3::interpolate(velocity,vec3d(),m_dx,p);
 						new_particle.r = r;
@@ -630,8 +617,8 @@ void macnbflip3::reseed( const macarray3<double> &velocity, size_t &reseeded, si
 			}
 		};
 		//
-		if( m_fluid_filled || (narrowband_mask_accessors[0](i,j,k) && sizing_array_accessors[0](i,j,k))) {
-			if( loose_interior && fluid_accessors[tn](i,j,k) < -1.25*m_dx ) {
+		if( m_fluid_filled || (m_narrowband_mask(i,j,k) && m_sizing_array(i,j,k))) {
+			if( loose_interior && m_fluid(i,j,k) < -1.25*m_dx ) {
 				attempt_reseed(m_dx*vec3i(i,j,k).cell());
 			} else {
 				for( unsigned ii=0; ii<2; ii++ ) for( unsigned jj=0; jj<2; jj++ ) for( unsigned kk=0; kk<2; kk++ ) {
@@ -746,7 +733,6 @@ void macnbflip3::export_mesh_and_ballistic_particles( int frame, std::string dir
 	array_upsampler3::upsample_to_double_nodal<double>(m_solid,m_dx,doubled_solid());
 	//
 	shared_bitarray3 mask(m_double_shape);
-	auto mask_accessor = mask->get_serial_accessor();
 	std::vector<particlerasterizer3_interface::Particle3> points, ballistic_points;
 	for( int n=0; n<m_particles.size(); ++n ) {
 		particlerasterizer3_interface::Particle3 point;
@@ -754,7 +740,7 @@ void macnbflip3::export_mesh_and_ballistic_particles( int frame, std::string dir
 		point.r = m_particles[n].r;
 		if( interpolate_fluid(m_particles[n].p) < 0.5*m_dx ) {
 			points.push_back(point);
-			mask_accessor.set(mask_accessor.shape().clamp(point.p/m_half_dx));
+			mask().set(mask->shape().clamp(point.p/m_half_dx));
 		} else {
 			if( m_particles[n].bullet ) ballistic_points.push_back(point);
 		}
@@ -766,12 +752,9 @@ void macnbflip3::export_mesh_and_ballistic_particles( int frame, std::string dir
 	shared_array3<double> particle_levelset(m_double_shape,0.125*m_dx);
 	m_highres_particlerasterizer->build_levelset(particle_levelset(),mask(),points);
 	//
-	auto doubled_sizing_array_accessors = doubled_sizing_array->get_const_accessors();
-	auto particle_levelset_accessors = particle_levelset->get_const_accessors();
-	//
 	doubled_fluid->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
-		double rate = doubled_sizing_array_accessors[tn](i,j,k);
-		double f = it(), p = particle_levelset_accessors[tn](i,j,k);
+		double rate = doubled_sizing_array()(i,j,k);
+		double f = it(), p = particle_levelset()(i,j,k);
 		it.set( rate * std::min(f,p) + (1.0-rate) * f );
 	});
 	//
@@ -856,16 +839,15 @@ void macnbflip3::update_velocity_derivative( Particle& particle, const macarray3
 			dw[7] = grid_gradient_kernel(cell_pos[7]-p_pos,m_dx);
 			//
 			auto v_shape = velocity[dim].shape();
-			auto v_accessor = velocity[dim].get_const_accessor();
 			//
-			c += dw[0] * v_accessor(v_shape.clamp(i,j,k));
-			c += dw[1] * v_accessor(v_shape.clamp(i+1,j,k));
-			c += dw[2] * v_accessor(v_shape.clamp(i,j+1,k));
-			c += dw[3] * v_accessor(v_shape.clamp(i+1,j+1,k));
-			c += dw[4] * v_accessor(v_shape.clamp(i,j,k+1));
-			c += dw[5] * v_accessor(v_shape.clamp(i+1,j,k+1));
-			c += dw[6] * v_accessor(v_shape.clamp(i,j+1,k+1));
-			c += dw[7] * v_accessor(v_shape.clamp(i+1,j+1,k+1));
+			c += dw[0] * velocity[dim](v_shape.clamp(i,j,k));
+			c += dw[1] * velocity[dim](v_shape.clamp(i+1,j,k));
+			c += dw[2] * velocity[dim](v_shape.clamp(i,j+1,k));
+			c += dw[3] * velocity[dim](v_shape.clamp(i+1,j+1,k));
+			c += dw[4] * velocity[dim](v_shape.clamp(i,j,k+1));
+			c += dw[5] * velocity[dim](v_shape.clamp(i+1,j,k+1));
+			c += dw[6] * velocity[dim](v_shape.clamp(i,j+1,k+1));
+			c += dw[7] * velocity[dim](v_shape.clamp(i+1,j+1,k+1));
 		}
 	}
 }
@@ -903,10 +885,9 @@ void macnbflip3::initialize_solid() {
 //
 void macnbflip3::seed_set_fluid( const array3<double> &fluid ) {
 	//
-	auto fluid_accessors = fluid.get_const_accessors();
 	m_fluid.activate_as(fluid);
 	m_fluid.parallel_actives([&]( int i, int j, int k, auto &it, int tn ) {
-		it.set(std::min(fluid_accessors[tn](i,j,k),it()));
+		it.set(std::min(m_fluid(i,j,k),it()));
 	});
 	m_fluid.flood_fill();
 }
@@ -941,10 +922,9 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 		timer.tick(); console::dump( ">>> Levelset advection\n");
 		//
 		unsigned dilate_width = m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(velocity)*dt/m_dx);
-		auto fluid_accessor = m_fluid.get_serial_accessor();
 		for( int n=0; n<m_particles.size(); ++n ) {
 			vec3i pi = m_shape.clamp(m_particles[n].p/m_dx);
-			if( ! fluid_accessor.active(pi)) fluid_accessor.set(pi,fluid_accessor(pi));
+			if( ! m_fluid.active(pi)) m_fluid.set(pi,m_fluid(pi));
 		}
 		m_fluid.dilate(dilate_width);
 		m_macadvection->advect_scalar(m_fluid,velocity,dt);
@@ -956,8 +936,6 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 			// Erosion
 			timer.tick(); console::dump( "Levelset erosion...");
 			shared_array3<double> save_fluid (m_fluid);
-			auto save_fluid_accessors = save_fluid->get_const_accessors();
-			auto fluid_accessors = m_fluid.get_const_accessors();
 			//
 			m_fluid.parallel_actives([&]( int i, int j, int k, auto &it ) {
 				if( solid_exist ) {
@@ -974,18 +952,17 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 			timer.tick(); console::dump( "Building FLIP levelset...");
 			//
 			shared_bitarray3 mask(m_fluid.shape());
-			auto mask_accessor = mask->get_serial_accessor();
 			std::vector<particlerasterizer3_interface::Particle3> points(m_particles.size());
 			for( int n=0; n<m_particles.size(); ++n ) {
 				vec3d p = m_particles[n].p;
 				points[n].p = p;
 				points[n].r = m_particles[n].r;
-				mask_accessor.set(mask_accessor.shape().clamp(p/m_dx));
+				mask().set(mask->shape().clamp(p/m_dx));
 			}
 			//
 			mask().dilate([&](int i, int j, int k, auto &it, int tn ) { it.set(); },2);
 			mask->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
-				if( fluid_accessors[tn](i,j,k) < 0.0 ) it.set_off();
+				if( m_fluid(i,j,k) < 0.0 ) it.set_off();
 			});
 			m_fluid.activate_as(mask());
 			//
@@ -995,13 +972,11 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 			console::dump("Done. Took %s.\n", timer.stock("particle_levelset_construction").c_str());
 			//
 			timer.tick(); console::dump( "Combining levelsets...");
-			auto sizing_array_accessors = m_sizing_array.get_const_accessors();
-			auto particle_levelset_accessors = particle_levelset->get_const_accessors();
 			//
 			m_fluid.dilate(3);
 			m_fluid.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
-				double rate = sizing_array_accessors[tn](i,j,k);
-				double value = rate * std::min(fluid_accessors[tn](i,j,k),particle_levelset_accessors[tn](i,j,k)) + (1.0-rate) * save_fluid_accessors[tn](i,j,k);
+				double rate = m_sizing_array(i,j,k);
+				double value = rate * std::min(m_fluid(i,j,k),particle_levelset()(i,j,k)) + (1.0-rate) * save_fluid()(i,j,k);
 				it.set(value);
 			});
 			console::dump("Done. Took %s.\n", timer.stock("levelset_combine").c_str());
@@ -1024,11 +999,10 @@ void macnbflip3::sizing_func( array3<double> &sizing_array, const bitarray3 &mas
 void macnbflip3::collision_levelset( std::function<double(const vec3d& p)> levelset ) {
 	//
 	const double sqrt_DIM = sqrt(DIM3);
-	auto fluid_accessors = m_fluid.get_const_accessors();
 	//
 	m_fluid.parallel_actives([&]( int i, int j, int k, auto &it, int tn ) {
 		vec3d cell_p = m_dx*vec3i(i,j,k).cell();
-		it.set(std::max(fluid_accessors[tn](i,j,k),-levelset(cell_p)-sqrt_DIM*m_dx));
+		it.set(std::max(m_fluid(i,j,k),-levelset(cell_p)-sqrt_DIM*m_dx));
 	});
 }
 //

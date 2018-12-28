@@ -114,16 +114,13 @@ void macsmoke2::post_initialize () {
 		density_copy->dilate();
 		//
 		double space = 1.0 / m_param.r_sample;
-		auto solid_accessor = m_solid.get_const_accessor();
-		auto density_accessor = m_density.get_const_accessor();
-		//
 		density_copy->const_serial_actives([&]( int i, int j, const auto &it ) {
 			for( int ii=0; ii<m_param.r_sample; ++ii ) for( int pjj=0; pjj<m_param.r_sample; ++pjj ) {
 				int jj = ii % 2 == 0 ? pjj : m_param.r_sample-pjj-1;
 				vec2d unit_pos = 0.5*vec2d(space,space)+vec2d(ii*space,jj*space);
 				vec2d pos = m_dx*(unit_pos+vec2d(i,j));
-				if( array_interpolator2::interpolate<double>(solid_accessor,pos/m_dx) > 0.0 && 
-					array_interpolator2::interpolate<double>(density_accessor,pos/m_dx-vec2d(0.5,0.5))) {
+				if( array_interpolator2::interpolate<double>(m_solid,pos/m_dx) > 0.0 && 
+					array_interpolator2::interpolate<double>(m_density,pos/m_dx-vec2d(0.5,0.5))) {
 					m_dust_particles.push_back(pos);
 				}
 			}
@@ -214,10 +211,9 @@ void macsmoke2::rasterize_dust_particles( array2<double> &rasterized_density ) {
 //
 void macsmoke2::add_buoyancy_force( macarray2<double> &velocity, const array2<double> &density, double dt ) {
 	//
-	auto density_accessors = density.get_const_accessors();
 	velocity[1].parallel_all([&]( int i, int j, auto &it, int tn ) {
 		vec2i pi = vec2i(i,j).face(1);
-		double d = array_interpolator2::interpolate<double>(density_accessors[tn],(pi-vec2d(0.5,0.5)));
+		double d = array_interpolator2::interpolate<double>(density,(pi-vec2d(0.5,0.5)));
 		it.increment(m_param.buoyancy_factor*dt*d);
 	});
 }
@@ -259,21 +255,19 @@ void macsmoke2::idle() {
 //
 void macsmoke2::advect_dust_particles( const macarray2<double> &velocity, double dt ) {
 	//
-	auto velocity_accessors = velocity.get_const_accessors();
 	m_parallel.for_each( m_dust_particles.size(), [&]( size_t n, int tn ) {
 		vec2d &p = m_dust_particles[n];
-		vec2d u0 = macarray_interpolator2::interpolate<double>(velocity_accessors[tn],p/m_dx);
-		vec2d u1 =  macarray_interpolator2::interpolate<double>(velocity_accessors[tn],(p+dt*u0)/m_dx);
+		vec2d u0 = macarray_interpolator2::interpolate<double>(velocity,p/m_dx);
+		vec2d u1 =  macarray_interpolator2::interpolate<double>(velocity,(p+dt*u0)/m_dx);
 		p += 0.5 * dt * (u0+u1);
 	});
 	//
-	auto solid_accessors = m_solid.get_const_accessors();
 	m_parallel.for_each( m_dust_particles.size(), [&]( size_t n, int tn ) {
 		vec2d &p = m_dust_particles[n];
-		double phi = array_interpolator2::interpolate<double>(solid_accessors[tn],p/m_dx);
+		double phi = array_interpolator2::interpolate<double>(m_solid,p/m_dx);
 		if( phi < 0.0 ) {
 			double derivative[DIM2];
-			array_derivative2::derivative(solid_accessors[tn],p/m_dx,derivative);
+			array_derivative2::derivative(m_solid,p/m_dx,derivative);
 			p = p - phi*vec2d(derivative).normal();
 		}
 		for( unsigned dim : DIMS2 ) {

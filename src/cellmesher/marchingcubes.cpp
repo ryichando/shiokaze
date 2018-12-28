@@ -28,10 +28,9 @@ private:
 		//
 		assert(m_dx);
 		vec3d global_origin = levelset.shape()==m_shape.nodal() ? vec3d() : m_dx * vec3d(0.5,0.5,0.5);
-		auto levelset_accessors = levelset.get_const_accessors();
 		//
-		std::vector<std::unordered_map<size_t,vec3d> > global_edge_vertices(levelset_accessors.size());
-		std::vector<std::vector<std::vector<size_t> > > global_faces(levelset_accessors.size());
+		std::vector<std::unordered_map<size_t,vec3d> > global_edge_vertices(levelset.get_thread_num());
+		std::vector<std::vector<std::vector<size_t> > > global_faces(levelset.get_thread_num());
 		//
 		const shape3 s = levelset.shape();
 		levelset.const_parallel_actives([&]( int i, int j, int k, const auto &it, int tn ) {
@@ -41,7 +40,7 @@ private:
 				int flag (0);
 				//
 				for(int n=0; n<8; ++n ) {
-					value[n] = levelset_accessors[tn](
+					value[n] = levelset(
 						i+a2fVertexOffset[n][0],
 						j+a2fVertexOffset[n][1],
 						k+a2fVertexOffset[n][2]
@@ -94,7 +93,7 @@ private:
 			};
 			for( int ii=0; ii<=1; ++ii ) for( int jj=0; jj<=1; ++jj ) for( int kk=0; kk<=1; ++kk ) {
 				if( ! (s-shape3(1,1,1)).out_of_bounds(i-ii,j-jj,k-kk)) {
-					if( (ii==0 && jj==0 && kk==0) || ! levelset_accessors[tn].active(i-ii,j-jj,k-kk)) {
+					if( (ii==0 && jj==0 && kk==0) || ! levelset.active(i-ii,j-jj,k-kk)) {
 						_do(i-ii,j-jj,k-kk);
 					}
 				}

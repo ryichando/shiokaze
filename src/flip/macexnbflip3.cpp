@@ -46,7 +46,6 @@ static void pointwise_gaussian_blur( const array3<T> &source, array3<T> &result,
 		}
 	}
 	result.activate_as(source);
-	auto source_acccessors = source.get_const_accessors();
 	result.parallel_actives([&]( int i, int j, int k, auto &it, int tn ) {
 		//
 		T val (0.0);
@@ -59,7 +58,7 @@ static void pointwise_gaussian_blur( const array3<T> &source, array3<T> &result,
 					int nk = k+qk;
 					if( ! source.shape().out_of_bounds(ni,nj,nk) ) {
 						const double &wght = exp_w[qi+rs+L*(qj+rs)+(L*L)*(qk+rs)];
-						const T &value = source_acccessors[tn](ni,nj,nk);
+						const T &value = source(ni,nj,nk);
 						val += value * wght;  wsum += wght;
 					}
 				}
@@ -77,7 +76,6 @@ void macexnbflip3::internal_sizing_func(array3<double> &sizing_array,
 							const macarray3<double> &velocity,
 							double dt) {
 	//
-	auto mask_accessors = mask.get_const_accessors();
 	shared_array3<vec3d> diff(m_shape);
 	//
 	if( m_param.mode==0 || m_param.mode==1 ) {
@@ -101,20 +99,16 @@ void macexnbflip3::internal_sizing_func(array3<double> &sizing_array,
 	if( m_param.mode==0 || m_param.mode==2 ) pointwise_gaussian_blur(fluid,fluid_blurred(),m_param.radius);
 	//
 	// 5. Set sizing_array
-	auto diff_accessors = diff->get_const_accessors();
-	auto fluid_accessors = fluid.get_const_accessors();
-	auto fluid_blurred_accessors = fluid_blurred->get_const_accessors();
-	//
 	sizing_array.activate_as(mask);
 	sizing_array.parallel_actives([&](int i, int j, int k, auto &it, int tn ) {
 		//
 		double value0, value1;
 		//
-		if( m_param.mode==0 || m_param.mode==1 ) value0 = std::max(0.0,m_param.amplification * std::min(1.0,diff_accessors[tn](i,j,k).len()) - m_param.threshold_u);
+		if( m_param.mode==0 || m_param.mode==1 ) value0 = std::max(0.0,m_param.amplification * std::min(1.0,diff()(i,j,k).len()) - m_param.threshold_u);
 		if( m_param.mode==0 || m_param.mode==2 ) {
-			double val = fluid_accessors[tn](i,j,k);
+			double val = fluid(i,j,k);
 			if( val < 0 && val > -0.5*m_dx ) {
-				value1 = std::max(0.0, m_param.amplification * std::abs(fluid_blurred_accessors[tn](i,j,k)-val) / m_dx - m_param.threshold_g);
+				value1 = std::max(0.0, m_param.amplification * std::abs(fluid_blurred()(i,j,k)-val) / m_dx - m_param.threshold_g);
 			} else {
 				value1 = 0.0;
 			}
@@ -159,16 +153,11 @@ void macexnbflip3::sizing_func( array3<double> &sizing_array, const bitarray3 &m
 	//
 	auto diffuse = [&]( array3<double> &array, int width, double rate ) {
 		//
-		auto mask_accessors = mask.get_const_accessors();
-		auto array_accessors = array.get_const_accessors();
-		//
 		for( unsigned count=0; count<width; count++ ) {
 			//
 			shared_array3<double> array_save(array);
-			auto array_save_accessors = array_save->get_const_accessors();
-			//
 			array.parallel_actives([&](int i, int j, int k, auto &it, int tn ) {
-				if( mask_accessors[tn](i,j,k)) {
+				if( mask(i,j,k)) {
 					double sum (0.0);
 					int weight = 0;
 					int query[][DIM3] = {{i+1,j,k},{i-1,j,k},{i,j+1,k},{i,j-1,k},{i,j,k-1},{i,j,k+1}};
@@ -177,14 +166,14 @@ void macexnbflip3::sizing_func( array3<double> &sizing_array, const bitarray3 &m
 						int qj = query[nq][1];
 						int qk = query[nq][2];
 						if( ! m_shape.out_of_bounds(qi,qj,qk)) {
-							if( mask_accessors[tn](qi,qj,qk) && array_save_accessors[tn](qi,qj,qk) > array_accessors[tn](i,j,k)) {
-								sum += array_save_accessors[tn](qi,qj,qk);
+							if( mask(qi,qj,qk) && array_save()(qi,qj,qk) > array(i,j,k)) {
+								sum += array_save()(qi,qj,qk);
 								weight ++;
 							}
 						}
 					}
 					if( weight ) {
-						it.set((1.0-rate)*array_accessors[tn](i,j,k)+rate*sum/weight);
+						it.set((1.0-rate)*array(i,j,k)+rate*sum/weight);
 					}
 				}
 			});
@@ -200,7 +189,6 @@ void macexnbflip3::sizing_func( array3<double> &sizing_array, const bitarray3 &m
 	//
 	// Evaluate sizing function
 	shared_array3<double> pop_array(m_shape);
-	auto pop_array_accessors = pop_array->get_const_accessors();
 	internal_sizing_func(pop_array(),m_narrowband_mask,m_solid,m_fluid,velocity,dt);
 	//
 	sizing_array.clear(0.0);
@@ -214,22 +202,21 @@ void macexnbflip3::sizing_func( array3<double> &sizing_array, const bitarray3 &m
 		if( m_particles.size()) {
 			m_parallel.for_each(m_particles.size(),[&]( size_t n, int tn ) {
 				Particle &p = m_particles[n];
-				p.sizing_value = std::max(p.sizing_value,array_interpolator3::interpolate<double>(pop_array_accessors[tn],p.p/m_dx-vec3d(0.5,0.5,0.5)));
+				p.sizing_value = std::max(p.sizing_value,array_interpolator3::interpolate<double>(pop_array(),p.p/m_dx-vec3d(0.5,0.5,0.5)));
 			});
 		}
 		// Assign initial value
 		sizing_array.activate_as(pop_array());
 		sizing_array.parallel_actives([&]( int i, int j, int k, auto &it, int tn ) {
-			it.set(std::max(0.0,std::min(1.0,pop_array_accessors[tn](i,j,k))));
+			it.set(std::max(0.0,std::min(1.0,pop_array()(i,j,k))));
 		});
 	}
 	//
 	// Assign sizing value
 	if( m_particles.size()) {
-		auto sizing_array_accessor = sizing_array.get_serial_accessor();
 		for( unsigned n=0; n<m_particles.size(); ++n ) {
 			vec3i pi = m_shape.clamp(m_particles[n].p/m_dx);
-			sizing_array_accessor.set(pi,std::max(sizing_array_accessor(pi),std::min(1.0,m_particles[n].sizing_value)));
+			sizing_array.set(pi,std::max(sizing_array(pi),std::min(1.0,m_particles[n].sizing_value)));
 		}
 	}
 }

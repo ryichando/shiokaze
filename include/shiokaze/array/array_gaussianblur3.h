@@ -58,7 +58,6 @@ namespace array_gaussianblur3 {
 			}
 		};
 		shared_array3<T> save (array);
-		auto save_accessors = save->get_const_accessors();
 		//
 		for( int dim : DIMS3 ) {
 			result.parallel_all([&](int i, int j, int k, auto &it, int tn) {
@@ -71,7 +70,7 @@ namespace array_gaussianblur3 {
 						int nk = k+(dim==2)*q;
 						const double &wght = exp_w[q+rs];
 						if(valid(ni,nj,nk)) {
-							T value = save_accessors[tn](save->shape().clamp(ni,nj,nk));
+							T value = save()(save->shape().clamp(ni,nj,nk));
 							val += value * wght;  wsum += wght;
 						}
 					}

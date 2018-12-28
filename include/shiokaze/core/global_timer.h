@@ -24,6 +24,7 @@
 //
 #ifndef SHKZ_GLOBAL_TIMER_H
 #define SHKZ_GLOBAL_TIMER_H
+#include <shiokaze/core/common.h>
 //
 SHKZ_BEGIN_NAMESPACE
 //

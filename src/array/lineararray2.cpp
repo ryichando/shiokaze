@@ -164,12 +164,6 @@ private:
 		}
 	}
 	//
-	virtual void* generate_cache() const override {
-		return nullptr;
-	}
-	virtual void destroy_cache( void *cache ) const override {
-	}
-	//
 	bool check_bound( int i, int j ) const {
 		if( i >= 0 && j >= 0 && i < m_nx && j < m_ny ) {
 			return true;
@@ -179,7 +173,7 @@ private:
 		}
 	}
 	//
-	virtual void set( int i, int j, std::function<void(void *value_ptr, bool &active)> func, void *cache=nullptr ) override {
+	virtual void set( int i, int j, std::function<void(void *value_ptr, bool &active)> func ) override {
 		//
 		assert(check_bound(i,j));
 		const size_t n = encode(i,j);
@@ -194,7 +188,7 @@ private:
 		else mask &= ~(1UL << n%8);
 	}
 	//
-	virtual const void * operator()( int i, int j, bool &filled, void *cache=nullptr ) const override {
+	virtual const void * operator()( int i, int j, bool &filled ) const override {
 		//
 		assert(check_bound(i,j));
 		const size_t n = encode(i,j);

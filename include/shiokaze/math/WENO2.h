@@ -38,19 +38,19 @@ class WENO2 {
 public:
 	/**
 	 \~english @brief Interpolate using WENO interpolation.
-	 @param[in] accessor Grid accessor.
+	 @param[in] array Grid.
 	 @param[in] p Position in index coordinate.
 	 @param[in] order Order of WENO interpolation. Either 6 or 4 is available.
 	 @return Interpolated value.
 	 \~japanese @brief WENO 補間を行う。
-	 @param[in] accessor グリッドのアクセッサー。
+	 @param[in] array グリッド。
 	 @param[in] p インデックス空間の位置。
 	 @param[in] order WENO の次数。4 あるいは 6 が指定可能。
 	 @return 補間結果。
 	 */
-	static vec2d interpolate( array2<vec2d>::const_accessor &accessor, const vec2d &p, unsigned order=6 ) {
+	static vec2d interpolate( const array2<vec2d> &array, const vec2d &p, unsigned order=6 ) {
 		//
-		const auto shape = accessor.shape();
+		const auto shape = array.shape();
 		double x = std::max(0.0,std::min(shape.w-1.,p[0]));
 		double y = std::max(0.0,std::min(shape.h-1.,p[1]));
 		//
@@ -63,7 +63,7 @@ public:
 				double vv[6];
 				for( int jj=0; jj<6; ++jj ) {
 					double v[6];
-					for( int ii=0; ii<6; ++ii ) v[ii] = accessor(shape.clamp(i+ii-2,j+jj-2))[dim];
+					for( int ii=0; ii<6; ++ii ) v[ii] = array(shape.clamp(i+ii-2,j+jj-2))[dim];
 					vv[jj] = WENO::interp6(x-i,v);
 				}
 				result[dim] = WENO::interp6(y-j,vv);
@@ -71,7 +71,7 @@ public:
 				double vv[4];
 				for( int jj=0; jj<4; ++jj ) {
 					double hv[4];
-					for( int ii=0; ii<4; ++ii ) hv[ii] = accessor(shape.clamp(i+ii-1,j+jj-1))[dim];
+					for( int ii=0; ii<4; ++ii ) hv[ii] = array(shape.clamp(i+ii-1,j+jj-1))[dim];
 					vv[jj] = WENO::interp4(x-i,hv);
 				}
 				result[dim] = WENO::interp4(y-j,vv);
@@ -84,35 +84,19 @@ public:
 	}
 	/**
 	 \~english @brief Interpolate using WENO interpolation.
-	 @param[in] array Grid to interpolate.
+	 @param[in] array Grid.
 	 @param[in] p Position in index coordinate.
 	 @param[in] order Order of WENO interpolation. Either 6 or 4 is available.
 	 @return Interpolated value.
 	 \~japanese @brief WENO 補間を行う。
-	 @param[in] array 補間を行うグリッド。
+	 @param[in] array グリッド。
 	 @param[in] p インデックス空間の位置。
 	 @param[in] order WENO の次数。4 あるいは 6 が指定可能。
 	 @return 補間結果。
 	 */
-	static vec2d interpolate( const array2<vec2d> &array, const vec2d &p, unsigned order=6 ) {
-		auto accessor = array.get_const_accessor();
-		return interpolate(accessor,p,order);
-	}
-	/**
-	 \~english @brief Interpolate using WENO interpolation.
-	 @param[in] accessor Grid accessor.
-	 @param[in] p Position in index coordinate.
-	 @param[in] order Order of WENO interpolation. Either 6 or 4 is available.
-	 @return Interpolated value.
-	 \~japanese @brief WENO 補間を行う。
-	 @param[in] accessor グリッドのアクセッサー。
-	 @param[in] p インデックス空間の位置。
-	 @param[in] order WENO の次数。4 あるいは 6 が指定可能。
-	 @return 補間結果。
-	 */
-	static double interpolate( array2<double>::const_accessor &accessor, const vec2d &p, unsigned order=6 ) {
+	static double interpolate( const array2<double> &array, const vec2d &p, unsigned order=6 ) {
 		//
-		const auto shape = accessor.shape();
+		const auto shape = array.shape();
 		double x = std::max(0.0,std::min(shape.w-1.,p[0]));
 		double y = std::max(0.0,std::min(shape.h-1.,p[1]));
 		//
@@ -123,7 +107,7 @@ public:
 			double vv[6];
 			for( int jj=0; jj<6; ++jj ) {
 				double v[6];
-				for( int ii=0; ii<6; ++ii ) v[ii] = accessor(shape.clamp(i+ii-2,j+jj-2));
+				for( int ii=0; ii<6; ++ii ) v[ii] = array(shape.clamp(i+ii-2,j+jj-2));
 				vv[jj] = WENO::interp6(x-i,v);
 			}
 			return WENO::interp6(y-j,vv);
@@ -131,7 +115,7 @@ public:
 			double vv[4];
 			for( int jj=0; jj<4; ++jj ) {
 				double v[4];
-				for( int ii=0; ii<4; ++ii ) v[ii] = accessor(shape.clamp(i+ii-1,j+jj-1));
+				for( int ii=0; ii<4; ++ii ) v[ii] = array(shape.clamp(i+ii-1,j+jj-1));
 				vv[jj] = WENO::interp4(x-i,v);
 			}
 			return WENO::interp4(y-j,vv);
@@ -140,23 +124,6 @@ public:
 			exit(0);
 		}
 	}
-	/**
-	 \~english @brief Interpolate using WENO interpolation.
-	 @param[in] array Grid to interpolate.
-	 @param[in] p Position in index coordinate.
-	 @param[in] order Order of WENO interpolation. Either 6 or 4 is available.
-	 @return Interpolated value.
-	 \~japanese @brief WENO 補間を行う。
-	 @param[in] array 補間を行うグリッド。
-	 @param[in] p インデックス空間の位置。
-	 @param[in] order WENO の次数。4 あるいは 6 が指定可能。
-	 @return 補間結果。
-	 */
-	static double interpolate( const array2<double> &array, const vec2d &p, unsigned order=6 ) {
-		auto accessor = array.get_const_accessor();
-		return interpolate(accessor,p,order);
-	}
-	//
 };
 //
 SHKZ_END_NAMESPACE

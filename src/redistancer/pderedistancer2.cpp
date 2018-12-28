@@ -48,24 +48,21 @@ private:
 		shared_array2<double> phi_array0 (phi_array);
 		//
 		shared_array2<double> smoothed_sgns (phi_array.type());
-		auto phi_array0_accessors = phi_array0->get_const_accessors();
 		smoothed_sgns->activate_as(phi_array);
 		smoothed_sgns->parallel_actives([&](int i, int j, auto &it, int tn) {
-			it.set(smoothed_sgn(phi_array0_accessors[tn](i,j),dx));
+			it.set(smoothed_sgn(phi_array0()(i,j),dx));
 		});
 		//
-		auto smoothed_sgns_accessors = smoothed_sgns->get_const_accessors();
 		auto derivative = [&]( const array2<double> &phi_array, array2<double> &phi_array_derivative ) {
 			//
 			phi_array_derivative.clear();
 			phi_array_derivative.activate_as(phi_array);
 			//
-			auto phi_array_accessors = phi_array.get_const_accessors();
 			phi_array_derivative.parallel_actives([&](int i, int j, auto &it, int tn) {
 				//
-				const double &sgn0 = smoothed_sgns_accessors[tn](i,j);
-				const double &phi0 = phi_array0_accessors[tn](i,j);
-				const double &phi = phi_array_accessors[tn](i,j);
+				const double &sgn0 = smoothed_sgns()(i,j);
+				const double &phi0 = phi_array0()(i,j);
+				const double &phi = phi_array(i,j);
 				//
 				// Evaluate upwind gradient
 				vec2d gradient;
@@ -73,12 +70,12 @@ private:
 				for( int dim : DIMS2 ) {
 					int select_direction (0);
 					double tmp_phi (sgn0*phi), phi_backward, phi_backward0, phi_forward, phi_forward0, g (0.0);
-					if( ij[dim] > 0 && phi_array_accessors[tn].active(i-(dim==0),j-(dim==1))) {
-						phi_backward = phi_array_accessors[tn](i-(dim==0),j-(dim==1));
+					if( ij[dim] > 0 && phi_array.active(i-(dim==0),j-(dim==1))) {
+						phi_backward = phi_array(i-(dim==0),j-(dim==1));
 						if( sgn0*phi_backward < tmp_phi ) select_direction = -1;
 					}
-					if( ij[dim] < phi_array.shape()[dim]-1 && phi_array_accessors[tn].active(i+(dim==0),j+(dim==1))) {
-						phi_forward = phi_array_accessors[tn](i+(dim==0),j+(dim==1));
+					if( ij[dim] < phi_array.shape()[dim]-1 && phi_array.active(i+(dim==0),j+(dim==1))) {
+						phi_forward = phi_array(i+(dim==0),j+(dim==1));
 						if( sgn0*phi_forward < tmp_phi ) {
 							if( select_direction == 0 ) select_direction = 1;
 							else if( sgn0*phi_forward < sgn0*phi_backward ) {
@@ -87,7 +84,7 @@ private:
 						}
 					}
 					if( select_direction == -1 ) {
-						phi_backward0 = phi_array0_accessors[tn](i-(dim==0),j-(dim==1));
+						phi_backward0 = phi_array0()(i-(dim==0),j-(dim==1));
 						double frac = utility::fraction(phi0,phi_backward0);
 						if( frac == 1.0 || frac == 0.0 ) {
 							g = (phi-phi_backward) / dx;
@@ -96,7 +93,7 @@ private:
 							else g = phi / (dx * (1.0-frac));
 						}
 					} else if( select_direction == 1 ) {
-						phi_forward0 = phi_array0_accessors[tn](i+(dim==0),j+(dim==1));
+						phi_forward0 = phi_array0()(i+(dim==0),j+(dim==1));
 						double frac = utility::fraction(phi0,phi_forward0);
 						if( frac == 1.0 || frac == 0.0 ) {
 							g = (phi_forward-phi) / dx;

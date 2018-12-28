@@ -46,8 +46,7 @@ namespace array_extrapolator2 {
 	 */
 	template<class T> unsigned extrapolate_if ( array2<T> &array, std::function<bool(int i, int j, int thread_index )> func, int count=1 ) {
 		//
-		auto acessors = array.get_const_accessors();
-		std::vector<unsigned> counters(acessors.size());
+		std::vector<unsigned> counters(array.get_thread_num());
 		const shape2 shape(array.shape());
 		//
 		array.dilate([&](int i, int j, auto &it, int tn ) {
@@ -58,8 +57,8 @@ namespace array_extrapolator2 {
 				for( int nq=0; nq<4; nq++ ) {
 					vec2i qi (query[nq]);
 					if( ! shape.out_of_bounds(qi) ) {
-						if( acessors[tn].active(qi)) {
-							sum += acessors[tn](qi);
+						if( array.active(qi)) {
+							sum += array(qi);
 							weight ++;
 						}
 					}

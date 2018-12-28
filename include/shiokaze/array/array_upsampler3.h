@@ -43,22 +43,20 @@ namespace array_upsampler3 {
 	 */
 	template<class T> void upsample_to_double_cell( const array3<T> &array, double dx, array3<T> &doubled_array ) {
 		//
-		auto doubled_array_accessor = doubled_array.get_serial_accessor();
 		assert(doubled_array.shape() == 2*array.shape());
 		//
 		array.const_serial_actives([&]( int i, int j, int k, auto &it ) {
 			for( int ii=0; ii<2; ++ii ) for( int jj=0; jj<2; ++jj ) for( int kk=0; kk<2; ++kk ) {
 				vec3i pi (2*i+ii,2*j+jj,2*k+kk);
 				if( ! doubled_array.shape().out_of_bounds(pi)) {
-					doubled_array_accessor.set(pi,0.0);
+					doubled_array.set(pi,0.0);
 				}
 			}
 		});
 		//
-		auto array_accessors = array.get_const_accessors();
 		doubled_array.parallel_actives([&]( int i, int j, int k, auto &it, int tn) {
 			vec3d p = 0.5*vec3i(i,j,k).cell()-vec3d(0.5,0.5,0.5);
-			it.set(array_interpolator3::interpolate<double>(array_accessors[tn],p));
+			it.set(array_interpolator3::interpolate<double>(array,p));
 		});
 		//
 		if( array.get_levelset_halfwidth()) {
@@ -77,23 +75,20 @@ namespace array_upsampler3 {
 	 */
 	template<class T> void upsample_to_double_nodal( const array3<T> &array, double dx, array3<T> &doubled_array ) {
 		//
-		auto doubled_array_accessor = doubled_array.get_serial_accessor();
 		assert(doubled_array.shape() == 2*array.shape()-shape3(1,1,1));
 		//
-		auto doubled_accessor = doubled_array.get_serial_accessor();
 		array.const_serial_actives([&]( int i, int j, int k, auto &it ) {
 			for( int ii=0; ii<2; ++ii ) for( int jj=0; jj<2; ++jj ) for( int kk=0; kk<2; ++kk ) {
 				vec3i pi (2*i+ii,2*j+jj,2*k+kk);
 				if( ! doubled_array.shape().out_of_bounds(pi)) {
-					doubled_accessor.set(pi,0.0);
+					doubled_array.set(pi,0.0);
 				}
 			}
 		});
 		//
-		auto array_accessors = array.get_const_accessors();
 		doubled_array.parallel_actives([&]( int i, int j, int k, auto &it, int tn) {
 			vec3d p = 0.5*vec3i(i,j,k).nodal();
-			it.set(array_interpolator3::interpolate<double>(array_accessors[tn],p));
+			it.set(array_interpolator3::interpolate<double>(array,p));
 		});
 		//
 		if( array.get_levelset_halfwidth()) {

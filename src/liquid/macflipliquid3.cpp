@@ -76,29 +76,6 @@ void macflipliquid3::idle() {
 	shared_macarray3<double> momentum(m_shape);
 	shared_macarray3<double> mass(m_shape);
 	//
-	// Inject liquid
-	shared_array3<double> inject_fluid(m_shape);
-	inject_fluid->set_as_levelset(m_dx);
-	shared_macarray3<double> inject_velocity(m_shape);
-	double amount_injected;
-	bool injected = inject_liquid(dt,inject_fluid(),inject_velocity(),amount_injected);
-	if( injected ) {
-		m_flip->seed(inject_fluid(),inject_velocity());
-		m_flip->get_levelset(m_fluid);
-		auto m_velocity_accessor = m_velocity.get_serial_accessor();
-		inject_velocity->const_serial_actives([&]( int dim, int i, int j, int k, const auto &it ) {
-			m_velocity_accessor.set(dim,i,j,k,it());
-		});
-		if( m_previous_injected ) {
-			m_initial_volume += amount_injected;
-		} else {
-			m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
-			m_previous_injected = true;
-		}
-	} else {
-		m_previous_injected = false;
-	}
-	//
 	// Advect FLIP particles and get the levelset after the advection
 	m_flip->advect(m_velocity,m_timestepper->get_current_time(),dt);
 	m_flip->get_levelset(m_fluid);
@@ -118,23 +95,17 @@ void macflipliquid3::idle() {
 	// Compute the combined grid velocity
 	timer.tick(); console::dump( "Computing combined grid velocity..." );
 	//
-	auto mass_accessors = mass->get_const_accessors();
-	auto face_density_accessors = face_density->get_const_accessors();
-	auto velocity_accessors = m_velocity.get_const_accessors();
-	auto momentum_accessors = momentum->get_const_accessors();
-	//
 	shared_macarray3<double> overwritten_velocity(m_shape);
 	overwritten_velocity->activate_as(mass());
 	overwritten_velocity->parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn ) {
-		double m = mass_accessors[tn](dim,i,j,k);
-		double grid_mass = std::max(0.0,face_density_accessors[tn](dim,i,j,k)-m);
-		it.set((grid_mass*velocity_accessors[tn](dim,i,j,k)+momentum_accessors[tn](dim,i,j,k)) / (grid_mass+m));
+		double m = mass()[dim](i,j,k);
+		double grid_mass = std::max(0.0,face_density()[dim](i,j,k)-m);
+		it.set((grid_mass*m_velocity[dim](i,j,k)+momentum()[dim](i,j,k)) / (grid_mass+m));
 	});
 	//
 	// Velocity overwrite
-	auto velocity_accessor = m_velocity.get_serial_accessor();
 	overwritten_velocity->const_serial_actives([&](int dim, int i, int j, int k, auto &it) {
-		velocity_accessor.set(dim,i,j,k,it());
+		m_velocity[dim].set(i,j,k,it());
 	});
 	console::dump( "Done. Took %s\n", timer.stock("compute_combined_velocity").c_str());
 	//

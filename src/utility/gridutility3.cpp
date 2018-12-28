@@ -50,12 +50,11 @@ private:
 		for( unsigned ii=0; ii<2; ii++ ) for( unsigned jj=0; jj<2; jj++ ) for( unsigned kk=0; kk<2; kk++ ) {
 			result.activate_as(nodal_array,-vec3i(ii,jj,kk));
 		}
-		auto accessors = nodal_array.get_const_accessors(result.get_thread_num());
 		result.parallel_actives([&](int i, int j, int k, auto& it, int tn) {
 			double value (0.0);
 			double wsum = 0.0;
 			for( unsigned ii=0; ii<2; ii++ ) for( unsigned jj=0; jj<2; jj++ ) for( unsigned kk=0; kk<2; kk++ ) {
-				value += accessors[tn](i+ii,j+jj,k+kk);
+				value += nodal_array(i+ii,j+jj,k+kk);
 				wsum ++;
 			}
 			value = value / wsum;
@@ -74,13 +73,10 @@ private:
 			copy_solid->set_as_levelset(m_dx);
 			copy_solid->flood_fill();
 			//
-			auto fluid_accessors = fluid.get_const_accessors(combined.get_thread_num());
-			auto copy_solid_accessors = copy_solid->get_const_accessors();
-			//
 			combined.activate_as(fluid);
 			combined.activate_as(copy_solid());
 			combined.parallel_actives([&](int i, int j, int k, auto& it, int tn) {
-				it.set(std::max(fluid_accessors[tn](i,j,k),-solid_offset-copy_solid_accessors[tn](i,j,k)));
+				it.set(std::max(fluid(i,j,k),-solid_offset-copy_solid()(i,j,k)));
 			});
 			combined.set_as_levelset(m_dx);
 			combined.flood_fill();
@@ -97,32 +93,30 @@ private:
 			fluid.copy(combined());
 			shared_array3<double> old_fluid = shared_array3<double>(fluid);
 			//
-			auto solid_accessors = solid.get_const_accessors();
-			auto old_fluid_accessors = old_fluid->get_const_accessors();
 			bool is_fluid_nodal = fluid.shape() == m_shape.nodal();
 			//
 			const double limit_y = sin(M_PI/4.0);
 			fluid.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 				vec3d p = is_fluid_nodal ? vec3d(i,j,k) : vec3i(i,j,k).cell();
-				double solid_levelset = is_fluid_nodal ? solid_accessors[tn](i,j,k) : array_interpolator3::interpolate<double>(solid_accessors[tn],p);
+				double solid_levelset = is_fluid_nodal ? solid(i,j,k) : array_interpolator3::interpolate<double>(solid,p);
 				if( solid_levelset < threshold && solid_levelset > -m_param.extrapolation_toward_solid*m_dx ) {
 					if( m_param.solid_wall_extrapolation ) {
 						double derivative[DIM3];
-						array_derivative3::derivative(solid_accessors[tn],p,derivative);
+						array_derivative3::derivative(solid,p,derivative);
 						vec3d normal = vec3d(derivative).normal();
 						for( unsigned dim : DIMS3 ) {
 							p[dim] = std::min(1.0,std::max(0.0,p[dim]));
 						}
 						if( normal.norm2() ) {
 							vec3d index_p_n = vec3d(i,j,k)+(-solid_levelset/m_dx)*normal;
-							double value = array_interpolator3::interpolate<double>(old_fluid_accessors[tn],index_p_n);
+							double value = array_interpolator3::interpolate<double>(old_fluid(),index_p_n);
 							if( m_param.horizontal_solid_extrapolation && normal[1] < limit_y ) {
 								vec3d normal_horizontal = normal;
 								normal_horizontal[1] = 0.0;
 								normal_horizontal.normalize();
 								if( normal_horizontal.norm2() ) {
 									vec3d index_p_h = vec3d(i,j,k)+(-solid_levelset/m_dx)*normal_horizontal;
-									value = std::min(value,array_interpolator3::interpolate<double>(old_fluid_accessors[tn],index_p_h));
+									value = std::min(value,array_interpolator3::interpolate<double>(old_fluid(),index_p_h));
 								}
 							}
 							it.set(value);
@@ -136,7 +130,6 @@ private:
 				}
 			});
 			//
-			auto fluid_accessors = fluid.get_const_accessors();
 			fluid.dilate([&]( int i, int j, int k, auto &it, int tn) {
 				if( it() >= 0.0 ) {
 					vec3i query[] = {vec3i(i+1,j,k),vec3i(i-1,j,k),vec3i(i,j+1,k),
@@ -144,7 +137,7 @@ private:
 					for( int nq=0; nq<6; nq++ ) {
 						vec3i qi (query[nq]);
 						if( ! m_shape.out_of_bounds(qi) ) {
-							if( fluid_accessors[tn](qi) < 0.0 ) {
+							if( fluid(qi) < 0.0 ) {
 								it.set(m_dx);
 								break;
 							}
@@ -158,15 +151,14 @@ private:
 	}
 	virtual void compute_gradient( const array3<double> &levelset, array3<vec3d> &gradient ) const override {
 		//
-		auto levelset_accessors = levelset.get_const_accessors();
 		gradient.activate_as(levelset);
 		gradient.dilate();
 		gradient.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			vec3d grad;
 			for( unsigned dim : DIMS3 ) {
 				grad[dim] = 
-					array_interpolator3::interpolate<double>(levelset_accessors[tn],vec3i(i,j,k).cell()+0.5*vec3d(dim==0,dim==1,dim==2)) -
-					array_interpolator3::interpolate<double>(levelset_accessors[tn],vec3i(i,j,k).cell()-0.5*vec3d(dim==0,dim==1,dim==2));
+					array_interpolator3::interpolate<double>(levelset,vec3i(i,j,k).cell()+0.5*vec3d(dim==0,dim==1,dim==2)) -
+					array_interpolator3::interpolate<double>(levelset,vec3i(i,j,k).cell()-0.5*vec3d(dim==0,dim==1,dim==2));
 			}
 			it.set(grad/m_dx);
 		});
@@ -200,7 +192,6 @@ private:
 	virtual void mark_narrowband( array3<double> &levelset, unsigned half_cells ) const override {
 		//
 		shared_array3<double> old_levelset(levelset);
-		auto old_levelset_accessors = old_levelset->get_const_accessors();
 		levelset.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			//
 			vec3i ijk (i,j,k);
@@ -209,8 +200,8 @@ private:
 			for( int dim : DIMS3 ) {
 				if( ijk[dim] > 0 ) {
 					vec3i np(i-(dim==0),j-(dim==1),k-(dim==2));
-					if( old_levelset_accessors[tn].active(np) ) {
-						if( phi * old_levelset_accessors[tn](np) < 0.0 ) {
+					if( old_levelset->active(np) ) {
+						if( phi * old_levelset()(np) < 0.0 ) {
 							should_set_off = false;
 							break;
 						}
@@ -218,8 +209,8 @@ private:
 				}
 				if( ijk[dim] < levelset.shape()[dim]-1 ) {
 					vec3i np(i+(dim==0),j+(dim==1),k+(dim==2));
-					if( old_levelset_accessors[tn].active(np) ) {
-						if( phi * old_levelset_accessors[tn](np) < 0.0 ) {
+					if( old_levelset->active(np) ) {
+						if( phi * old_levelset()(np) < 0.0 ) {
 							should_set_off = false;
 							break;
 						}
@@ -230,15 +221,14 @@ private:
 		});
 		//
 		if( half_cells > 1 ) {
-			auto levelset_accessors = levelset.get_const_accessors();
 			for( int count=0; count<half_cells-1; ++count) levelset.dilate([&](int i, int j, int k, auto &it, int tn) {
 				vec3i query[] = {vec3i(i-1,j,k),vec3i(i+1,j,k),vec3i(i,j-1,k),vec3i(i,j+1,k),vec3i(i,j,k-1),vec3i(i,j,k+1)};
 				double extrapolated_value (0.0);
 				for( int nq=0; nq<6; nq++ ) {
 					const vec3i &qi = query[nq];
 					if( ! levelset.shape().out_of_bounds(qi) ) {
-						if( levelset_accessors[tn].active(qi) ) {
-							const double &value = levelset_accessors[tn](qi);
+						if( levelset.active(qi) ) {
+							const double &value = levelset(qi);
 							if( value < 0.0 ) {
 								extrapolated_value = std::min(extrapolated_value,extrapolated_value-m_dx);
 								break;
@@ -255,25 +245,24 @@ private:
 	}
 	void mark_narrowband( const array3<double> &levelset, array3<char> &flag, unsigned half_cells ) const {
 		//
-		auto levelset_accessors = levelset.get_const_accessors();
 		flag.clear(0);
 		flag.activate_as(levelset);
 		flag.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			//
 			vec3i ijk (i,j,k);
-			const double &phi = levelset_accessors[tn](i,j,k);
+			const double &phi = levelset(i,j,k);
 			bool should_set_off(true);
 			//
 			for( int dim : DIMS3 ) {
 				if( should_set_off && ijk[dim] > 0 ) {
-					if( phi * levelset_accessors[tn](i-(dim==0),j-(dim==1),k-(dim==2)) < 0.0 ) {
+					if( phi * levelset(i-(dim==0),j-(dim==1),k-(dim==2)) < 0.0 ) {
 						it.set(phi < 0.0 ? -1 : 1);
 						should_set_off = false;
 						break;
 					}
 				}
 				if( should_set_off && ijk[dim] < levelset.shape()[dim]-1 ) {
-					if( phi * levelset_accessors[tn](i+(dim==0),j+(dim==1),k+(dim==2)) < 0.0 ) {
+					if( phi * levelset(i+(dim==0),j+(dim==1),k+(dim==2)) < 0.0 ) {
 						it.set(phi < 0.0 ? -1 : 1);
 						should_set_off = false;
 						break;
@@ -284,13 +273,12 @@ private:
 		});
 		//
 		if( half_cells > 1 ) {
-			auto flag_accessors = flag.get_const_accessors();
 			for( int count=0; count<half_cells-1; ++count) flag.dilate([&](int i, int j, int k, auto &it, int tn) {
 				vec3i query[] = {vec3i(i-1,j,k),vec3i(i+1,j,k),vec3i(i,j-1,k),vec3i(i,j+1,k),vec3i(i,j,k-1),vec3i(i,j,k+1)};
 				for( int nq=0; nq<6; nq++ ) {
 					const vec3i &qi = query[nq];
 					if( ! flag.shape().out_of_bounds(qi) ) {
-						const char &value = flag_accessors[tn](qi);
+						const char &value = flag(qi);
 						if( value ) {
 							it.set(value < 0 ? -2-(char)count : 2+(char)count);
 							break;
@@ -304,9 +292,8 @@ private:
 		//
 		shared_array3<char> flag(levelset.shape());
 		mark_narrowband(levelset,flag(),levelset.get_levelset_halfwidth());
-		auto flag_accessors = flag->get_const_accessors();
 		levelset.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
-			if( ! flag_accessors[tn](i,j,k)) it.set_off();
+			if( ! flag()(i,j,k)) it.set_off();
 		});
 	}
 	//
@@ -437,14 +424,13 @@ private:
 		shared_array3<double> combined = shared_array3<double>(fluid.type());
 		combine_levelset(solid,fluid,combined());
 		//
-		auto combined_accessors = combined->get_const_accessors();
-		std::vector<double> volume_buckets(combined_accessors.size(),0.0);
+		std::vector<double> volume_buckets(combined->get_thread_num(),0.0);
 		auto shrunk_shape = combined->shape()-shape3(1,1,1);
 		//
 		auto accumulation_body = [&]( int i, int j, int k, int tn ) {
 			double cell_fluid[2][2][2];
 			for( int ii=0; ii<2; ++ii ) for( int jj=0; jj<2; ++jj ) for( int kk=0; kk<2; ++kk ) {
-				cell_fluid[ii][jj][kk] = combined_accessors[tn](i+ii,j+jj,k+kk);
+				cell_fluid[ii][jj][kk] = combined()(i+ii,j+jj,k+kk);
 				volume_buckets[tn] += get_cell_volume(cell_fluid);
 			}
 		};

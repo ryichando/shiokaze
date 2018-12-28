@@ -63,16 +63,6 @@ private:
 			return i+j*w;
 		};
 		//
-		// Make accessors
-		auto fluid_accessors = fluid.get_const_accessors();
-		auto solid_accessors = solid.get_const_accessors();
-		auto rho_accessors = rhos->get_const_accessors();
-		auto area_accessors = areas->get_const_accessors();
-		auto velocity_accessors = velocity.get_const_accessors();
-		auto E_acessors = E_array->get_const_accessors();
-		auto corner_remap_accessors = corner_remap->get_const_accessors();
-		auto visited_acessors = visited->get_const_accessors();
-		//
 		// Compute fractions
 		m_macutility->compute_area_fraction(solid,areas());
 		m_macutility->compute_fluid_fraction(fluid,rhos());
@@ -85,27 +75,26 @@ private:
 			curvature->activate_as(fluid);
 	 		curvature->parallel_actives([&](int i, int j, auto &it, int tn ) {
 				double value = (
-					+ fluid_accessors[tn](m_shape.clamp(i-1,j))
-					+ fluid_accessors[tn](m_shape.clamp(i+1,j))
-					+ fluid_accessors[tn](m_shape.clamp(i,j-1))
-					+ fluid_accessors[tn](m_shape.clamp(i,j+1))
-					- 4.0*fluid_accessors[tn](i,j)
+					+ fluid(m_shape.clamp(i-1,j))
+					+ fluid(m_shape.clamp(i+1,j))
+					+ fluid(m_shape.clamp(i,j-1))
+					+ fluid(m_shape.clamp(i,j+1))
+					- 4.0*fluid(i,j)
 				) / (m_dx*m_dx);
 				it.set(value);
 			});
 			//
 			double kappa = m_param.surftens_k;
-			auto curvature_acessors = curvature->get_const_accessors();
 			velocity.parallel_actives([&](int dim, int i, int j, auto &it, int tn ) {
-				double rho = rho_accessors[tn](dim,i,j);
+				double rho = rhos()[dim](i,j);
 				//
 				// Embed ordinary 2nd order surface tension force
 				if( rho && rho < 1.0 ) {
-					double sgn = fluid_accessors[tn](m_shape.clamp(i,j)) < 0.0 ? -1.0 : 1.0;
+					double sgn = fluid(m_shape.clamp(i,j)) < 0.0 ? -1.0 : 1.0;
 					double theta = sgn < 0 ? 1.0-rho : rho;
 					double face_c = 
-						theta*curvature_acessors[tn](m_shape.clamp(i,j))
-						+(1.0-theta)*curvature_acessors[tn](m_shape.clamp(i-(dim==0),j-(dim==1)));
+						theta*curvature()(m_shape.clamp(i,j))
+						+(1.0-theta)*curvature()(m_shape.clamp(i-(dim==0),j-(dim==1)));
 					it.increment( -sgn * dt / (m_dx*rho) * kappa * face_c );
 				}
 			});
@@ -141,7 +130,7 @@ private:
 			for( int dim : DIMS2 ) {
 				m_parallel.for_each(areas()[dim].shape(),[&]( int i, int j, int tn ) {
 					unsigned row = Xf(i,j,dim);
-					double area = area_accessors[tn](dim,i,j);
+					double area = areas()[dim](i,j);
 					A[row] = area;
 				});
 			}
@@ -163,7 +152,7 @@ private:
 			for( int dim : DIMS2 ) {
 				m_parallel.for_each(rhos()[dim].shape(),[&]( int i, int j, int tn ) {
 					unsigned row = Xf(i,j,dim);
-					F[row] = rho_accessors[tn](dim,i,j);
+					F[row] = rhos()[dim](i,j);
 				});
 			}
 			return F;
@@ -181,8 +170,8 @@ private:
 				double rho_sum(0.0);
 				double sum(0.0);
 				for( int dim : DIMS2 ) {
-					rho_sum += E_acessors[tn](dim,E_acessors[tn].shape(dim).clamp(i,j));
-					rho_sum += E_acessors[tn](dim,E_acessors[tn].shape(dim).clamp(i-(dim!=0),j-(dim!=1)));
+					rho_sum += E_array()[dim](E_array->shape(dim).clamp(i,j));
+					rho_sum += E_array()[dim](E_array->shape(dim).clamp(i-(dim!=0),j-(dim!=1)));
 					sum ++;
 				}
 				if( rho_sum ) E[row] = rho_sum / sum;
@@ -221,8 +210,8 @@ private:
 			corners->parallel_all([&](int i, int j, auto &it, int tn) {
 				for( int dim : DIMS2 ) {
 					shape2 face_shape(m_shape.face(dim));
-					if( area_accessors[tn](dim,face_shape.clamp(i,j)) == 0.0 ||
-						area_accessors[tn](dim,face_shape.clamp(i-(dim!=0),j-(dim!=1))) == 0.0 ) {
+					if( areas()[dim](face_shape.clamp(i,j)) == 0.0 ||
+						areas()[dim](face_shape.clamp(i-(dim!=0),j-(dim!=1))) == 0.0 ) {
 						it.set(1);
 						break;
 					}
@@ -231,7 +220,7 @@ private:
 			// Assign the degree of freedom there
 			unsigned corner_indices = 0;
 			visited->parallel_all([&](int i, int j, auto &it, int tn) {
-				if( solid_accessors[tn](i,j) < -sqrt(DIM2)*m_dx ) it.set(true);
+				if( solid(i,j) < -sqrt(DIM2)*m_dx ) it.set(true);
 			});
 			//
 			auto markable = [&]( const vec2i &q ) {
@@ -263,9 +252,9 @@ private:
 			auto Z = m_factory->allocate_matrix(Lhs_size,Lhs_size+corner_indices);
 			m_parallel.for_each(corner_remap->shape(),[&]( int i, int j, int tn ) {
 				unsigned row = Xp(i,j);
-				if( corner_remap_accessors[tn](i,j)) {
-					Z->add_to_element(row,Lhs_size+corner_remap_accessors[tn](i,j)-1,1.0);
-				} else if( solid_accessors[tn](i,j) > -m_dx ) {
+				if( corner_remap()(i,j)) {
+					Z->add_to_element(row,Lhs_size+corner_remap()(i,j)-1,1.0);
+				} else if( solid(i,j) > -m_dx ) {
 					Z->add_to_element(row,row,1.0);
 				}
 			});
@@ -357,7 +346,7 @@ private:
 		rhos->const_parallel_all([&](int dim, int i, int j, auto &it, int tn){
 			//
 			unsigned row = Xf(i,j,dim);
-			pu_vector[row] = velocity_accessors[tn](dim,i,j) * it();
+			pu_vector[row] = velocity[dim](i,j) * it();
 		});
 		//
 		// Assign to the vorticity
@@ -444,8 +433,8 @@ private:
 		std::vector<double> u_result = m_CZ->multiply(result);
 		//
 		velocity.parallel_actives([&]( int dim, int i, int j, auto &it, int tn ) {
-			if( area_accessors[tn](dim,i,j) && rho_accessors[tn](dim,i,j) ) {
-				double area = area_accessors[tn](dim,i,j);
+			if( areas()[dim](i,j) && rhos()[dim](i,j) ) {
+				double area = areas()[dim](i,j);
 				unsigned row = Xf(i,j,dim);
 				double rho = F[row];
 				if( area && rho ) it.set( iA[row] * u_result[row]);
@@ -471,23 +460,15 @@ private:
 						const macarray2<double> &areas,
 						const macarray2<double> &rhos) {
 		//
-		// Make accessors
 		shared_array2<double> pressure(m_shape);
-		auto fluid_accessors = fluid.get_const_accessors();
-		auto solid_accessors = solid.get_const_accessors();
-		auto pressure_acessors = pressure->get_const_accessors();
-		auto rho_accessors = rhos.get_const_accessors();
-		auto area_accessors = areas.get_const_accessors();
-		auto velocity_accessors = velocity.get_const_accessors();
 		//
 		// Label cell indices
 		size_t index (0);
 		shared_array2<size_t> index_map(fluid.shape());
-		auto index_map_accessor = index_map->get_serial_accessor();
 		const auto mark_body = [&]( int i, int j ) {
 			//
 			bool inside (false);
-			if( fluid_accessors[0](i,j) < 0.0 ) {
+			if( fluid(i,j) < 0.0 ) {
 				//
 				vec2i query[] = {vec2i(i+1,j),vec2i(i-1,j),vec2i(i,j+1),vec2i(i,j-1)};
 				vec2i face[] = {vec2i(i+1,j),vec2i(i,j),vec2i(i,j+1),vec2i(i,j)};
@@ -495,9 +476,9 @@ private:
 				//
 				for( int nq=0; nq<4; nq++ ) {
 					if( ! m_shape.out_of_bounds(query[nq]) ) {
-						if( fluid_accessors[0](query[nq]) < 0.0 ) {
+						if( fluid(query[nq]) < 0.0 ) {
 							int dim = direction[nq];
-							if( area_accessors[0](dim,face[nq]) && rho_accessors[0](dim,face[nq]) ) {
+							if( areas[dim](face[nq]) && rhos[dim](face[nq]) ) {
 								inside = true;
 								break;
 							}
@@ -506,7 +487,7 @@ private:
 				}
 			}
 			if( inside ) {
-				index_map_accessor.set(i,j,index++);
+				index_map->set(i,j,index++);
 			}
 		};
 		if( fluid.get_background_value() < 0.0 ) {
@@ -521,7 +502,6 @@ private:
 		//
 		auto Lhs = m_factory->allocate_matrix(index,index);
 		auto rhs = m_factory->allocate_vector(index);
-		auto index_map_accessors = index_map->get_const_accessors();
 		//
 		// Volume correction
 		double rhs_correct = 0.0;
@@ -547,14 +527,14 @@ private:
 			for( int nq=0; nq<4; nq++ ) {
 				int dim = direction[nq];
 				if( ! m_shape.out_of_bounds(query[nq]) ) {
-					double area = area_accessors[tn](dim,face[nq]);
+					double area = areas[dim](face[nq]);
 					if( area ) {
-						double rho = rho_accessors[tn](dim,face[nq]);
+						double rho = rhos[dim](face[nq]);
 						if( rho ) {
 							double value = dt*area/(m_dx*m_dx*rho);
-							if( fluid_accessors[tn](query[nq]) < 0.0 ) {
-								assert(index_map_accessors[tn].active(query[nq]));
-								size_t m_index = index_map_accessors[tn](query[nq]);
+							if( fluid(query[nq]) < 0.0 ) {
+								assert(index_map->active(query[nq]));
+								size_t m_index = index_map()(query[nq]);
 								Lhs->add_to_element(n_index,m_index,-value);
 							}
 							diagonal += value;
@@ -570,22 +550,21 @@ private:
 		m_solver->solve(Lhs.get(),rhs.get(),result.get());
 		//
 		// Re-arrange to the array
-		auto pressure_acessor = pressure->get_serial_accessor();
 		pressure->clear();
 		index_map->const_serial_actives([&](int i, int j, const auto& it) {
-			pressure_acessor.set(i,j,result->at(it()));
+			pressure->set(i,j,result->at(it()));
 		});
 		//
 		// Update the full velocity
 		velocity.parallel_actives([&](int dim, int i, int j, auto &it, int tn ) {
-			double rho = rho_accessors[tn](dim,i,j);
-			if( area_accessors[tn](dim,i,j) && rho ) {
+			double rho = rhos[dim](i,j);
+			if( areas[dim](i,j) && rho ) {
 				vec2i pi(i,j);
 				if( pi[dim] == 0 || pi[dim] == velocity.shape()[dim] ) it.set(0.0);
 				else {
 					it.subtract( dt * (
-						+ pressure_acessors[tn](m_shape.clamp(i,j))
-						- pressure_acessors[tn](m_shape.clamp(i-(dim==0),j-(dim==1)))
+						+ pressure()(m_shape.clamp(i,j))
+						- pressure()(m_shape.clamp(i-(dim==0),j-(dim==1)))
 					) / (rho*m_dx));
 				}
 			}

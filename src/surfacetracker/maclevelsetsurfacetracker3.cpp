@@ -83,32 +83,31 @@ private:
 		} else {
 			fluid_closed->copy(m_fluid);
 		}
-		auto fluid_closed_accessor = fluid_closed->get_serial_accessor();
 		const double eps (0.01*m_dx);
 		//
 		// Front and back
 		double value;
 		for( int i=0; i<m_shape[0]; ++i ) for( int j=0; j<m_shape[1]; ++j ) {
-			value = fluid_closed_accessor(i,j,0);
-			if( value < 0.0 ) fluid_closed_accessor.set(i,j,0,eps);
-			value = fluid_closed_accessor(i,j,m_shape[2]-1);
-			if( value < 0.0 ) fluid_closed_accessor.set(i,j,m_shape[2]-1,eps);
+			value = fluid_closed()(i,j,0);
+			if( value < 0.0 ) fluid_closed().set(i,j,0,eps);
+			value = fluid_closed()(i,j,m_shape[2]-1);
+			if( value < 0.0 ) fluid_closed().set(i,j,m_shape[2]-1,eps);
 		}
 		//
 		// Left and right
 		for( int j=0; j<m_shape[1]; ++j ) for( int k=0; k<m_shape[2]; ++k ) {
-			value = fluid_closed_accessor(0,j,k);
-			if( value < 0.0 ) fluid_closed_accessor.set(0,j,k,eps);
-			value = fluid_closed_accessor(m_shape[0]-1,j,k);
-			if( value < 0.0 ) fluid_closed_accessor.set(m_shape[0]-1,j,k,eps);
+			value = fluid_closed()(0,j,k);
+			if( value < 0.0 ) fluid_closed().set(0,j,k,eps);
+			value = fluid_closed()(m_shape[0]-1,j,k);
+			if( value < 0.0 ) fluid_closed().set(m_shape[0]-1,j,k,eps);
 		}
 		//
 		// Floor and ceiling
 		for( int k=0; k<m_shape[2]; ++k ) for( int i=0; i<m_shape[0]; ++i ) {
-			value = fluid_closed_accessor(i,0,k);
-			if( value < 0.0 ) fluid_closed_accessor.set(i,0,k,eps);
-			value = fluid_closed_accessor(i,m_shape[1]-1,k);
-			if( value < 0.0 ) fluid_closed_accessor.set(i,m_shape[1]-1,k,eps);
+			value = fluid_closed()(i,0,k);
+			if( value < 0.0 ) fluid_closed().set(i,0,k,eps);
+			value = fluid_closed()(i,m_shape[1]-1,k);
+			if( value < 0.0 ) fluid_closed().set(i,m_shape[1]-1,k,eps);
 		}
 		//
 		export_fluid_mesh(path_wo_suffix+"_enclosed",fluid_closed(), ! m_param.enclose_solid, vertex_color_func,uv_coordinate_func);
