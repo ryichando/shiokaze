@@ -92,7 +92,7 @@ public:
 	 @param[in] pi インデックス位置。
 	 @param[in] type ハッシュセルの種類。
 	 */
-	virtual std::vector<size_t> get_cell_neighbors( const vec3i &pi, hash_type type=USE_CELL ) const = 0;
+	virtual std::vector<size_t> get_cell_neighbors( const vec3i &pi, hash_type type=USE_CELL, unsigned half_witdh=1 ) const = 0;
 	/**
 	 \~english @brief Get points in a node and its all adjacent neighbors.
 	 @param[in] pi Index position.
@@ -103,7 +103,7 @@ public:
 	 @param[in] type ハッシュセルの種類。
 	 @return ポイント群。
 	 */
-	virtual std::vector<size_t> get_nodal_neighbors( const vec3i &pi, hash_type type=USE_NODAL ) const = 0;
+	virtual std::vector<size_t> get_nodal_neighbors( const vec3i &pi, hash_type type=USE_NODAL, unsigned half_witdh=1 ) const = 0;
 	/**
 	 \~english @brief Get points in a face and its all adjacent neighbors.
 	 @param[in] pi Index position.
@@ -115,46 +115,6 @@ public:
 	 @return ポイント群。
 	 */
 	virtual std::vector<size_t> get_face_neighbors( const vec3i &pi, unsigned dim, hash_type type=USE_EDGE ) const = 0;
-	/**
-	 \~english @brief Get a corresponding cell index position for a physical position.
-	 @param[in] p Position in physical space.
-	 @return Cell index position.
-	 \~japanese @brief 物理位置に対応するセルにインデックス位置を取得する。
-	 @param[in] p 物理空間の位置。
-	 @return セルのインデックス位置。
-	 */
-	virtual vec3i find_cell( const vec3d &p ) const = 0;
-	/**
-	 \~english @brief Get a corresponding nodal index position for a physical position.
-	 @param[in] p Position in physical space.
-	 @return Nodal index position.
-	 \~japanese @brief 物理位置に対応するノードのインデックス位置を取得する。
-	 @param[in] p 物理空間の位置。
-	 @return ノードのインデックス位置。
-	 */
-	virtual vec3i find_node( const vec3d &p ) const = 0;
-	/**
-	 \~english @brief Get a corresponding edge index position for a physical position.
-	 @param[in] p Position in physical space.
-	 @param[in] dim Dimension of the edge.
-	 @return Facial index position.
-	 \~japanese @brief 物理位置に対応するエッジのインデックス位置を取得する。
-	 @param[in] p 物理空間の位置。
-	 @param[in] dim エッジの次元。
-	 @return 面のインデックス位置。
-	 */
-	virtual vec3i find_edge( const vec3d &p, unsigned dim ) const = 0;
-	/**
-	 \~english @brief Get a corresponding facial index position for a physical position.
-	 @param[in] p Position in physical space.
-	 @param[in] dim Dimension of the face.
-	 @return Facial index position.
-	 \~japanese @brief 物理位置に対応する面のインデックス位置を取得する。
-	 @param[in] p 物理空間の位置。
-	 @param[in] dim 面の次元。
-	 @return 面のインデックス位置。
-	 */
-	virtual vec3i find_face( const vec3d &p, unsigned dim ) const = 0;
 	//
 private:
 	//

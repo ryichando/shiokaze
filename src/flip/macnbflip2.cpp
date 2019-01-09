@@ -387,16 +387,16 @@ size_t macnbflip2::correct( const macarray2<double> &velocity, const array2<doub
 		bool skip (false);
 		const Particle &pi = m_particles[n];
 		if( mask ) {
-			if( ! (*mask).active(m_pointgridhash->find_cell(pi.p))) skip = true;
+			if( ! (*mask).active(m_shape.find_cell(pi.p/m_dx))) skip = true;
 		}
 		vec2d displacement;
 		if( ! skip ) {
-			std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(m_pointgridhash->find_cell(pi.p),pointgridhash2_interface::USE_NODAL);
+			std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(m_shape.find_cell(pi.p/m_dx),pointgridhash2_interface::USE_NODAL);
 			for( const size_t &j : neighbors ) {
 				if( n != j ) {
 					const Particle &pj = m_particles[j];
 					if( mask ) {
-						if( ! (*mask).active(m_pointgridhash->find_cell(pj.p))) skip = true;
+						if( ! (*mask).active(m_shape.find_cell(pj.p/m_dx))) skip = true;
 					}
 					if( ! skip ) {
 						double dist2 = (pi.p-pj.p).norm2();

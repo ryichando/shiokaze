@@ -51,7 +51,7 @@ public:
 		fluid.parallel_actives( [&](int i, int j, auto &it ) {
 			if( mask(i,j)) {
 				vec2d x (m_dx*vec2i(i,j).cell());
-				std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(m_pointgridhash->find_cell(x),pointgridhash2_interface::USE_NODAL);
+				std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(m_shape.find_cell(x/m_dx),pointgridhash2_interface::USE_NODAL);
 				if( neighbors.size()) {
 					double R (0.0), w_sum (0.0);
 					for( const auto n : neighbors ) R += m_param.r_factor * particles[n].r;

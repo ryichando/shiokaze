@@ -210,7 +210,7 @@ public:
 		fluid.clear();
 		fluid.activate_as(mask);
 		fluid.parallel_actives( [&](int i, int j, int k, auto &it ) {
-			std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(m_pointgridhash->find_cell(m_dx*vec3i(i,j,k).cell()),pointgridhash3_interface::USE_NODAL);
+			std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(vec3i(i,j,k),pointgridhash3_interface::USE_NODAL);
 			it.set(getConvexhullLevelset(m_dx*vec3i(i,j,k).cell(),neighbors));
 		});
 	}

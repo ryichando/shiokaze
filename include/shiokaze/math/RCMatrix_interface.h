@@ -545,7 +545,7 @@ public:
 	 @param[in-out] rhs 入力の行列。
 	 @return 結果の行列。
 	 */
-	RCMatrix_ptr<N,T> multiply( RCMatrix_interface<N,T> *m ) const {
+	RCMatrix_ptr<N,T> multiply( const RCMatrix_interface<N,T> *m ) const {
 		auto result = this->allocate_matrix();
 		multiply(m,result.get());
 		return result;
@@ -558,7 +558,7 @@ public:
 	 @param[in-out] rhs 入力の行列。
 	 @return 結果の行列。
 	 */
-	RCMatrix_ptr<N,T> add( RCMatrix_interface<N,T> *m ) const {
+	RCMatrix_ptr<N,T> add( const RCMatrix_interface<N,T> *m ) const {
 		auto result = this->allocate_matrix();
 		add(m,result.get());
 		return result;

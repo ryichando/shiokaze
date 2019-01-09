@@ -454,16 +454,16 @@ size_t macnbflip3::correct( const macarray3<double> &velocity, const array3<doub
 		bool skip (false);
 		const Particle &pi = m_particles[n];
 		if( mask ) {
-			if( ! (*mask).active(m_pointgridhash->find_cell(pi.p))) skip = true;
+			if( ! (*mask).active(m_shape.find_cell(pi.p/m_dx))) skip = true;
 		}
 		vec3d displacement;
 		if( ! skip ) {
-			std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(m_pointgridhash->find_cell(pi.p),pointgridhash3_interface::USE_NODAL);
+			std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(m_shape.find_cell(pi.p/m_dx),pointgridhash3_interface::USE_NODAL);
 			for( const size_t &j : neighbors ) {
 				if( n != j ) {
 					const Particle &pj = m_particles[j];
 					if( mask ) {
-						if( ! (*mask).active(m_pointgridhash->find_cell(pj.p)) ) skip = true;
+						if( ! (*mask).active(m_shape.find_cell(pj.p/m_dx)) ) skip = true;
 					}
 					if( ! skip ) {
 						double dist2 = (pi.p-pj.p).norm2();
@@ -887,7 +887,7 @@ void macnbflip3::seed_set_fluid( const array3<double> &fluid ) {
 	//
 	m_fluid.activate_as(fluid);
 	m_fluid.parallel_actives([&]( int i, int j, int k, auto &it, int tn ) {
-		it.set(std::min(m_fluid(i,j,k),it()));
+		it.set(std::min(fluid(i,j,k),it()));
 	});
 	m_fluid.flood_fill();
 }

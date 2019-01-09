@@ -49,7 +49,7 @@ private:
 		if( m_mode & CELL_MODE ) {
 			operations.push_back([&](){
 				for( unsigned n=0; n<points.size(); ++n ) {
-					const vec3i pi = find_cell(points[n]);
+					const vec3i pi = m_shape.find_cell(points[n]/m_dx);
 					auto ptr = m_hash_cell.ptr(pi);
 					if( ptr ) ptr->push_back(n);
 					else m_hash_cell.set(pi,{n});
@@ -60,7 +60,7 @@ private:
 		if( m_mode & NODAL_MODE ) {
 			operations.push_back([&](){
 				for( unsigned n=0; n<points.size(); ++n ) {
-					const vec3i pi = find_node(points[n]);
+					const vec3i pi = m_shape.find_node(points[n]/m_dx);
 					auto ptr = m_hash_node.ptr(pi);
 					if( ptr ) ptr->push_back(n);
 					else m_hash_node.set(pi,{n});
@@ -72,7 +72,7 @@ private:
 			operations.push_back([&](){
 				m_parallel.for_each(DIM3,[&]( size_t dim ) {
 					for( unsigned n=0; n<points.size(); ++n ) {
-						const vec3i pi = find_edge(points[n],dim);
+						const vec3i pi = m_shape.find_edge(points[n]/m_dx,dim);
 						auto ptr = hash_edge(dim).ptr(pi);
 						if( ptr ) ptr->push_back(n);
 						else hash_edge(dim).set(pi,{n});
@@ -102,11 +102,11 @@ private:
 		}
 		return false;
 	}
-	virtual std::vector<size_t> get_cell_neighbors( const vec3i &pi, hash_type type=USE_CELL ) const override {
+	virtual std::vector<size_t> get_cell_neighbors( const vec3i &pi, hash_type type=USE_CELL, unsigned half_witdh=1 ) const override {
 		std::vector<size_t> neighbors;
 		if( type == USE_NODAL ) {
 			if (m_mode & NODAL_MODE) {
-				for( int ii=pi[0]-m_w+1; ii<=pi[0]+m_w; ++ii ) for( int jj=pi[1]-m_w+1; jj<=pi[1]+m_w; ++jj ) for( int kk=pi[2]-m_w+1; kk<=pi[2]+m_w; ++kk ) {
+				for( int ii=pi[0]-half_witdh+1; ii<=pi[0]+half_witdh; ++ii ) for( int jj=pi[1]-half_witdh+1; jj<=pi[1]+half_witdh; ++jj ) for( int kk=pi[2]-half_witdh+1; kk<=pi[2]+half_witdh; ++kk ) {
 					if( ! m_hash_node.shape().out_of_bounds(ii,jj,kk) ) {
 						const auto &bucket = m_hash_node(ii,jj,kk);
 						neighbors.insert(neighbors.end(),bucket.begin(),bucket.end());
@@ -118,7 +118,7 @@ private:
 			}
 		} else if( type == USE_CELL ) {
 			if (m_mode & CELL_MODE) {
-				for( int ii=pi[0]-m_w; ii<=pi[0]+m_w; ++ii ) for( int jj=pi[1]-m_w; jj<=pi[1]+m_w; ++jj ) for( int kk=pi[2]-m_w; kk<=pi[2]+m_w; ++kk ) {
+				for( int ii=pi[0]-half_witdh; ii<=pi[0]+half_witdh; ++ii ) for( int jj=pi[1]-half_witdh; jj<=pi[1]+half_witdh; ++jj ) for( int kk=pi[2]-half_witdh; kk<=pi[2]+half_witdh; ++kk ) {
 					if( ! m_hash_cell.shape().out_of_bounds(ii,jj,kk) ) {
 						const auto &bucket = m_hash_cell(ii,jj,kk);
 						neighbors.insert(neighbors.end(),bucket.begin(),bucket.end());
@@ -135,11 +135,11 @@ private:
 		//
 		return std::move(neighbors);
 	}
-	virtual std::vector<size_t> get_nodal_neighbors( const vec3i &pi, hash_type type=USE_NODAL ) const override {
+	virtual std::vector<size_t> get_nodal_neighbors( const vec3i &pi, hash_type type=USE_NODAL, unsigned half_witdh=1 ) const override {
 		std::vector<size_t> neighbors;
 		if( type == USE_CELL ) {
 			if (m_mode & CELL_MODE) {
-				for( int ii=pi[0]-m_w; ii<=pi[0]+m_w-1; ++ii ) for( int jj=pi[1]-m_w; jj<=pi[1]+m_w-1; ++jj ) for( int kk=pi[2]-m_w; kk<=pi[2]+m_w-1; ++kk ) {
+				for( int ii=pi[0]-half_witdh; ii<=pi[0]+half_witdh-1; ++ii ) for( int jj=pi[1]-half_witdh; jj<=pi[1]+half_witdh-1; ++jj ) for( int kk=pi[2]-half_witdh; kk<=pi[2]+half_witdh-1; ++kk ) {
 					if( ! m_hash_cell.shape().out_of_bounds(ii,jj,kk) ) {
 						const auto &bucket = m_hash_cell(ii,jj,kk);
 						neighbors.insert(neighbors.end(),bucket.begin(),bucket.end());
@@ -151,7 +151,7 @@ private:
 			}
 		} else if( type == USE_NODAL ) {
 			if (m_mode & NODAL_MODE) {
-				for( int ii=pi[0]-m_w; ii<=pi[0]+m_w; ++ii ) for( int jj=pi[1]-m_w; jj<=pi[1]+m_w; ++jj ) for( int kk=pi[2]-m_w; kk<=pi[2]+m_w; ++kk ) {
+				for( int ii=pi[0]-half_witdh; ii<=pi[0]+half_witdh; ++ii ) for( int jj=pi[1]-half_witdh; jj<=pi[1]+half_witdh; ++jj ) for( int kk=pi[2]-half_witdh; kk<=pi[2]+half_witdh; ++kk ) {
 					if( ! m_hash_node.shape().out_of_bounds(ii,jj,kk) ) {
 						const auto &bucket = m_hash_node(ii,jj,kk);
 						neighbors.insert(neighbors.end(),bucket.begin(),bucket.end());
@@ -208,19 +208,6 @@ private:
 		}
 		return std::move(neighbors);
 	}
-	//
-	virtual vec3i find_cell( const vec3d &p ) const override {
-		return m_shape.find_cell(p/m_dx);
-	}
-	virtual vec3i find_node( const vec3d &p ) const override {
-		return m_shape.find_node(p/m_dx);
-	}
-	virtual vec3i find_edge( const vec3d &p, unsigned dim ) const override {
-		return m_shape.find_edge(p/m_dx,dim);
-	}
-	virtual vec3i find_face( const vec3d &p, unsigned dim ) const override {
-		return m_shape.find_face(p/m_dx,dim);
-	}
 	virtual void initialize( const shape3 &shape, double dx, int mode=CELL_MODE | NODAL_MODE | EDGE_MODE ) override {
 		//
 		clear();
@@ -244,13 +231,9 @@ private:
 			}
 		}
 	}
-	virtual void configure ( configuration &config ) override {
-		config.get_unsigned("NeighborLookUpCells",m_w,"Neighbor look up width");
-	}
 	//
 	shape3 m_shape;
 	double m_dx {0.0};
-	unsigned m_w {1};
 	unsigned m_num_sorted {0};
 	int m_mode {0};
 	//

@@ -22,15 +22,6 @@
 #	CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 #	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-def greeting(opt):
-	pass
-#
-def options(opt):
-	greeting(opt)
-#
-def configure(conf):
-	pass
-#
 def build(bld):
 #
 	bld.shlib(source = 'dilation2-example.cpp',
