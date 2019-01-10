@@ -100,11 +100,11 @@ private:
 		}
 		return false;
 	}
-	virtual std::vector<size_t> get_cell_neighbors( const vec2i &pi, hash_type type=USE_CELL, unsigned half_witdh=1 ) const override {
+	virtual std::vector<size_t> get_cell_neighbors( const vec2i &pi, hash_type type=USE_CELL, int half_width=1 ) const override {
 		std::vector<size_t> neighbors;
 		if( type == USE_NODAL ) {
 			if (m_mode & NODAL_MODE) {
-				for( int ii=pi[0]-half_witdh+1; ii<=pi[0]+half_witdh; ++ii ) for( int jj=pi[1]-half_witdh+1; jj<=pi[1]+half_witdh; ++jj ) {
+				for( int ii=pi[0]-half_width+1; ii<=pi[0]+half_width; ++ii ) for( int jj=pi[1]-half_width+1; jj<=pi[1]+half_width; ++jj ) {
 					if( ! m_hash_node.shape().out_of_bounds(ii,jj)) {
 						const auto &bucket = m_hash_node(ii,jj);
 						neighbors.insert(neighbors.end(),bucket.begin(),bucket.end());
@@ -116,7 +116,7 @@ private:
 			}
 		} else if ( type == USE_CELL ) {
 			if (m_mode & CELL_MODE) {
-				for( int ii=pi[0]-half_witdh; ii<=pi[0]+half_witdh; ++ii ) for( int jj=pi[1]-half_witdh; jj<=pi[1]+half_witdh; ++jj ) {
+				for( int ii=pi[0]-half_width; ii<=pi[0]+half_width; ++ii ) for( int jj=pi[1]-half_width; jj<=pi[1]+half_width; ++jj ) {
 					if( ! m_hash_cell.shape().out_of_bounds(ii,jj)) {
 						const auto &bucket = m_hash_cell(ii,jj);
 						neighbors.insert(neighbors.end(),bucket.begin(),bucket.end());
@@ -132,11 +132,11 @@ private:
 		}
 		return std::move(neighbors);
 	}
-	virtual std::vector<size_t> get_nodal_neighbors( const vec2i &pi, hash_type type=USE_NODAL, unsigned half_witdh=1 ) const override {
+	virtual std::vector<size_t> get_nodal_neighbors( const vec2i &pi, hash_type type=USE_NODAL, int half_width=1 ) const override {
 		std::vector<size_t> neighbors;
 		if( type == USE_CELL ) {
 			if (m_mode & CELL_MODE) {
-				for( int ii=pi[0]-half_witdh; ii<=pi[0]+half_witdh-1; ++ii ) for( int jj=pi[1]-half_witdh; jj<=pi[1]+half_witdh-1; ++jj ) {
+				for( int ii=pi[0]-half_width; ii<=pi[0]+half_width-1; ++ii ) for( int jj=pi[1]-half_width; jj<=pi[1]+half_width-1; ++jj ) {
 					if( ! m_hash_cell.shape().out_of_bounds(ii,jj)) {
 						const auto &bucket = m_hash_cell(ii,jj);
 						neighbors.insert(neighbors.end(),bucket.begin(),bucket.end());
@@ -148,7 +148,7 @@ private:
 			}
 		} else if( type == USE_NODAL ) {
 			if (m_mode & NODAL_MODE) {
-				for( int ii=pi[0]-half_witdh; ii<=pi[0]+half_witdh; ++ii ) for( int jj=pi[1]-half_witdh; jj<=pi[1]+half_witdh; ++jj ) {
+				for( int ii=pi[0]-half_width; ii<=pi[0]+half_width; ++ii ) for( int jj=pi[1]-half_width; jj<=pi[1]+half_width; ++jj ) {
 					if( ! m_hash_node.shape().out_of_bounds(ii,jj)) {
 						const auto &bucket = m_hash_node(ii,jj);
 						neighbors.insert(neighbors.end(),bucket.begin(),bucket.end());

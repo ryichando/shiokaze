@@ -92,7 +92,7 @@ public:
 	 @param[in] pi インデックス位置。
 	 @param[in] type ハッシュセルの種類。
 	 */
-	virtual std::vector<size_t> get_cell_neighbors( const vec3i &pi, hash_type type=USE_CELL, unsigned half_witdh=1 ) const = 0;
+	virtual std::vector<size_t> get_cell_neighbors( const vec3i &pi, hash_type type=USE_CELL, int half_width=1 ) const = 0;
 	/**
 	 \~english @brief Get points in a node and its all adjacent neighbors.
 	 @param[in] pi Index position.
@@ -103,7 +103,7 @@ public:
 	 @param[in] type ハッシュセルの種類。
 	 @return ポイント群。
 	 */
-	virtual std::vector<size_t> get_nodal_neighbors( const vec3i &pi, hash_type type=USE_NODAL, unsigned half_witdh=1 ) const = 0;
+	virtual std::vector<size_t> get_nodal_neighbors( const vec3i &pi, hash_type type=USE_NODAL, int half_width=1 ) const = 0;
 	/**
 	 \~english @brief Get points in a face and its all adjacent neighbors.
 	 @param[in] pi Index position.
