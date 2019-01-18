@@ -250,6 +250,7 @@ void ui::configure( configuration &config ) {
 }
 //
 static void push_screen_coord ( unsigned width, unsigned height ) {
+#if	USE_OPENGL
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
@@ -257,13 +258,16 @@ static void push_screen_coord ( unsigned width, unsigned height ) {
 	glPushMatrix();
 	glLoadIdentity();
 	glOrtho(0.0,width,height,0.0,-1.0,1.0);
+#endif
 }
 //
 static void pop_screen_coord () {
+#if USE_OPENGL
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
+#endif
 }
 //
 void ui::run () {
