@@ -107,7 +107,7 @@ public:
 		vertex2v(v);
 	}
 	//
-	enum class MODE { POINTS, LINES, LINE_LOOP, POLYGON };
+	enum class MODE { POINTS, LINES, LINE_STRIP, LINE_LOOP, TRIANGLES, POLYGON };
 	/**
 	 \~english @brief Equivalebt to glBegin. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glBegin.xml
 	 \~japanese @brief glBegin と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glBegin.xml を参照。

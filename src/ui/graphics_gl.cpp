@@ -91,8 +91,12 @@ void graphics_gl::begin( MODE mode ) {
 				return GL_POINTS;
 			case MODE::LINES:
 				return GL_LINES;
+			case MODE::LINE_STRIP:
+				return GL_LINE_STRIP;
 			case MODE::LINE_LOOP:
 				return GL_LINE_LOOP;
+			case MODE::TRIANGLES:
+				return GL_TRIANGLES;
 			case MODE::POLYGON:
 				return GL_POLYGON;
 			default:
