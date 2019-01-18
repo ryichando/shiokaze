@@ -87,11 +87,15 @@ public:
 			g.begin(ge::MODE::LINES);
 			g.vertex2v(p0);
 			g.vertex2v(p1);
-			g.vertex2v(p1);
+			g.end();
 			//
-			g.vertex2(p1[0]+k*0.8*x_vec_x-k*y_vec_x,p1[1]+k*0.8*x_vec_y-k*y_vec_y);
+			g.begin(ge::MODE::POLYGON);
 			g.vertex2v(p1);
-			g.vertex2(p1[0]-k*0.8*x_vec_x-k*y_vec_x,p1[1]-k*0.8*x_vec_y-k*y_vec_y);
+			vec2d p2(p1[0]+k*0.8*x_vec_x-k*y_vec_x,p1[1]+k*0.8*x_vec_y-k*y_vec_y);
+			vec2d p3(p1[0]-k*0.8*x_vec_x-k*y_vec_x,p1[1]-k*0.8*x_vec_y-k*y_vec_y);
+			g.vertex2v(p2.v);
+			g.vertex2v(((vec2d(p1[0],p1[1])+p2+p3)/3.0).v);
+			g.vertex2v(p3.v);
 			g.end();
 		}
 	}

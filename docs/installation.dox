@@ -64,7 +64,7 @@ xcode-select --install
 and
 
 ~~~{.sh}
-brew install libpng tbb openexr boost gsl glfw3
+brew install libpng tbb openexr boost gsl
 ~~~
 
 \subsection compiling_linux Debian (Ubuntu Linux)
@@ -160,7 +160,7 @@ xcode-select --install
 でインストールできます。インストール出来たら、Homebrew を通して必要なパッケージをインストールします。これは、
 
 ~~~{.sh}
-brew install libpng tbb openexr boost gsl glfw3
+brew install libpng tbb openexr boost gsl
 ~~~
 
 で行えます。
