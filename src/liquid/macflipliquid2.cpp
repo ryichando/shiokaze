@@ -112,7 +112,7 @@ void macflipliquid2::idle() {
 	m_macstats->dump_stats(m_solid,m_fluid,m_velocity,m_timestepper.get());
 }
 //
-void macflipliquid2::draw( const graphics_engine &g, int width, int height ) const {
+void macflipliquid2::draw( graphics_engine &g, int width, int height ) const {
 	//
 	// Draw grid lines
 	m_gridvisualizer->draw_grid(g);

@@ -58,7 +58,7 @@ public:
 	 \~japanese @brief グラフィックス環境をセットアップする。
 	 @param[in] g グラフィックスエンジン。
 	 */
-	virtual void setup_graphics ( const graphics_engine &g ) const { g.setup_graphics(); };
+	virtual void setup_graphics ( graphics_engine &g ) const { g.setup_graphics(); };
 	/**
 	 \~english @brief Set up an initial new window environment.
 	 @param[out] name Name of the window.
@@ -147,7 +147,7 @@ public:
 	 @param[in] width ウィンドウの横幅。
 	 @param[in] height ウィンドウの高さ。
 	 */
-	virtual void resize( const graphics_engine &g, int width, int height ) { view_change(g,width,height); }
+	virtual void resize( graphics_engine &g, int width, int height ) { view_change(g,width,height); }
 	/**
 	 \~english @brief Function that catches view change evenets.
 	 @param[in] g Graphics engine.
@@ -158,7 +158,7 @@ public:
 	 @param[in] width ウィンドウの横幅。
 	 @param[in] height ウィンドウの高さ。
 	 */
-	virtual void view_change( const graphics_engine &g, int width, int height ) { g.configure_view(width,height,SPATIAL_DIM); }
+	virtual void view_change( graphics_engine &g, int width, int height ) { g.configure_view(width,height,SPATIAL_DIM); }
 	/**
 	 \~english @brief Function that catches draw event.
 	 @param[in] g Graphics engine.
@@ -169,7 +169,7 @@ public:
 	 @param[in] width ウィンドウの横幅。
 	 @param[in] height ウィンドウの高さ。
 	 */
-	virtual void draw( const graphics_engine &g, int width, int height ) const {}
+	virtual void draw( graphics_engine &g, int width, int height ) const {}
 	/**
 	 \~english @brief Function to tell the host program that program should quit.
 	 @return If return \c true, program will exit. \c false otherwise.

@@ -54,11 +54,6 @@ def build(bld):
 			cxxflags = ['-DSPATIAL_DIM=3'],
 			use = bld.get_target_name(bld,['core']))
 #
-	bld.shlib(source = 'vecfluid2-example.cpp',
-			target = bld.get_target_name(bld,'vecfluid2-example'),
-			cxxflags = ['-DSPATIAL_DIM=2'],
-			use = bld.get_target_name(bld,['core']))
-#
 	bld.shlib(source = 'meshexporter-demo3.cpp',
 			target = bld.get_target_name(bld,'meshexporter3-demo'),
 			use = bld.get_target_name(bld,'core'),

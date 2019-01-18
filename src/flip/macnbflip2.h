@@ -69,7 +69,7 @@ public:
 	virtual void get_levelset( array2<double> &fluid ) const override;
 	//
 	// Draw FLIP partciels
-	virtual void draw( const graphics_engine &g, double time=0.0 ) const override;
+	virtual void draw( graphics_engine &g, double time=0.0 ) const override;
 	//
 	// Get the number of particles
 	virtual size_t get_particle_count() const override { return m_particles.size(); }
@@ -163,7 +163,7 @@ protected:
 	virtual double interpolate_solid( const vec2d &p ) const;
 	virtual vec2d interpolate_fluid_gradient( const vec2d &p ) const;
 	virtual vec2d interpolate_solid_gradient( const vec2d &p ) const;
-	virtual void drawCircle ( const graphics_engine &g, const vec2d &p, double r, bool bullet, double sizing_value ) const;
+	virtual void drawCircle ( graphics_engine &g, const vec2d &p, double r, bool bullet, double sizing_value ) const;
 	//
 	virtual void fit_particle( std::function<double(const vec2d &p)> fluid, Particle &particle, const vec2d &gradient ) const;
 	virtual void compute_narrowband();

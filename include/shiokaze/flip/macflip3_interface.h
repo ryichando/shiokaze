@@ -114,7 +114,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] time 現在のシミュレーション時間。
 	 */
-	virtual void draw( const graphics_engine &g, double time=0.0 ) const = 0;
+	virtual void draw( graphics_engine &g, double time=0.0 ) const = 0;
 	/**
 	 \~english @brief Get the number of FLIP particles.
 	 @return Number of FLIP particles.

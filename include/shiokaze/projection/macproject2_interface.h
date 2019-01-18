@@ -69,7 +69,7 @@ public:
 	 \~japanese @brief 内部情報を描画する。
 	 @param[in] g gグラフィックスエンジン。
 	 */
-	virtual void draw( const graphics_engine &g ) const {}
+	virtual void draw( graphics_engine &g ) const {}
 	//
 private:
 	//

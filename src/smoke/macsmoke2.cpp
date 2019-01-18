@@ -86,7 +86,7 @@ void macsmoke2::post_initialize () {
 	m_velocity.initialize(m_shape);
 	m_external_force.initialize(m_shape);
 	//
-	m_solid.initialize(m_shape.cell());
+	m_solid.initialize(m_shape.nodal());
 	m_fluid.initialize(m_shape.cell(),-1.0);
 	m_solid.set_as_levelset(m_dx);
 	m_density.initialize(m_shape.cell(),0.0);
@@ -279,7 +279,7 @@ void macsmoke2::advect_dust_particles( const macarray2<double> &velocity, double
 	rasterize_dust_particles(m_density);
 }
 //
-void macsmoke2::draw_dust_particles( const graphics_engine &g ) const {
+void macsmoke2::draw_dust_particles( graphics_engine &g ) const {
 	//
 	using ge = graphics_engine;
 	double r = m_dx * 0.5 / m_param.r_sample;
@@ -287,11 +287,11 @@ void macsmoke2::draw_dust_particles( const graphics_engine &g ) const {
 		g.color4(1.0,1.0,1.0,1.0);
 		graphics_utility::draw_circle(g,p.v,r,ge::MODE::LINE_LOOP);
 		g.color4(1.0,1.0,1.0,0.3);
-		graphics_utility::draw_circle(g,p.v,r,ge::MODE::TRIANGLES);
+		graphics_utility::draw_circle(g,p.v,r,ge::MODE::POLYGON);
 	}
 }
 //
-void macsmoke2::draw( const graphics_engine &g, int width, int height ) const {
+void macsmoke2::draw( graphics_engine &g, int width, int height ) const {
 	//
 	// Draw density
 	if( m_param.use_dust ) draw_dust_particles(g);

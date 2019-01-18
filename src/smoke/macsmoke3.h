@@ -49,7 +49,7 @@ public:
 	//
 	virtual void setup_window( std::string &name, int &width, int &height ) const override;
 	virtual void idle() override;
-	virtual void draw( const graphics_engine &g, int width, int height ) const override;
+	virtual void draw( graphics_engine &g, int width, int height ) const override;
 	virtual bool should_quit() const override { return m_timestepper->should_quit(); }
 	virtual bool should_screenshot() const override { return m_timestepper->should_export_frame(); }
 	//
@@ -105,7 +105,7 @@ protected:
 	virtual void advect_dust_particles( const macarray3<double> &velocity, double dt );
 	virtual void add_source ( macarray3<double> &velocity, array3<double> &density, double time, double dt );
 	virtual void rasterize_dust_particles( array3<double> &rasterized_density );
-	virtual void draw_dust_particles( const graphics_engine &g ) const;
+	virtual void draw_dust_particles( graphics_engine &g ) const;
 	virtual void export_density () const;
 	virtual void do_export_density( int frame ) const;
 	virtual void render_density( int frame ) const;

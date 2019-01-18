@@ -48,7 +48,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] q 目標となるグリッド。
 	 */
-	virtual void draw_active( const graphics_engine &g, const array2<double> &q ) const = 0;
+	virtual void draw_active( graphics_engine &g, const array2<double> &q ) const = 0;
 	/**
 	 \~english @brief Draw filled cells.
 	 @param[in] g Graphics engine.
@@ -57,14 +57,14 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] q 目標となるグリッド。
 	 */
-	virtual void draw_inside( const graphics_engine &g, const array2<double> &q ) const = 0;
+	virtual void draw_inside( graphics_engine &g, const array2<double> &q ) const = 0;
 	/**
 	 \~english @brief Draw grid.
 	 @param[in] g Graphics engine.
 	 \~japanese @brief グリッドを描画する。
 	 @param[in] g グラフィックスエンジン。
 	 */
-	virtual void draw_grid( const graphics_engine &g ) const = 0;
+	virtual void draw_grid( graphics_engine &g ) const = 0;
 	/**
 	 \~english @brief Draw a density field.
 	 @param[in] g Graphics engine.
@@ -73,7 +73,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] density 密度場。
 	 */
-	virtual void draw_density( const graphics_engine &g, const array2<double> &density ) const = 0;
+	virtual void draw_density( graphics_engine &g, const array2<double> &density ) const = 0;
 	/**
 	 \~english @brief Draw velocity.
 	 @param[in] g Graphics engine.
@@ -82,7 +82,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] velocity 速度場。
 	 */
-	virtual void draw_velocity( const graphics_engine &g, const array2<vec2d> &velocity ) const = 0;
+	virtual void draw_velocity( graphics_engine &g, const array2<vec2d> &velocity ) const = 0;
 	/**
 	 \~english @brief Draw level set grid.
 	 @param[in] g Graphics engine.
@@ -91,7 +91,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] levelset レベルセットグリッド。
 	 */
-	virtual void draw_levelset( const graphics_engine &g, const array2<double> &levelset ) const = 0;
+	virtual void draw_levelset( graphics_engine &g, const array2<double> &levelset ) const = 0;
 	/**
 	 \~english @brief Draw level set of solid.
 	 @param[in] g Graphics engine.
@@ -100,7 +100,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] solid 壁のレベルセットグリッド。
 	 */
-	virtual void draw_solid( const graphics_engine &g, const array2<double> &solid ) const = 0;
+	virtual void draw_solid( graphics_engine &g, const array2<double> &solid ) const = 0;
 	/**
 	 \~english @brief Draw level set of fluid.
 	 @param[in] g Graphics engine.
@@ -109,7 +109,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] fluid 流体のレベルセットグリッド。
 	 */
-	virtual void draw_fluid( const graphics_engine &g, const array2<double> &solid, const array2<double> &fluid ) const = 0;
+	virtual void draw_fluid( graphics_engine &g, const array2<double> &solid, const array2<double> &fluid ) const = 0;
 	/**
 	 \~english @brief Draw cell-based scalar.
 	 @param[in] g Graphics engine.
@@ -118,7 +118,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] q 目標となるグリッド。
 	 */
-	virtual void visualize_cell_scalar( const graphics_engine &g, const array2<double> &q ) const = 0;
+	virtual void visualize_cell_scalar( graphics_engine &g, const array2<double> &q ) const = 0;
 	/**
 	 \~english @brief Draw nodal scalar.
 	 @param[in] g Graphics engine.
@@ -127,7 +127,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] q 目標となるグリッド。
 	 */
-	virtual void visualize_nodal_scalar( const graphics_engine &g, const array2<double> &q ) const = 0;
+	virtual void visualize_nodal_scalar( graphics_engine &g, const array2<double> &q ) const = 0;
 	//
 private:
 	virtual void initialize( const shape2 &shape, double dx ) = 0;

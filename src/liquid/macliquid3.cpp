@@ -370,7 +370,7 @@ void macliquid3::do_export_solid_mesh() const {
 	}
 }
 //
-void macliquid3::draw( const graphics_engine &g, int width, int height ) const {
+void macliquid3::draw( graphics_engine &g, int width, int height ) const {
 	//
 	g.color4(1.0,1.0,1.0,0.5);
 	graphics_utility::draw_wired_box(g);

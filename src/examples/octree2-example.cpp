@@ -59,7 +59,7 @@ private:
 		double ratio = shape[1] / (double) shape[0];
 		height = ratio * width;
 	}
-	virtual void draw( const graphics_engine &g, int width, int height ) const override {
+	virtual void draw( graphics_engine &g, int width, int height ) const override {
 		octree.draw_octree(g);
 	}
 	//

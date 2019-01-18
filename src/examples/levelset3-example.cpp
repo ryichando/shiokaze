@@ -91,7 +91,7 @@ private:
 		return drawable::keyboard(key);
 	}
 	//
-	virtual void draw( const graphics_engine &g, int width, int height ) const override {
+	virtual void draw( graphics_engine &g, int width, int height ) const override {
 		//
 		g.color4(1.0,1.0,1.0,0.5);
 		graphics_utility::draw_wired_box(g);
@@ -103,9 +103,7 @@ private:
 		else gridvisualizer->draw_inside(g,array);
 		//
 		g.color4(1.0,1.0,1.0,1.0);
-		g.push_screen_coord(width,height);
-		g.draw_string(vec2d(30,30).v, "Press \"M\" to toggle mode");
-		g.pop_screen_coord();
+		g.draw_string(vec2d(0.01,0.01).v, "Press \"M\" to toggle mode");
 	}
 	//
 	bool mode {false};

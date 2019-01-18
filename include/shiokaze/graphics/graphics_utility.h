@@ -53,7 +53,7 @@ public:
 	 @param[in] mode 描画モード。
 	 @param[in] num_v 頂点数。
 	 */
-	static void draw_circle ( const graphics_engine &g, const double *p, double r, ge::MODE mode, unsigned num_v=20 ) {
+	static void draw_circle ( graphics_engine &g, const double *p, double r, ge::MODE mode, unsigned num_v=20 ) {
 		g.begin(mode);
 		for( unsigned t=0; t<num_v; t++ ) {
 			double theta = 2.0 * M_PI * t / (double)num_v;
@@ -71,7 +71,7 @@ public:
 	 @param[in] p0 始点。
 	 @param[in] p1 終点。
 	 */
-	static void draw_arrow( const graphics_engine &g, const double *p0, const double *p1 ) {
+	static void draw_arrow( graphics_engine &g, const double *p0, const double *p1 ) {
 		double y_vec_x = p1[0]-p0[0];
 		double y_vec_y = p1[1]-p0[1];
 		double y_vec_len = hypot(y_vec_x,y_vec_y);
@@ -101,7 +101,7 @@ public:
 	 \~japanese @brief 単位サイズのワイヤーボックスを描く。
 	 @param[in] g グラフィックスエンジン。
 	 */
-	static void draw_wired_box( const graphics_engine &g ) {
+	static void draw_wired_box( graphics_engine &g ) {
 		const double p0[] = { 0.0, 0.0, 0.0 };
 		const double p1[] = { 1.0, 1.0, 1.0 };
 		draw_wired_box(g,p0,p1);
@@ -116,7 +116,7 @@ public:
 	 @param[in] p0 始点。
 	 @param[in] p1 終点。
 	 */
-	static void draw_wired_box( const graphics_engine &g, const double *p0, const double *p1 ) {
+	static void draw_wired_box( graphics_engine &g, const double *p0, const double *p1 ) {
 		//
 		g.begin(ge::MODE::LINE_LOOP);
 		g.vertex3(p0[0],p0[1],p0[2]);
@@ -157,11 +157,9 @@ public:
 	 @param[in] width ウィンドウの幅。
 	 @param[in] height ウィンドウの高さ。
 	 */
-	static void draw_number ( const graphics_engine &g, const char *label, double number, int width, int height ) {
+	static void draw_number ( graphics_engine &g, const char *label, double number, int width, int height ) {
 		g.color4(1.0,1.0,1.0,1.0);
-		g.push_screen_coord(width,height);
-		g.draw_string(vec2d(10,15).v, console::format_str("%s = %.3f",label,number));
-		g.pop_screen_coord();
+		g.draw_string(vec2d(0.01,0.01).v, console::format_str("%s = %.3f",label,number));
 	}
 };
 //

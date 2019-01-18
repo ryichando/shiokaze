@@ -70,7 +70,7 @@ public:
 	 \~japanese @brief レベルセットサーフェスを描画する。
 	 @param[int] g グラフィックスエンジン。
 	 */
-	virtual void draw( const graphics_engine &g ) const = 0;
+	virtual void draw( graphics_engine &g ) const = 0;
 	/**
 	 \~english @brief Export level set surface as a mesh file.
 	 @param[in] path_to_directory Path to the directory to export.

@@ -33,7 +33,7 @@ SHKZ_USING_NAMESPACE
 class macvisualizer2 : public macvisualizer2_interface {
 private:
 	//
-	virtual void draw_velocity( const graphics_engine &g, const macarray2<double> &velocity ) const override {
+	virtual void draw_velocity( graphics_engine &g, const macarray2<double> &velocity ) const override {
 		if( m_param.draw_velocity ) {
 			//
 			shared_array2<vec2d> cell_velocity(velocity.shape());
@@ -48,7 +48,7 @@ private:
 		}
 	}
 	//
-	virtual void visualize_scalar( const graphics_engine &g, const macarray2<double> &array ) const override {
+	virtual void visualize_scalar( graphics_engine &g, const macarray2<double> &array ) const override {
 		//
 		double maxv = std::numeric_limits<double>::min();
 		double minv = std::numeric_limits<double>::max();

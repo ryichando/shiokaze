@@ -608,7 +608,7 @@ void macbackwardflip2::registerBuffer(
 	m_step ++;
 }
 //
-void macbackwardflip2::draw( const graphics_engine &g ) const {
+void macbackwardflip2::draw( graphics_engine &g ) const {
 	//
 	if( m_param.draw_buffer && m_buffers.size() && m_exist_gradient ) {
 		g.color4(1.0,0.3,0.3,0.5);
@@ -641,7 +641,7 @@ void macbackwardflip2::draw( const graphics_engine &g ) const {
 		m_spatial_adaptivity.const_serial_all([&](int i, int j, auto &it) {
 			g.color4(1.0,0.5,0.2,0.5);
 			if(it()) {
-				g.begin(graphics_engine::MODE::QUADS);
+				g.begin(graphics_engine::MODE::POLYGON);
 				g.vertex2(i*m_dx,j*m_dx);
 				g.vertex2((i+1)*m_dx,j*m_dx);
 				g.vertex2((i+1)*m_dx,(j+1)*m_dx);

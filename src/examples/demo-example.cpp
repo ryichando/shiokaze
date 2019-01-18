@@ -66,7 +66,7 @@ private:
 		console::dump( "Mouse (x,y) = (%.2f,%.2f), (%d), (%d)\n", x, y, button, action );
 	};
 	//
-	virtual void draw( const graphics_engine &g, int width, int height ) const override {
+	virtual void draw( graphics_engine &g, int width, int height ) const override {
 		//
 		// Draw a message
 		g.color4(1.0,1.0,1.0,1.0);

@@ -68,7 +68,7 @@ public:
 	 \~japanese @brief レベルセットサーフェスを描画する。
 	 @param[int] g グラフィックスエンジン。
 	 */
-	virtual void draw( const graphics_engine &g ) const = 0;
+	virtual void draw( graphics_engine &g ) const = 0;
 	//
 private:
 	virtual void initialize( const shape2 &shape, double dx ) = 0;

@@ -205,7 +205,7 @@ private:
 		});
 	}
 	//
-	virtual void draw( const graphics_engine &g ) const override {
+	virtual void draw( graphics_engine &g ) const override {
 		if( m_param.draw_pressure ) {
 			//
 			// Visualize pressure

@@ -37,7 +37,7 @@ public:
 	//
 	void build_octree( std::function<double(const vec2d &p)> hint, unsigned maxdepth );
 	unsigned hit_test( vec2d p, leaf2 *leaf=nullptr ) const;
-	void draw_octree( const graphics_engine &g ) const;
+	void draw_octree( graphics_engine &g ) const;
 	//
 	leaf2 *m_root {nullptr};
 	std::vector<leaf2 *> m_terminals;	// Octree terminal list
@@ -54,7 +54,7 @@ private:
 	void build_nodes();
 	bool release_children( leaf2 *leaf );
 	leaf2* alloc_leaf( vec2i center, unsigned depth, vec2i position );
-	void draw_octree( const graphics_engine &g, const leaf2 *leaf ) const;
+	void draw_octree( graphics_engine &g, const leaf2 *leaf ) const;
 	void copy( leaf2 *src, leaf2 *dest );
 	uint64_t compute_corner_index( vec2i p ) const;
 	bool check_subdivision( vec2i pos, unsigned dx, std::function<double(vec2d p)> hint, int threshold, int depth, unsigned max_nest, unsigned maxdepth ) const;

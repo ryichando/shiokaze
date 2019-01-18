@@ -58,7 +58,7 @@ private:
 		},5);
 	}
 	//
-	virtual void draw( const graphics_engine &g, int width, int height ) const override {
+	virtual void draw( graphics_engine &g, int width, int height ) const override {
 		//
 		g.color4(1.0,1.0,1.0,0.5);
 		graphics_utility::draw_wired_box(g);

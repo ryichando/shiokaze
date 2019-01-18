@@ -1,8 +1,8 @@
 /*
-**	macbackwardflipsmoke2.h
+**	upsampler2.h
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on June 8, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on April 17, 2017. 
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -22,33 +22,35 @@
 **	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 //
-#ifndef SHKZ_BACKWARDFLIPSMOKE2_H
-#define SHKZ_BACKWARDFLIPSMOKE2_H
+#ifndef SHKZ_UPSAMPLER2_H
+#define SHKZ_UPSAMPLER2_H
 //
-#include "macsmoke2.h"
-#include <shiokaze/backwardflip/macbackwardflip2_interface.h>
+#include <shiokaze/array/array2.h>
+#include <shiokaze/graphics/graphics_engine.h>
+#include <functional>
 //
 SHKZ_BEGIN_NAMESPACE
 //
-class macbackwardflipsmoke2 : public macsmoke2 {
+class upsampler2 {
 public:
+	void build_upsampler( const array2<double> &fluid, double dx, int narrowband=6 );
+	std::function<bool( const vec2i &pi, std::vector<size_t> &indices, std::vector<double> &coefficients, std::vector<vec2d> &positions )> get_upsampler () const;
+	size_t get_index_size() const { return m_index; }
+	void draw( graphics_engine &g ) const;
 	//
-	LONG_NAME("MAC Backward FLIP Smoke 2D")
-	macbackwardflipsmoke2();
-	virtual ~macbackwardflipsmoke2() {}
+private:
+	typedef struct {
+		int start, end;
+		size_t index;
+		bool active;
+	} tallcell;
 	//
-	virtual void idle() override;
-	virtual void draw( graphics_engine &g, int width, int height ) const override;
-	//
-protected:
-	//
-	virtual void configure( configuration &config ) override;
-	//
-	bool m_use_regular_velocity_advection;
-	macbackwardflip2_driver m_backwardflip{this,"macbackwardflip2"};
+	std::vector<tallcell> m_tallcells;
+	array2<size_t> m_index_map;
+	size_t m_index {0};
+	double m_dx;
 };
 //
 SHKZ_END_NAMESPACE
 //
 #endif
-//

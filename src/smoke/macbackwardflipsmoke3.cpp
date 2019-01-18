@@ -124,7 +124,7 @@ void macbackwardflipsmoke3::idle() {
 	export_density();
 }
 //
-void macbackwardflipsmoke3::draw( const graphics_engine &g, int width, int height ) const {
+void macbackwardflipsmoke3::draw( graphics_engine &g, int width, int height ) const {
 	//
 	macsmoke3::draw(g,width,height);
 	m_backwardflip->draw(g);
@@ -135,9 +135,7 @@ void macbackwardflipsmoke3::draw( const graphics_engine &g, int width, int heigh
 	// Report kinetic energy
 	double kinetic_energy = m_macutility->get_kinetic_energy(m_solid,m_fluid,m_velocity);
 	g.color4(1.0,1.0,1.0,1.0);
-	g.push_screen_coord(width,height);
-	g.draw_string(vec2d(10,15).v, console::format_str("Energy = %.3e",kinetic_energy).c_str());
-	g.pop_screen_coord();
+	g.draw_string(vec2d(0.01,0.01).v, console::format_str("Energy = %.3e",kinetic_energy).c_str());
 }
 //
 extern "C" module * create_instance() {

@@ -66,7 +66,7 @@ private:
 	}
 	//
 	virtual void get( array3<double> &fluid ) override { fluid.copy(m_fluid); }
-	virtual void draw( const graphics_engine &g ) const override {
+	virtual void draw( graphics_engine &g ) const override {
 		m_gridvisualizer->draw_fluid(g,m_solid,m_fluid);
 	}
 	//

@@ -49,7 +49,7 @@ private:
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 	}
 	virtual void get( array2<double> &fluid ) override { fluid.copy(m_fluid); }
-	virtual void draw( const graphics_engine &g ) const override {
+	virtual void draw( graphics_engine &g ) const override {
 		g.color4(0.5,0.6,1.0,0.5);
 		m_gridvisualizer->draw_levelset(g,m_fluid);
 		if( m_param.draw_actives ) m_gridvisualizer->draw_active(g,m_fluid);

@@ -1006,7 +1006,7 @@ void macnbflip3::collision_levelset( std::function<double(const vec3d& p)> level
 	});
 }
 //
-void macnbflip3::draw( const graphics_engine &g, double time ) const {
+void macnbflip3::draw( graphics_engine &g, double time ) const {
 	//
 	if( m_param.draw_particles ) {
 		//

@@ -306,7 +306,7 @@ void macsmoke3::advect_dust_particles( const macarray3<double> &velocity, double
 	rasterize_dust_particles(m_density);
 }
 //
-void macsmoke3::draw_dust_particles( const graphics_engine &g ) const {
+void macsmoke3::draw_dust_particles( graphics_engine &g ) const {
 	using ge = graphics_engine;
 	g.color4(1.0,1.0,1.0,1.0);
 	g.begin(ge::MODE::POINTS);
@@ -316,7 +316,7 @@ void macsmoke3::draw_dust_particles( const graphics_engine &g ) const {
 	g.end();
 }
 //
-void macsmoke3::draw( const graphics_engine &g, int width, int height ) const {
+void macsmoke3::draw( graphics_engine &g, int width, int height ) const {
 	//
 	g.color4(1.0,1.0,1.0,0.5);
 	graphics_utility::draw_wired_box(g);

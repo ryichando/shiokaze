@@ -637,7 +637,7 @@ void macbackwardflip3::registerBuffer(const macarray3<double> &u1,
 	m_step ++;
 }
 //
-void macbackwardflip3::draw( const graphics_engine &g ) const {
+void macbackwardflip3::draw( graphics_engine &g ) const {
 	if( m_buffers.size() && m_exist_gradient ) {
 		//
 		// Draw velocity field back in time

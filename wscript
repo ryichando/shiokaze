@@ -95,15 +95,16 @@ def build(bld):
 	bld.use_opengl = use_opengl
 	#
 	bld.root_path = bld.path.abspath()
-	bld.env.LIBPATH  = ['/usr/local/lib']
+	bld.env.LIBPATH  = ['/usr/local/lib',
+						bld.root_path+'/local/lib']
 	bld.env.INCLUDES = ['/usr/local/include',
 						bld.root_path+'/include',
 						bld.root_path+'/local/include']
 	#
 	if use_opengl:
 		if sys.platform == 'darwin':
-			bld.LIB_OPENGL = ['glfw']
-			bld.FRAMEWORK_OPENGL = ['OpenGL','GLUT']
+			bld.LIB_OPENGL = ['glfw3_mac']
+			bld.FRAMEWORK_OPENGL = ['OpenGL','GLUT','Cocoa','CoreVideo','IOKit']
 		elif sys.platform == 'linux2':
 			bld.LIB_OPENGL = ['glfw','GL','GLU','glut']
 			bld.FRAMEWORK_OPENGL = []

@@ -239,14 +239,14 @@ bool octree3::release_children( leaf3 *leaf ) {
 	return true;
 }
 //
-void octree3::draw_octree( const graphics_engine &g ) const {
+void octree3::draw_octree( graphics_engine &g ) const {
 	if( m_root ) {
 		g.color4(0.5,0.5,0.5,0.5);
 		draw_octree(g,m_root);
 	}
 }
 //
-void octree3::draw_octree( const graphics_engine &g, const leaf3 *leaf ) const {
+void octree3::draw_octree( graphics_engine &g, const leaf3 *leaf ) const {
 	g.color4(0.5,0.5,0.5,0.5);
 	shape3(2,2,2).for_each([&]( int i, int j, int k ) {
 		if( leaf->subdivided ) {

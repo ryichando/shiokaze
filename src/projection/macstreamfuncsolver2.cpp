@@ -571,7 +571,7 @@ private:
 		});
 	}
 	//
-	virtual void draw( const graphics_engine &g ) const override {
+	virtual void draw( graphics_engine &g ) const override {
 		//
 		// Visualize pressure
 		if( m_vecpotential_array.shape().count() ) {

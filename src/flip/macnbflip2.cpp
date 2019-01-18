@@ -830,7 +830,7 @@ void macnbflip2::collision_levelset( std::function<double(const vec2d& p)> level
 	});
 }
 //
-void macnbflip2::drawCircle ( const graphics_engine &g, const vec2d &p, double r, bool bullet, double sizing_value ) const {
+void macnbflip2::drawCircle ( graphics_engine &g, const vec2d &p, double r, bool bullet, double sizing_value ) const {
 	const unsigned num_v = 20;
 	double alpha = m_fluid_filled ? 0.25 : 0.75;
 	if( bullet ) {
@@ -839,7 +839,7 @@ void macnbflip2::drawCircle ( const graphics_engine &g, const vec2d &p, double r
 		g.color4(0.5,0.5,1.0,alpha*sizing_value);
 	}
 	//
-	g.begin(graphics_engine::MODE::TRIANGLES);
+	g.begin(graphics_engine::MODE::POLYGON);
 	for( unsigned t=0; t<num_v; t++ ) {
 		double theta = 2.0 * M_PI * t / (double)num_v;
 		g.vertex2v((p+r*vec2d(cos(theta),sin(theta))).v);
@@ -854,7 +854,7 @@ void macnbflip2::drawCircle ( const graphics_engine &g, const vec2d &p, double r
 	g.end();
 }
 //
-void macnbflip2::draw( const graphics_engine &g, double time ) const {
+void macnbflip2::draw( graphics_engine &g, double time ) const {
 	//
 	if( ! m_fluid_filled ) {
 		if( m_param.draw_levelset ) {

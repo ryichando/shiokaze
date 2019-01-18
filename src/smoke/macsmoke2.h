@@ -50,7 +50,7 @@ public:
 	virtual void drag( int width, int height, double x, double y, double u, double v ) override;
 	virtual void idle() override;
 	virtual void setup_window( std::string &name, int &width, int &height ) const override;
-	virtual void draw( const graphics_engine &g, int width, int height ) const override;
+	virtual void draw( graphics_engine &g, int width, int height ) const override;
 	virtual bool should_quit() const override { return m_timestepper->should_quit(); }
 	virtual bool should_screenshot() const override { return m_timestepper->should_export_frame(); }
 	//
@@ -104,7 +104,7 @@ protected:
 	virtual void advect_dust_particles( const macarray2<double> &velocity, double dt );
 	virtual void add_source ( macarray2<double> &velocity, array2<double> &density, double time, double dt );
 	virtual void rasterize_dust_particles( array2<double> &rasterized_density );
-	virtual void draw_dust_particles( const graphics_engine &g ) const;
+	virtual void draw_dust_particles( graphics_engine &g ) const;
 };
 //
 SHKZ_END_NAMESPACE

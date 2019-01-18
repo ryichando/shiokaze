@@ -52,7 +52,7 @@ public:
 	//
 	virtual void setup_window( std::string &name, int &width, int &height ) const override;
 	virtual void idle() override;
-	virtual void draw( const graphics_engine &g, int width, int height ) const override;
+	virtual void draw( graphics_engine &g, int width, int height ) const override;
 	virtual bool should_quit() const override { return m_timestepper->should_quit(); }
 	virtual bool should_screenshot() const override { return m_timestepper->should_export_frame(); }
 	//

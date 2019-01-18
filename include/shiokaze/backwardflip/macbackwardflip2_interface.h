@@ -97,7 +97,7 @@ public:
 	 \~japanese @brief デバッグのためにシミュレーション情報を描画する。
 	 @param[in] g グラフィックスエンジン。
 	 */
-	virtual void draw( const graphics_engine &g ) const = 0;
+	virtual void draw( graphics_engine &g ) const = 0;
 	//
 private:
 	//

@@ -68,7 +68,7 @@ public:
 	virtual void get_levelset( array3<double> &fluid ) const override;
 	//
 	// Draw FLIP partciels
-	virtual void draw( const graphics_engine &g, double time=0.0 ) const override;
+	virtual void draw( graphics_engine &g, double time=0.0 ) const override;
 	//
 	// Get the number of particles
 	virtual size_t get_particle_count() const override { return m_particles.size(); }

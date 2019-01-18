@@ -249,7 +249,25 @@ void ui::configure( configuration &config ) {
 	}
 }
 //
+static void push_screen_coord ( unsigned width, unsigned height ) {
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);	
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0.0,width,height,0.0,-1.0,1.0);
+}
+//
+static void pop_screen_coord () {
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+}
+//
 void ui::run () {
+	//
 #if USE_OPENGL
 	//
 	// Make sure that the instance is not null
@@ -376,9 +394,9 @@ void ui::run () {
 			ge.color4(1.0,1.0,1.0,1.0);
 			ge.line_width(2.0);
 			double k = 10.0;
-			ge.push_screen_coord(width,height);
+			push_screen_coord(width,height);
 			graphics_utility::draw_arrow(ge,mouse_p.v,(mouse_p+k*force_accumulation/mouse_accumulation).v);
-			ge.pop_screen_coord();
+			pop_screen_coord();
 			ge.line_width(1.0);
 		}
 		//
@@ -396,7 +414,7 @@ void ui::run () {
 				position = vec2d(width-sub_window[0]*logo_width-10,height-sub_window[1]*logo_height-10);
 			}
 			//
-			ge.push_screen_coord(width,height);
+			push_screen_coord(width,height);
 			::glColor4d(0.0,0.0,0.0,0.5);
 			::glBegin(GL_QUADS);
 				::glVertex2i(position[0],position[1]);
@@ -421,19 +439,19 @@ void ui::run () {
 			::glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 			::glDisable(GL_TEXTURE_2D);
 			::glBindTexture(GL_TEXTURE_2D,0);
-			ge.pop_screen_coord();
+			pop_screen_coord();
 		}
 		//
 		if( ! running ) {
 			//
 			ge.color4(1.0,1.0,1.0,1.0);
-			ge.push_screen_coord(width,height);
+			push_screen_coord(width,height);
 			if( strong_pause_step && strong_pause_step == step ) {
 				ge.draw_string(vec2d(10,height-10).v, "Not running. Press [space] to resume.");
 			} else {
 				ge.draw_string(vec2d(10,height-10).v, "Not running");
 			}
-			ge.pop_screen_coord();
+			pop_screen_coord();
 			//
 		} else {
 			//
@@ -459,14 +477,6 @@ void ui::run () {
 		//
 		// Exit loop if requested
 		if( instance->should_quit()) break;
-		//
-		// Trick for macOS Mojave
-		static bool first_time (true);
-		if( first_time ) {
-			::glfwHideWindow(window);
-			::glfwShowWindow(window);
-			first_time = false;
-		}
 	}
 	//
 	::glfwTerminate();

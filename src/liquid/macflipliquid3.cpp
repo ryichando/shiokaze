@@ -185,7 +185,7 @@ void macflipliquid3::render_mesh( unsigned frame ) const {
 	global_timer::resume();
 }
 //
-void macflipliquid3::draw( const graphics_engine &g, int width, int height ) const {
+void macflipliquid3::draw( graphics_engine &g, int width, int height ) const {
 	//
 	g.color4(1.0,1.0,1.0,0.5);
 	graphics_utility::draw_wired_box(g);

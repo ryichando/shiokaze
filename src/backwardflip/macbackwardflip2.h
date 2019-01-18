@@ -53,7 +53,7 @@ private:
 						const array2<double> *d_added,				// Density field source of the current step - can be nullptr
 						double dt ) override;						// Time-step size of the current step
 	//
-	virtual void draw( const graphics_engine &g ) const override;
+	virtual void draw( graphics_engine &g ) const override;
 	virtual void configure( configuration &config ) override;
 	//
 	struct Parameters {
