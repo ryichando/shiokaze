@@ -97,7 +97,7 @@ unsigned module::close_all_handles () {
 }
 //
 std::string module::module_libpath( std::string module_name ) {
-	return filesystem::find_libpath(std::string("shiokaze_")+module_name);
+	return filesystem::resolve_libname(std::string("shiokaze_")+module_name);
 }
 //
 module * module::alloc_module( configuration &config, std::string arg_name, std::string default_module_name, std::string description ) {

@@ -26,4 +26,5 @@ for d in $(find "build" -type d)
 do
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$d
 done
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/local/lib
 ./build/launcher/launcher "$@"

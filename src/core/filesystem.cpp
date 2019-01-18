@@ -55,24 +55,7 @@ std::string filesystem::find_resource_path( std::string directory, std::string n
 	return std::string();
 }
 //
-static bool find_file( const boost::filesystem::path & dir_path,
-						   const std::string & file_name,
-						   boost::filesystem::path & path_found ) {
-	//
-	if ( ! boost::filesystem::exists( dir_path ) ) return false;
-	boost::filesystem::directory_iterator end_iter;
-	for ( boost::filesystem::directory_iterator iter(dir_path); iter != end_iter;  ++iter ) {
-		if ( boost::filesystem::is_directory( *iter ) ) {
-			if ( find_file( *iter, file_name, path_found ) ) return true;
-		} else if ( iter->path().filename() == file_name ) {
-			path_found = *iter;
-			return true;
-		}
-	}
-	return false;
-}
-//
-std::string filesystem::find_libpath( std::string name ) {
+std::string filesystem::resolve_libname( std::string name ) {
 	//
 #ifdef __APPLE__
 	static const std::string extension ("dylib");
@@ -80,10 +63,5 @@ std::string filesystem::find_libpath( std::string name ) {
 	static const std::string extension ("so");
 #endif
 	std::string libname = std::string("lib")+name+SHKZ_SUFFIX+"."+extension;
-	boost::filesystem::path path;
-	if(find_file("build",libname,path)) {
-		return path.string();
-	} else {
-		return std::string();
-	}
+	return libname;
 }

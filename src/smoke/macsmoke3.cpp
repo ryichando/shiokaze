@@ -50,7 +50,7 @@ void macsmoke3::setup_window( std::string &name, int &width, int &height ) const
 void macsmoke3::load( configuration &config ) {
 	//
 	std::string name("plume3"); config.get_string("Name",name,"Scene file name");
-	m_dylib.open_library(filesystem::find_libpath(name));
+	m_dylib.open_library(filesystem::resolve_libname(name));
 	m_dylib.load(config);
 	m_dylib.overwrite(config);
 	//

@@ -35,7 +35,7 @@ int main ( int argc, const char* argv[] ) {
 	pthread_mutex_init(&mutex, NULL);
 	//
 	std::thread dummy([](){}); dummy.join(); // Dummy code to enforce linking against thread
-	const auto handle = ::dlopen(filesystem::find_libpath("shiokaze_ui").c_str(),RTLD_LAZY);
+	const auto handle = ::dlopen(filesystem::resolve_libname("shiokaze_ui").c_str(),RTLD_LAZY);
 	int result (0);
 	if( ! handle ) {
 		std::cout << "Could not open the library: " << ::dlerror() << std::endl;

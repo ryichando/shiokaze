@@ -80,7 +80,7 @@ public:
 	 \~japanese @brief ライブラリのパスを取得する。
 	 @param[in] name "lib" プレフィックスと ".so" サフィックスを除いたライブラリの名前。
 	 */
-	static std::string find_libpath( std::string name );
+	static std::string resolve_libname( std::string name );
 };
 //
 SHKZ_END_NAMESPACE

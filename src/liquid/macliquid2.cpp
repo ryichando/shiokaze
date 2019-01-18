@@ -45,7 +45,7 @@ macliquid2::macliquid2 () {
 void macliquid2::load( configuration &config ) {
 	//
 	std::string name("waterdrop2"); config.get_string("Name",name,"Scene file name");
-	m_dylib.open_library(filesystem::find_libpath(name));
+	m_dylib.open_library(filesystem::resolve_libname(name));
 	m_dylib.load(config);
 	m_dylib.overwrite(config);
 }
