@@ -48,7 +48,7 @@ private:
 		std::vector<std::function<void()> > operations;
 		if( m_mode & CELL_MODE ) {
 			operations.push_back([&](){
-				for( unsigned n=0; n<points.size(); ++n ) {
+				for( size_t n=0; n<points.size(); ++n ) {
 					const vec2i &pi = m_shape.find_cell(points[n]/m_dx);
 					auto ptr = m_hash_cell.ptr(pi);
 					if( ptr ) ptr->push_back(n);
@@ -59,7 +59,7 @@ private:
 		//
 		if( m_mode & NODAL_MODE ) {
 			operations.push_back([&](){
-				for( unsigned n=0; n<points.size(); ++n ) {
+				for( size_t n=0; n<points.size(); ++n ) {
 					const vec2i &pi = m_shape.find_node(points[n]/m_dx);
 					auto ptr = m_hash_node.ptr(pi);
 					if( ptr ) ptr->push_back(n);
@@ -71,7 +71,7 @@ private:
 		if( m_mode & FACE_MODE ) {
 			operations.push_back([&](){
 				m_parallel.for_each(DIM2,[&]( size_t dim ) {
-					for( unsigned n=0; n<points.size(); ++n ) {
+					for( size_t n=0; n<points.size(); ++n ) {
 						const vec2i &pi = m_shape.find_face(points[n]/m_dx,dim);
 						auto ptr = hash_face(dim).ptr(pi);
 						if( ptr ) ptr->push_back(n);
