@@ -390,7 +390,7 @@ void ui::run () {
 		}
 		//
 		// Call draw
-		::glClear(GL_COLOR_BUFFER_BIT);
+		ge.clear();
 		instance->draw(ge,width,height);
 		//
 		// Draw an arrow if mouse dragging
