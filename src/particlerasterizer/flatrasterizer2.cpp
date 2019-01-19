@@ -38,7 +38,7 @@ public:
 	virtual void build_levelset( array2<double> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const override {
 		//
 		std::vector<vec2d> points(particles.size());
-		for( unsigned n=0; n<points.size(); ++n ) points[n] = particles[n].p;
+		for( size_t n=0; n<points.size(); ++n ) points[n] = particles[n].p;
 		const_cast<pointgridhash2_driver &>(m_pointgridhash)->sort_points(points);
 		//
 		auto cube = []( double x ) { return x*x*x; };

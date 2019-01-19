@@ -102,7 +102,7 @@ public:
 			double wall_offset = 0.25*m_dx;
 			vec2d fp(p);
 			for( unsigned dim : DIMS2 ) fp[dim] = std::min(m_dx*m_shape[dim]-wall_offset,std::max(wall_offset,fp[dim]));
-			for( unsigned n0=0; n0<neighbors.size(); n0++ ) for( unsigned n1=n0+1; n1<neighbors.size(); n1++ ) {
+			for( size_t n0=0; n0<neighbors.size(); n0++ ) for( size_t n1=n0+1; n1<neighbors.size(); n1++ ) {
 				const Particle2 &p0 = particles[neighbors[n0]];
 				const Particle2 &p1 = particles[neighbors[n1]];
 				double r_limit = 2.0;
@@ -114,7 +114,7 @@ public:
 		};
 		//
 		std::vector<vec2d> points(particles.size());
-		for( unsigned n=0; n<points.size(); ++n ) {
+		for( size_t n=0; n<points.size(); ++n ) {
 			points[n] = particles[n].p;
 		}
 		const_cast<pointgridhash2_driver &>(m_pointgridhash)->sort_points(points);
