@@ -28,6 +28,7 @@
 SHKZ_USING_NAMESPACE
 //
 graphics_gl::graphics_gl () {
+	//
 	setHiDPIScalingFactor(1.0);
 	m_position[0] = -1.0;
 	m_position[1] = 1.3;
@@ -39,10 +40,12 @@ graphics_gl::graphics_gl () {
 }
 //
 void graphics_gl::setHiDPIScalingFactor( double factor ) {
+	//
 	m_HiDPI_factor = factor;
 }
 //
 void graphics_gl::setup_graphics ( double r, double g, double b, double a ) {
+	//
 	glClearColor(r,g,b,a);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -55,11 +58,13 @@ void graphics_gl::setup_graphics ( double r, double g, double b, double a ) {
 }
 //
 void graphics_gl::set_camera( const double target[3], const double position[3] ) {
+	//
 	for( int i=0; i<3; ++i ) m_target[i] = target[i];
 	for( int i=0; i<3; ++i ) m_position[i] = position[i];
 }
 //
 void graphics_gl::configure_view( unsigned width, unsigned height, unsigned dim ) {
+	//
 	m_dimension = dim;
 	glViewport(0,0,width,height);
 	if( dim == 2 ) {
@@ -76,8 +81,8 @@ void graphics_gl::configure_view( unsigned width, unsigned height, unsigned dim 
 	}
 }
 //
-void graphics_gl::color3v( const double *v ) {
-	glColor3dv(v);
+void graphics_gl::clear() {
+	glClear(GL_COLOR_BUFFER_BIT);
 }
 //
 void graphics_gl::color4v( const double *v ) {
@@ -122,10 +127,6 @@ void graphics_gl::line_width( double width ) {
 //
 void graphics_gl::vertex3v( const double *v ) {
 	glVertex3dv(v);
-}
-//
-void graphics_gl::vertex2v( const double *v ) {
-	glVertex2dv(v);
 }
 //
 void graphics_gl::draw_string( const double *v, std::string str ) const {

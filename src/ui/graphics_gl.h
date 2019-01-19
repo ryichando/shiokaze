@@ -1,3 +1,4 @@
+
 /*
 **	graphics_gl.h
 **
@@ -45,12 +46,10 @@ public:
 	//
 	virtual void setup_graphics ( double r=0.0, double g=0.0, double b=0.0, double a=1.0 ) override;
 	virtual void configure_view( unsigned width, unsigned height, unsigned dim ) override;
+	virtual void clear() override;
 	//
-	virtual void color3v( const double *v ) override;
 	virtual void color4v( const double *v ) override;
-	//
 	virtual void vertex3v( const double *v ) override;
-	virtual void vertex2v( const double *v ) override;
 	//
 	virtual void begin( MODE mode ) override;
 	virtual void end() override;
@@ -70,7 +69,6 @@ private:
 	double m_HiDPI_factor;
 	double m_position[3], m_target[3];
 	int m_dimension;
-	//
 };
 //
 SHKZ_END_NAMESPACE

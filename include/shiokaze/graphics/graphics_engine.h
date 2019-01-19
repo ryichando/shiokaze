@@ -65,6 +65,11 @@ public:
 	 */
 	virtual void configure_view( unsigned width, unsigned height, unsigned dim ) = 0;
 	/**
+	 \~english @brief Clear out the canvas.
+	 \~japanese @brief キャンバスをクリアする。
+	 */
+	virtual void clear() = 0;
+	/**
 	 \~english @brief Equivalebt to glColor. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml
 	 \~japanese @brief glColor と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml を参照。
 	 */
@@ -84,7 +89,10 @@ public:
 	 \~english @brief Equivalebt to glColor. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml
 	 \~japanese @brief glColor と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml を参照。
 	 */
-	virtual void color3v( const double *v ) = 0;
+	void color3v( const double *v ) {
+		double v_plus_alpha[] = { v[0], v[1], v[2], 1.0 };
+		color4v(v_plus_alpha);
+	}
 	/**
 	 \~english @brief Equivalebt to glColor. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml
 	 \~japanese @brief glColor と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml を参照。
@@ -94,18 +102,18 @@ public:
 	 \~english @brief Equivalebt to glVertex. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml
 	 \~japanese @brief glVertex と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml を参照。
 	 */
-	void vertex3( double x, double y, double z ) {
-		double v[] = { x, y, z};
+	void vertex2( double x, double y ) {
+		double v[] = { x, y, 0.0 };
 		vertex3v(v);
 	}
 	/**
 	 \~english @brief Equivalebt to glVertex. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml
 	 \~japanese @brief glVertex と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml を参照。
 	 */
-	void vertex2( double x, double y ) {
-		double v[] = { x, y };
-		vertex2v(v);
-	}
+	void vertex3( double x, double y, double z ) {
+		double v[] = { x, y, z};
+		vertex3v(v);
+	}\
 	//
 	enum class MODE { POINTS, LINES, LINE_STRIP, LINE_LOOP, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN };
 	/**
@@ -132,12 +140,15 @@ public:
 	 \~english @brief Equivalebt to glVertex. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml
 	 \~japanese @brief glVertex と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml を参照。
 	 */
-	virtual void vertex3v( const double *v ) = 0;
+	void vertex2v( const double *v ) {
+		double v_3d_added[] = { v[0], v[1], 0.0 };
+		vertex3v(v_3d_added);
+	}
 	/**
 	 \~english @brief Equivalebt to glVertex. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml
 	 \~japanese @brief glVertex と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml を参照。
 	 */
-	virtual void vertex2v( const double *v ) = 0;
+	virtual void vertex3v( const double *v ) = 0;
 	/**
 	 \~english @brief Draw a string at the current position.
 	 @param[in] p Position.
