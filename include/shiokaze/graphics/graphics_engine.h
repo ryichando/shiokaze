@@ -158,14 +158,6 @@ public:
 	 @param[in] str 文字列。
 	 */
 	virtual void draw_string( const double *v, std::string str ) const = 0;
-	/**
-	 \~english @brief Get DPI factor of the monitor.
-	 @return DPI factor.
-	 \~japanese @brief モニターの DPI を取得する。
-	 @return DPI ファクター。
-	 */
-	virtual double get_HiDPI_scaling_factor() const = 0;
-	//
 };
 //
 SHKZ_END_NAMESPACE

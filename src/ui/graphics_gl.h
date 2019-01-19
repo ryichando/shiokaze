@@ -59,8 +59,8 @@ public:
 	//
 	virtual void draw_string( const double *v, std::string str ) const override;
 	//
-	virtual void setHiDPIScalingFactor( double factor );
-	virtual double get_HiDPI_scaling_factor() const override;
+	void setHiDPIScalingFactor( double factor );
+	double get_HiDPI_scaling_factor() const;
 	//
 	void set_camera( const double target[3], const double position[3] );
 	//
