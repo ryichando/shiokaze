@@ -641,7 +641,7 @@ void macbackwardflip2::draw( graphics_engine &g ) const {
 		m_spatial_adaptivity.const_serial_all([&](int i, int j, auto &it) {
 			g.color4(1.0,0.5,0.2,0.5);
 			if(it()) {
-				g.begin(graphics_engine::MODE::POLYGON);
+				g.begin(graphics_engine::MODE::TRIANGLE_FAN);
 				g.vertex2(i*m_dx,j*m_dx);
 				g.vertex2((i+1)*m_dx,j*m_dx);
 				g.vertex2((i+1)*m_dx,(j+1)*m_dx);

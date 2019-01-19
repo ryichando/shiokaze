@@ -839,7 +839,7 @@ void macnbflip2::drawCircle ( graphics_engine &g, const vec2d &p, double r, bool
 		g.color4(0.5,0.5,1.0,alpha*sizing_value);
 	}
 	//
-	g.begin(graphics_engine::MODE::POLYGON);
+	g.begin(graphics_engine::MODE::TRIANGLE_FAN);
 	for( unsigned t=0; t<num_v; t++ ) {
 		double theta = 2.0 * M_PI * t / (double)num_v;
 		g.vertex2v((p+r*vec2d(cos(theta),sin(theta))).v);

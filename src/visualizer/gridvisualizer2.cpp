@@ -39,7 +39,7 @@ private:
 		if( m_param.draw_active ) {
 			g.color4(1.0,0.0,0.0,0.25);
 			q.const_serial_actives([&](int i, int j, const auto &it) {
-				g.begin(graphics_engine::MODE::POLYGON);
+				g.begin(graphics_engine::MODE::TRIANGLE_FAN);
 				g.vertex2(i*m_dx,j*m_dx);
 				g.vertex2((i+1)*m_dx,j*m_dx);
 				g.vertex2((i+1)*m_dx,(j+1)*m_dx);
@@ -52,7 +52,7 @@ private:
 		if( m_param.draw_inside ) {
 			g.color4(1.0,0.0,0.0,0.25);
 			q.const_serial_inside([&](int i, int j, const auto &it) {
-				g.begin(graphics_engine::MODE::POLYGON);
+				g.begin(graphics_engine::MODE::TRIANGLE_FAN);
 				g.vertex2(i*m_dx,j*m_dx);
 				g.vertex2((i+1)*m_dx,j*m_dx);
 				g.vertex2((i+1)*m_dx,(j+1)*m_dx);
@@ -80,7 +80,7 @@ private:
 		if( m_param.draw_density ) {
 			density.const_serial_actives([&](int i, int j, const auto &it) {
 				g.color4(1.0,1.0,1.0,it());
-				g.begin(graphics_engine::MODE::POLYGON);
+				g.begin(graphics_engine::MODE::TRIANGLE_FAN);
 				g.vertex2(i*m_dx,j*m_dx);
 				g.vertex2((i+1)*m_dx,j*m_dx);
 				g.vertex2((i+1)*m_dx,(j+1)*m_dx);
@@ -114,7 +114,7 @@ private:
 				vertices[ni][nj] = m_dx*vec2d(i+ni,j+nj);
 			}
 			m_meshutility->march_points(v,vertices,p,pnum,true);
-			g.begin(graphics_engine::MODE::POLYGON);
+			g.begin(graphics_engine::MODE::TRIANGLE_FAN);
 			for( int m=0; m<pnum; m++ ) {
 				g.vertex2v((p[m]+origin).v);
 			}
@@ -176,7 +176,7 @@ private:
 						g.color4(0.0,0.0,0.0,0.0);
 					}
 				};
-				g.begin(graphics_engine::MODE::POLYGON);
+				g.begin(graphics_engine::MODE::TRIANGLE_FAN);
 				set_color(i,j);
 				g.vertex2((i+0.5)*m_dx,(j+0.5)*m_dx);
 				set_color(i+1,j);
@@ -209,7 +209,7 @@ private:
 						g.color4(0.0,0.0,0.0,0.0);
 					}
 				};
-				g.begin(graphics_engine::MODE::POLYGON);
+				g.begin(graphics_engine::MODE::TRIANGLE_FAN);
 				set_color(i,j);
 				g.vertex2(i*m_dx,j*m_dx);
 				set_color(i+1,j);

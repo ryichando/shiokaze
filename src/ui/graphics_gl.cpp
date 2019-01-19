@@ -97,8 +97,10 @@ void graphics_gl::begin( MODE mode ) {
 				return GL_LINE_LOOP;
 			case MODE::TRIANGLES:
 				return GL_TRIANGLES;
-			case MODE::POLYGON:
-				return GL_POLYGON;
+			case MODE::TRIANGLE_STRIP:
+				return GL_TRIANGLE_STRIP;
+			case MODE::TRIANGLE_FAN:
+				return GL_TRIANGLE_FAN;
 			default:
 				throw;
 		}

@@ -287,7 +287,7 @@ void macsmoke2::draw_dust_particles( graphics_engine &g ) const {
 		g.color4(1.0,1.0,1.0,1.0);
 		graphics_utility::draw_circle(g,p.v,r,ge::MODE::LINE_LOOP);
 		g.color4(1.0,1.0,1.0,0.3);
-		graphics_utility::draw_circle(g,p.v,r,ge::MODE::POLYGON);
+		graphics_utility::draw_circle(g,p.v,r,ge::MODE::TRIANGLE_FAN);
 	}
 }
 //
