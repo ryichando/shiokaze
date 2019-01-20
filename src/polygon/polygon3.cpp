@@ -83,7 +83,7 @@ static int face_cb(p_ply_argument argument) {
 class polygon3 : public polygon3_interface {
 public:
 	//
-	virtual bool loadMesh( std::string path ) {
+	virtual bool load_mesh( std::string path ) override {
 		//
 		scoped_timer timer(this);
 		//
@@ -138,7 +138,7 @@ public:
 		console::dump("Done. Took %s.\n", timer.stock("Loading").c_str());
 		return true;
 	}
-	virtual void getMesh( std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) {
+	virtual void get_mesh( std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) override {
 		vertices = m_vertices;
 		faces = m_faces;
 	}

@@ -47,7 +47,7 @@ public:
 	 @param[in] path メッシュファイルへのパス。
 	 @return もし読み込みが成功すれば \c true を、失敗すれば \c false を返す。
 	*/
-	virtual bool loadMesh( std::string path ) = 0;
+	virtual bool load_mesh( std::string path ) = 0;
 	/**
 	 \~english @brief Get the loaded mesh.
 	 @param[out] vertices Vertices.
@@ -56,7 +56,7 @@ public:
 	 @param[out] vertices 頂点列。
 	 @param[out] faces メッシュの face 群。
 	*/
-	virtual void getMesh( std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) = 0;
+	virtual void get_mesh( std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) = 0;
 };
 //
 using polygon3_ptr = std::unique_ptr<polygon3_interface>;

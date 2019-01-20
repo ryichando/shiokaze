@@ -81,34 +81,34 @@ extern "C" void initialize( const shape3 &shape, double dx ) {
 		levelsets[n]->recursive_initialize({{"dx",&dx}});
 	}
 	//
-	polygon->loadMesh(filesystem::find_resource_path("objects","bunny_watertight_low.ply"));
-	polygon->getMesh(vertices,faces);
+	polygon->load_mesh(filesystem::find_resource_path("objects","bunny_watertight_low.ply"));
+	polygon->get_mesh(vertices,faces);
 	polygon3_utility::transform(vertices,vec3d(0.2,level+idx*stride,0.125+shift_z),0.2,1,180.0);
 	levelsets[0]->set_mesh(vertices,faces);
 	idx ++;
 	//
-	polygon->loadMesh(filesystem::find_resource_path("objects","armadillo.ply"));
-	polygon->getMesh(vertices,faces);
+	polygon->load_mesh(filesystem::find_resource_path("objects","armadillo.ply"));
+	polygon->get_mesh(vertices,faces);
 	polygon3_utility::transform(vertices,vec3d(0.39,level+idx*stride,0.14+shift_z),0.2,1,180.0);
 	levelsets[1]->set_mesh(vertices,faces);
 	idx ++;
 	//
-	polygon->loadMesh(filesystem::find_resource_path("objects","dragon_s.ply"));
-	polygon->getMesh(vertices,faces);
+	polygon->load_mesh(filesystem::find_resource_path("objects","dragon_s.ply"));
+	polygon->get_mesh(vertices,faces);
 	polygon3_utility::transform(vertices,vec3d(0.57,level+idx*stride,0.175+shift_z),0.22,1,0.0);
 	levelsets[2]->set_mesh(vertices,faces);
 	idx ++;
 	//
-	polygon->loadMesh(filesystem::find_resource_path("objects","dragon.ply"));
-	polygon->getMesh(vertices,faces);
+	polygon->load_mesh(filesystem::find_resource_path("objects","dragon.ply"));
+	polygon->get_mesh(vertices,faces);
 	polygon3_utility::transform(vertices,vec3d(0.78,level+idx*stride,0.175+shift_z),0.3,1,180.0);
 	levelsets[3]->set_mesh(vertices,faces);
 	idx ++;
 	//
 	std::vector<vec3d> lucy_vertices;
 	//
-	polygon->loadMesh(filesystem::find_resource_path("objects","lucy.ply"));
-	polygon->getMesh(lucy_vertices,faces);
+	polygon->load_mesh(filesystem::find_resource_path("objects","lucy.ply"));
+	polygon->get_mesh(lucy_vertices,faces);
 	//
 	vertices = lucy_vertices;
 	polygon3_utility::transform(vertices,vec3d(0.25,-0.01,0.18),0.25,1,180.0);
