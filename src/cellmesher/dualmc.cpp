@@ -1,5 +1,5 @@
 /*
-**	.cpp
+**	duaklc.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
 **	Created by Ryoichi Ando <rand@nii.ac.jp> on June 30, 2018. All rights reserved.
