@@ -34,7 +34,6 @@ private:
 				double y1 = v[quads[(n+1)%4][0]][quads[(n+1)%4][1]];
 				if( y0-y1 ) {
 					double a = y0/(y0-y1);
-					assert( a >= 0.0 && a <= 1.0 );
 					vec2d p0 = vertices[quads[n][0]][quads[n][1]];
 					vec2d p1 = vertices[quads[(n+1)%4][0]][quads[(n+1)%4][1]];
 					p[pnum] = (1.0-a)*p0+a*p1;
