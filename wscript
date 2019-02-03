@@ -24,7 +24,7 @@
 #
 import sys, os, multiprocessing, platform, glob, filecmp
 #
-if 'DISPLAY' in os.environ:
+if 'DISPLAY' in os.environ or sys.platform == 'darwin':
 	use_opengl = True
 else:
 	use_opengl = False
