@@ -564,7 +564,7 @@ int ui::run ( int argc, const char* argv[] ) {
 #endif
 	//
 	console::dump( "   CPU = \e[36m%s\e[39m\n", cpu_name.size() > cpu_trim ? cpu_name.substr(cpu_trim,cpu_name.size()).c_str() : "(Unknown)");
-	console::dump( "   OpenGL availability = %s\n", USE_OPENGL ? "Yes" : "No" );
+	console::dump( "   Display availability = %s\n", USE_OPENGL ? "Yes" : "No" );
 	console::dump( "   %s version = \e[36m%d.%d.%d\e[39m\n",compiler_name, __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
 	console::dump( "   Build target = \e[36m%s\e[39m\n", SHKZ_BUILD_TARGET );
 	console::dump( "   Available cores = \e[36m%d\e[39m\n", std::thread::hardware_concurrency() );
