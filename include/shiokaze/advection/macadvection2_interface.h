@@ -49,6 +49,7 @@ public:
 	 */
 	virtual void advect_scalar(	array2<double> &scalar,				// Cell-centered
 								const macarray2<double> &velocity,	// Face-located
+								const array2<double> &fluid,		// Fluid level set
 								double dt ) = 0;
 	/**
 	 \~english @brief Advect vector field.
@@ -62,6 +63,7 @@ public:
 	 */
 	virtual void advect_vector(	macarray2<double> &u,				// Face-located
 								const macarray2<double> &velocity,	// Face-located
+								const array2<double> &fluid,		// Fluid level set
 								double dt ) = 0;
 	//
 private:

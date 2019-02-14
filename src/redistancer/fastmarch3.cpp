@@ -71,7 +71,7 @@ static bool projectTriangle( vec3d *points, unsigned num=3 ) {
 	return true;
 }
 //
-static bool fastMarch( std::vector<node3 *> &nodes, double maxdist, double mindist, const parallel_driver &parallel ) {
+static bool fast_march( std::vector<node3 *> &nodes, double maxdist, double mindist, const parallel_driver &parallel ) {
 	//
 	// Check the sign of coefficients
 	assert(mindist<=0);
@@ -247,10 +247,9 @@ private:
 	LONG_NAME("FastMarch 3D")
 	ARGUMENT_NAME("FastMarch")
 	//
-	virtual void redistance( array3<double> &phi_array, double dx ) override {
+	virtual void redistance( array3<double> &phi_array, unsigned width, double dx ) override {
 		//
-		unsigned half_cells = phi_array.get_levelset_halfwidth();
-		double half_bandwidth = dx * (double)half_cells;
+		double half_bandwidth = dx * (double)width;
 		typedef struct { bool known; double dist; } grid;
 		//
 		// Generate a mesh
@@ -297,7 +296,7 @@ private:
 		});
 		//
 		// Trim to just near the surface
-		m_gridutility->mark_narrowband(phi_array,half_cells);
+		m_gridutility->mark_narrowband(phi_array,width);
 		//
 		// Setup a network
 		shared_array3<node3 *> nodeArray(phi_array.shape());
@@ -336,7 +335,7 @@ private:
 		});
 		//
 		// Perform fast march
-		fastMarch(nodes,half_bandwidth,-half_bandwidth,m_parallel);
+		fast_march(nodes,half_bandwidth,-half_bandwidth,m_parallel);
 		//
 		phi_array.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			it.set(nodeArray()(i,j,k)->levelset);

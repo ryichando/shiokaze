@@ -554,7 +554,7 @@ bool macbackwardflip3::fetch( array3<double> &density_reconstructed ) const {
 	}
 }
 //
-void macbackwardflip3::registerBuffer(const macarray3<double> &u1,
+void macbackwardflip3::register_buffer(const macarray3<double> &u1,
 									const macarray3<double> &u0,
 									const macarray3<double> *m_u_reconstructed,
 									const macarray3<double> *g,

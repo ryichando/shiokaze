@@ -745,14 +745,14 @@ private:
 			shape2 global_shape = shape2(m_oi+m_Zx,m_oj+m_Zy);
 			auto markable = [&]( vec2i pi, bool default_result ) {
 				if( ! local_shape.out_of_bounds(pi) && ! global_shape.out_of_bounds(pi+vec2i(m_oi,m_oj))) {
-					auto pass_m_fill_mask = [&]( size_t n ) {
+					auto pass_fill_mask = [&]( size_t n ) {
 						return ! ((*(m_fill_mask+n/8) >> n%8) & 1U);
 					};
 					const size_t n = encode(pi[0],pi[1]);
 					if( (*(m_bit_mask+n/8) >> n%8) & 1U ) {
-						return inside_func(m_buffer ? m_buffer+n*m_element_size : nullptr) && pass_m_fill_mask(n);
+						return inside_func(m_buffer ? m_buffer+n*m_element_size : nullptr) && pass_fill_mask(n);
 					} else {
-						return default_result && pass_m_fill_mask(n);
+						return default_result && pass_fill_mask(n);
 					}
 				} else {
 					return false;

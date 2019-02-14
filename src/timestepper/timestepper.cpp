@@ -27,6 +27,7 @@
 #include <shiokaze/core/global_timer.h>
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 //
 SHKZ_USING_NAMESPACE
 //
@@ -49,37 +50,58 @@ public:
 		double max_dt = std::max( m_min_dt, 1.0 / m_FPS );
 		//
 		double dt;
-		if( m_use_fixed_time_step ) {
-			dt = max_dt;
-		} else {
-			if( max_unit_u ) {
-				dt = std::min( max_dt, m_CFL / max_unit_u );
-			} else {
-				dt = m_min_dt;
-			}
-		}
-		//
-		assert( m_accumulated_time < 1.0 / m_FPS );	
-		if( m_accumulated_time+dt >= 1.0 / m_FPS ) {
-			dt = 1.0 / m_FPS - m_accumulated_time;
-			if( dt < m_min_dt ) {
-				double odd = m_min_dt - dt;
-				dt = m_min_dt;
-				m_accumulated_time = odd;
-			} else {
-				m_accumulated_time = 0.0;
-			}
-			m_should_export_video = true;
-			++ m_frame;
-			m_simulation_time_one_video_frame_prev = m_simulation_time_one_video_frame;
-			m_simulation_time_one_video_frame = global_timer::get_milliseconds();
+		if( m_fixed_timestep ) {
 			//
-			console::write("timestepper_time_per_video_frame",get_simulation_time_per_video_frame());
-			console::write("timestepper_frame_step",m_step+1);
+			if( m_accumulated_time >= 1.0 / m_FPS ) {
+				while( m_accumulated_time >= 1.0 / m_FPS ) {
+					//
+					m_accumulated_time = std::max(0.0, m_accumulated_time - 1.0 / m_FPS );
+					m_should_export_video = true;
+					++ m_frame;
+					m_simulation_time_one_video_frame_prev = m_simulation_time_one_video_frame;
+					m_simulation_time_one_video_frame = global_timer::get_milliseconds();
+					//
+					console::write("timestepper_time_per_video_frame",get_simulation_time_per_video_frame());
+					console::write("timestepper_frame_step",m_step+1);
+				}
+			}
 			//
-		} else {
+			dt = m_fixed_timestep;
 			m_accumulated_time += dt;
-			m_should_export_video = false;
+			//
+		} else {
+			if( m_use_fixed_time_step ) {
+				dt = max_dt;
+			} else {
+				if( max_unit_u ) {
+					dt = std::min( max_dt, m_CFL / max_unit_u );
+				} else {
+					dt = m_min_dt;
+				}
+			}
+			//
+			assert( m_accumulated_time < 1.0 / m_FPS );	
+			if( m_accumulated_time+dt >= 1.0 / m_FPS ) {
+				dt = 1.0 / m_FPS - m_accumulated_time;
+				if( dt < m_min_dt ) {
+					double odd = m_min_dt - dt;
+					dt = m_min_dt;
+					m_accumulated_time = odd;
+				} else {
+					m_accumulated_time = 0.0;
+				}
+				m_should_export_video = true;
+				++ m_frame;
+				m_simulation_time_one_video_frame_prev = m_simulation_time_one_video_frame;
+				m_simulation_time_one_video_frame = global_timer::get_milliseconds();
+				//
+				console::write("timestepper_time_per_video_frame",get_simulation_time_per_video_frame());
+				console::write("timestepper_frame_step",m_step+1);
+				//
+			} else {
+				m_accumulated_time += dt;
+				m_should_export_video = false;
+			}
 		}
 		//
 		m_simulation_time_per_step_prev = m_simulation_time_per_step;
@@ -88,7 +110,7 @@ public:
 		console::write("timestepper_time_per_step",get_simulation_time_per_step());
 		//
 		m_time += dt;
-		m_current_CFL = dt * max_unit_u;
+		m_current_CFL = std::ceil(dt * max_unit_u);
 		++ m_step;
 		//
 		console::write("timestepper_dt",dt);
@@ -141,6 +163,7 @@ protected:
 	virtual void configure( configuration &config ) override {
 		//
 		config.get_bool("UseFixedTimeStep",m_use_fixed_time_step,"Should use fixed time step");
+		config.get_double("TimeStep",m_fixed_timestep,"Target time step");
 		config.get_double("FPS",m_FPS,"Frame per second");
 		config.get_double("CFL",m_CFL,"Target CFL number");
 		config.get_unsigned("MaxSubsteps",m_maximal_substeps,"Maximal substeps");
@@ -171,6 +194,7 @@ private:
 	double m_simulation_time_one_video_frame;
 	double m_simulation_time_per_step_prev;
 	double m_simulation_time_per_step;
+	double m_fixed_timestep {0.0};
 	double m_current_CFL;
 	bool m_should_export_video {false}, m_use_fixed_time_step {false};
 	int m_frame;

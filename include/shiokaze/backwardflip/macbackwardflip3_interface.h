@@ -83,7 +83,7 @@ public:
 	 @param[in] d_added タイムステップ計算中に追加された密度場。nullptr でも可。
 	 @param[in] dt 現在のタイムステップ幅。
 	 */
-	virtual void registerBuffer(
+	virtual void register_buffer(
 						const macarray3<double> &u1,				// Velocity at the end of the step
 						const macarray3<double> &u0,				// Velocity at the beggining of the step
 						const macarray3<double> *u_reconstructed,	// Reconstructed dirty velocity of the beggining of the step - can be nullptr

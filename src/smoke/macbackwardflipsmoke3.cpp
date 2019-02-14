@@ -68,12 +68,12 @@ void macbackwardflipsmoke3::idle() {
 		//
 		// Compute the dirty velocity
 		shared_macarray3<double> u(velocity_reconstructed());
-		m_macadvection->advect_vector(u(),m_velocity,dt);
+		m_macadvection->advect_vector(u(),m_velocity,m_fluid,dt);
 		m_velocity.copy(u());
 		//
 	} else {
 		velocity_reconstructed->copy(velocity0());
-		m_macadvection->advect_vector(m_velocity,m_velocity,dt);
+		m_macadvection->advect_vector(m_velocity,m_velocity,m_fluid,dt);
 	}
 	//
 	if( m_param.use_dust ) {
@@ -81,7 +81,7 @@ void macbackwardflipsmoke3::idle() {
 	} else {
 		if( ! m_backwardflip->fetch(m_density)) {
 			density0->copy(m_density);
-			m_macadvection->advect_scalar(m_density,velocity0(),dt);
+			m_macadvection->advect_scalar(m_density,velocity0(),m_fluid,dt);
 		}
 	}
 	//
@@ -102,13 +102,13 @@ void macbackwardflipsmoke3::idle() {
 	m_macproject->project(dt,m_velocity,m_solid,m_fluid);
 	//
 	if( m_use_regular_velocity_advection ) {
-		m_backwardflip->registerBuffer(m_velocity,velocity0(),nullptr,nullptr,&m_density,&density0(),&density_added(),dt);
+		m_backwardflip->register_buffer(m_velocity,velocity0(),nullptr,nullptr,&m_density,&density0(),&density_added(),dt);
 	} else {
 		//
 		// Put buffer with one layer
 		shared_macarray3<double> g(m_velocity);
 		g() -= velocity_b4_proj();
-		m_backwardflip->registerBuffer(m_velocity,velocity0(),&velocity_reconstructed(),&g(),&m_density,&density0(),&density_added(),dt);
+		m_backwardflip->register_buffer(m_velocity,velocity0(),&velocity_reconstructed(),&g(),&m_density,&density0(),&density_added(),dt);
 	}
 	//
 	// Write down kinetic energy

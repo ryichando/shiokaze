@@ -77,7 +77,7 @@ void macflipsmoke3::idle() {
 	if( (macsmoke3::m_param).use_dust ) advect_dust_particles(m_velocity,dt);
 	else {
 		m_density.dilate(std::ceil(m_timestepper->get_current_CFL()));
-		m_macadvection->advect_scalar(m_density,m_velocity,dt,"density");
+		m_macadvection->advect_scalar(m_density,m_velocity,m_fluid,dt,"density");
 		double minimal_density = (macsmoke3::m_param).minimal_density;
 		m_density.parallel_actives([&](auto &it) {
 			if( std::abs(it()) <= minimal_density ) it.set_off();

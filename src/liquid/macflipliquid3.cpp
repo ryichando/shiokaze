@@ -82,7 +82,7 @@ void macflipliquid3::idle() {
 	m_macsurfacetracker->assign(m_solid,m_fluid);
 	//
 	// Grid velocity advection
-	m_macadvection->advect_vector(m_velocity,m_velocity,dt,"velocity");
+	m_macadvection->advect_vector(m_velocity,m_velocity,m_fluid,dt,"velocity");
 	//
 	// Splat momentum and mass of FLIP particles onto grids
 	m_flip->splat(momentum(),mass());

@@ -59,13 +59,13 @@ void macbackwardflipsmoke2::idle() {
 		//
 		// Compute the dirty velocity
 		shared_macarray2<double> u(velocity_reconstructed());
-		m_macadvection->advect_vector(u(),m_velocity,dt);
+		m_macadvection->advect_vector(u(),m_velocity,m_fluid,dt);
 		m_velocity.copy(u());
 		//
 	} else {
 		//
 		velocity_reconstructed->copy(velocity0());
-		m_macadvection->advect_vector(m_velocity,m_velocity,dt);
+		m_macadvection->advect_vector(m_velocity,m_velocity,m_fluid,dt);
 	}
 	//
 	if( (macsmoke2::m_param).use_dust ) {
@@ -73,7 +73,7 @@ void macbackwardflipsmoke2::idle() {
 	} else {
 		if( ! m_backwardflip->fetch(m_density)) {
 			density0->copy(m_density);
-			m_macadvection->advect_scalar(m_density,velocity0(),dt);
+			m_macadvection->advect_scalar(m_density,velocity0(),m_fluid,dt);
 		}
 	}
 	//
@@ -95,7 +95,7 @@ void macbackwardflipsmoke2::idle() {
 	m_macutility->extrapolate_and_constrain_velocity(m_solid,m_velocity,(macsmoke2::m_param).extrapolated_width);
 	//
 	if( m_use_regular_velocity_advection ) {
-		m_backwardflip->registerBuffer(m_velocity,velocity0(),nullptr,nullptr,
+		m_backwardflip->register_buffer(m_velocity,velocity0(),nullptr,nullptr,
 			(macsmoke2::m_param).use_dust ? nullptr : &m_density, (macsmoke2::m_param).use_dust ? nullptr : &density0(),
 			(macsmoke2::m_param).use_dust ? nullptr : &density_added(),dt);
 	} else {
@@ -104,7 +104,7 @@ void macbackwardflipsmoke2::idle() {
 		shared_macarray2<double> g(m_velocity);
 		g() -= velocity_b4_proj();
 		//
-		m_backwardflip->registerBuffer(m_velocity,velocity0(),&velocity_reconstructed(),&g(),
+		m_backwardflip->register_buffer(m_velocity,velocity0(),&velocity_reconstructed(),&g(),
 			(macsmoke2::m_param).use_dust ? nullptr : &m_density, (macsmoke2::m_param).use_dust ? nullptr : &density0(),
 			&density_added(),dt);
 	}

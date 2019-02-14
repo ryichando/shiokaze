@@ -35,24 +35,27 @@ private:
 	//
 	virtual void advect_scalar(	array2<double> &scalar,				// Cell-centered
 								const macarray2<double> &velocity,	// Face-located
+								const array2<double> &fluid,		// Fluid level set
 								double dt ) override {
 		//
 		shared_array2<double> scalar0(scalar);
-		advect_cell(scalar0(),velocity,scalar,dt,m_param.use_maccormack,m_param.weno_interpolation);
+		advect_cell(scalar0(),velocity,scalar,fluid,dt,m_param.use_maccormack,m_param.weno_interpolation);
 	}
 	//
 	virtual void advect_vector(	macarray2<double> &u,				// Face-located
 								const macarray2<double> &velocity,	// Face-located
+								const array2<double> &fluid,		// Fluid level set
 								double dt ) override {
 		//
 		shared_macarray2<double> u0(u);
-		advect_u(u0(),velocity,u,dt,m_param.use_maccormack,m_param.weno_interpolation);
+		advect_u(u0(),velocity,u,fluid,dt,m_param.use_maccormack,m_param.weno_interpolation);
 	}
 	//
 	virtual void configure( configuration &config ) override {
 		//
 		config.get_bool("MacCormack",m_param.use_maccormack,"Whether to use MacCormack method");
 		config.get_bool("WENO",m_param.weno_interpolation,"Whether to use WENO interpolation for advection");
+		config.get_unsigned( "TrimNarrowBand",m_param.trim_narrowband,"Narrow band count to turn to semi-Lagrangian advection");
 	}
 	//
 	virtual void initialize( const shape2 &shape, double dx ) override {
@@ -61,8 +64,8 @@ private:
 		m_dx = dx;
 	}
 	//
-	using double2 = struct { double v[2] = {0.0, 0.0}; };
-	void advect_semiLagrangian_u( const macarray2<double> &v_in, const macarray2<double> &v, macarray2<double> &v_out, macarray2<double2> *minMax, double dt, bool weno_interpolation ) {
+	using double2 = struct { double v[2] = {0.0, 0.0}; bool within_narrowband{false}; };
+	void advect_semiLagrangian_u( const macarray2<double> &v_in, const macarray2<double> &v, macarray2<double> &v_out, macarray2<double2> *minMax, const array2<double> &fluid, double dt, bool weno_interpolation ) {
 		//
 		v_out.clear();
 		v_out.activate_as(v_in);
@@ -97,6 +100,7 @@ private:
 				//
 				if( ! u.empty() ) {
 					vec2d p = vec2d(i,j)-dt*u/m_dx;
+					vec2d face_p = vec2i(i,j).face(dim)-dt*u/m_dx;
 					vec2i indices[4];
 					double coef[4];
 					array_interpolator2::interpolate_coef(v_in[dim].shape(),p,indices,coef);
@@ -108,13 +112,18 @@ private:
 						max_value = std::max(max_value,value);
 					}
 					double2 d2;
+					bool within_narrowband = array_interpolator2::interpolate(fluid,face_p-vec2d(0.5,0.5)) > -(double)m_param.trim_narrowband * m_dx;
 					d2.v[0] = min_value;
 					d2.v[1] = max_value;
+					d2.within_narrowband = within_narrowband;
 					it.set(d2);
 				} else {
 					if( minMax ) {
+						vec2d face_p = vec2i(i,j).face(dim);
 						double2 d2;
+						bool within_narrowband = array_interpolator2::interpolate(fluid,face_p-vec2d(0.5,0.5)) > -(double)m_param.trim_narrowband * m_dx;
 						d2.v[0] = d2.v[1] = v_in[dim](i,j);
+						d2.within_narrowband = within_narrowband;
 						it.set(d2);
 					}
 				}
@@ -122,34 +131,38 @@ private:
 		}
 	}
 	//
-	void advect_u ( const macarray2<double> &v_in, const macarray2<double> &v, macarray2<double> &v_out, double dt, bool use_maccormack, bool weno_interpolation ) {
+	void advect_u ( const macarray2<double> &v_in, const macarray2<double> &v, macarray2<double> &v_out, const array2<double> &fluid, double dt, bool use_maccormack, bool weno_interpolation ) {
 		//
 		if( use_maccormack ) {
 			//
 			shared_macarray2<double> velocity_0(v_in.type()), velocity_1(v_in.type());
 			shared_macarray2<double2> minMax_u(v_in.shape());
 			//
-			advect_semiLagrangian_u(v_in,v,velocity_0(),&minMax_u(),dt,weno_interpolation);
-			advect_semiLagrangian_u(velocity_0(),v,velocity_1(),nullptr,-dt,weno_interpolation);
+			advect_semiLagrangian_u(v_in,v,velocity_0(),&minMax_u(),fluid,dt,weno_interpolation);
+			advect_semiLagrangian_u(velocity_0(),v,velocity_1(),nullptr,fluid,-dt,weno_interpolation);
 			//
 			v_out.clear();
 			v_out.activate_as(v_in);
 			v_out.parallel_actives([&](int dim, int i, int j, auto &it, int tn) {
 				//
-				double min_value = minMax_u()[dim](i,j).v[0];
-				double max_value = minMax_u()[dim](i,j).v[1];
-				double vel0 = velocity_0()[dim](i,j);
-				double correction = 0.5*(v_in[dim](i,j)-velocity_1()[dim](i,j));
-				if( vel0+correction < min_value ) it.set(min_value);
-				else if( vel0+correction > max_value ) it.set(max_value);
-				else it.set(vel0+correction);
+				if( minMax_u()[dim](i,j).within_narrowband) {
+					it.set(velocity_0()[dim](i,j));
+				} else {
+					double min_value = minMax_u()[dim](i,j).v[0];
+					double max_value = minMax_u()[dim](i,j).v[1];
+					double vel0 = velocity_0()[dim](i,j);
+					double correction = 0.5*(v_in[dim](i,j)-velocity_1()[dim](i,j));
+					if( vel0+correction < min_value ) it.set(min_value);
+					else if( vel0+correction > max_value ) it.set(max_value);
+					else it.set(vel0+correction);
+				}
 			});
 		} else {
-			advect_semiLagrangian_u(v_in,v,v_out,nullptr,dt,weno_interpolation);
+			advect_semiLagrangian_u(v_in,v,v_out,nullptr,fluid,dt,weno_interpolation);
 		}
 	}
 	//
-	void advect_semiLagrangian_cell ( const array2<double> &q_in, const macarray2<double> &v, array2<double> &q_out, array2<double2> *minMax, double dt, bool weno_interpolation ) {
+	void advect_semiLagrangian_cell ( const array2<double> &q_in, const macarray2<double> &v, array2<double> &q_out, array2<double2> *minMax, const array2<double> &fluid, double dt, bool weno_interpolation ) {
 		//
 		shared_array2<vec2d> full_velocity(m_shape);
 		v.convert_to_full(full_velocity());
@@ -194,49 +207,57 @@ private:
 						max_value = std::max(max_value,value);
 					}
 					double2 d2;
+					bool within_narrowband = array_interpolator2::interpolate(fluid,p) > -(double)m_param.trim_narrowband * m_dx;
 					d2.v[0] = min_value;
 					d2.v[1] = max_value;
+					d2.within_narrowband = within_narrowband;
 					it.set(d2);
 				} else {
 					double2 d2;
+					bool within_narrowband = fluid(i,j) > -(double)m_param.trim_narrowband * m_dx;
 					d2.v[0] = d2.v[1] = q_in(i,j);
+					d2.within_narrowband = within_narrowband;
 					it.set(d2);
 				}
 			});
 		}
 	}
 	//
-	void advect_cell ( const array2<double> &q_in, const macarray2<double> &v, array2<double> &q_out, double dt, bool use_maccormack, bool weno_interpolation ) {
+	void advect_cell ( const array2<double> &q_in, const macarray2<double> &v, array2<double> &q_out, const array2<double> &fluid, double dt, bool use_maccormack, bool weno_interpolation ) {
 		//
 		if( use_maccormack ) {
 			//
 			shared_array2<double> q_0(q_in.type()), q_1(q_in.type());
 			shared_array2<double2> minMax_q(q_in.shape());
 			//
-			advect_semiLagrangian_cell(q_in,v,q_0(),&minMax_q(),dt,weno_interpolation);
-			advect_semiLagrangian_cell(q_0(),v,q_1(),nullptr,-dt,weno_interpolation);
+			advect_semiLagrangian_cell(q_in,v,q_0(),&minMax_q(),fluid,dt,weno_interpolation);
+			advect_semiLagrangian_cell(q_0(),v,q_1(),nullptr,fluid,-dt,weno_interpolation);
 			//
 			q_out.clear();
 			q_out.activate_as(q_in);
 			q_out.parallel_actives([&](int i, int j, auto &it, int tn) {
 				//
-				double min_value = minMax_q()(i,j).v[0];
-				double max_value = minMax_q()(i,j).v[1];
-				double q0 = q_0()(i,j);
-				double correction = 0.5*(q_in(i,j)-q_1()(i,j));
-				if( q0+correction < min_value ) it.set(min_value);
-				else if( q0+correction > max_value ) it.set(max_value);
-				else it.set(q0+correction);
-				//
+				if( minMax_q()(i,j).within_narrowband) {
+					it.set(q_0()(i,j));
+				} else {
+					double min_value = minMax_q()(i,j).v[0];
+					double max_value = minMax_q()(i,j).v[1];
+					double q0 = q_0()(i,j);
+					double correction = 0.5*(q_in(i,j)-q_1()(i,j));
+					if( q0+correction < min_value ) it.set(min_value);
+					else if( q0+correction > max_value ) it.set(max_value);
+					else it.set(q0+correction);
+				}
 			});
 		} else {
-			advect_semiLagrangian_cell(q_in,v,q_out,nullptr,dt,weno_interpolation);
+			advect_semiLagrangian_cell(q_in,v,q_out,nullptr,fluid,dt,weno_interpolation);
 		}
 	}
 	//
 	struct Parameters {
 		bool use_maccormack {true};
 		bool weno_interpolation {false};
+		unsigned trim_narrowband {1};
 	};
 	Parameters m_param;
 	//

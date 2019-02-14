@@ -109,34 +109,47 @@ private:
 		// Paint fluid
 		(levelset.shape()-shape2(1,1)).for_each([&](int i, int j) {
 			vec2d p[8];	int pnum; double v[2][2]; vec2d vertices[2][2];
+			int count (0);
 			for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
-				v[ni][nj] = levelset(i+ni,j+nj);
-				vertices[ni][nj] = m_dx*vec2d(i+ni,j+nj);
+				if(levelset.filled(i+ni,j+nj) || levelset.active(i+ni,j+nj)) count ++;
 			}
-			m_meshutility->march_points(v,vertices,p,pnum,true);
-			g.begin(graphics_engine::MODE::TRIANGLE_FAN);
-			for( int m=0; m<pnum; m++ ) {
-				g.vertex2v((p[m]+origin).v);
+			if( count == 4 ) {
+				for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
+					v[ni][nj] = levelset(i+ni,j+nj);
+					vertices[ni][nj] = m_dx*vec2d(i+ni,j+nj);
+				}
+				m_meshutility->march_points(v,vertices,p,pnum,true);
+				g.begin(graphics_engine::MODE::TRIANGLE_FAN);
+				for( int m=0; m<pnum; m++ ) {
+					g.vertex2v((p[m]+origin).v);
+				}
+				g.end();
 			}
-			g.end();
 		});
 		//
 		// Draw contour
 		(levelset.shape()-shape2(1,1)).for_each([&](int i, int j) {
 			//
-			// Check the nearst possible surfaces
-			vec2d lines[8];	int pnum; double v[2][2]; vec2d vertices[2][2];
+			int count (0);
 			for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
-				v[ni][nj] = levelset(i+ni,j+nj);
-				vertices[ni][nj] = m_dx*vec2d(i+ni,j+nj);
+				if(levelset.filled(i+ni,j+nj) || levelset.active(i+ni,j+nj)) count ++;
 			}
-			m_meshutility->march_points(v,vertices,lines,pnum,false);
-			g.color4(1.0,1.0,1.0,1.0);
-			g.begin(graphics_engine::MODE::LINES);
-			for( int m=0; m<pnum; m++ ) {
-				g.vertex2v((lines[m]+origin).v);
+			if( count == 4 ) {
+				//
+				// Check the nearst possible surfaces
+				vec2d lines[8];	int pnum; double v[2][2]; vec2d vertices[2][2];
+				for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
+					v[ni][nj] = levelset(i+ni,j+nj);
+					vertices[ni][nj] = m_dx*vec2d(i+ni,j+nj);
+				}
+				m_meshutility->march_points(v,vertices,lines,pnum,false);
+				g.color4(1.0,1.0,1.0,1.0);
+				g.begin(graphics_engine::MODE::LINES);
+				for( int m=0; m<pnum; m++ ) {
+					g.vertex2v((lines[m]+origin).v);
+				}
+				g.end();
 			}
-			g.end();
 		});
 	}
 	virtual void draw_solid( graphics_engine &g, const array2<double> &solid ) const override {

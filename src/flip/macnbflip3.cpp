@@ -363,7 +363,9 @@ void macnbflip3::advect( const macarray3<double> &velocity, double time, double 
 	}
 	//
 	// Recompute sizing function
+	timer.tick(); console::dump( "Computing sizing function...");
 	sizing_func(m_sizing_array,m_narrowband_mask,velocity,dt);
+	console::dump( "Done. Took %s\n", timer.stock("sizing_function").c_str());
 	//
 	// Reseed particles
 	timer.tick(); console::dump( "Performing particle reseeding...");
@@ -921,16 +923,17 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 		scoped_timer timer(this);
 		timer.tick(); console::dump( ">>> Levelset advection\n");
 		//
-		unsigned dilate_width = m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(velocity)*dt/m_dx);
+		unsigned dilate_width = 2+m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(velocity)*dt/m_dx);
 		for( int n=0; n<m_particles.size(); ++n ) {
 			vec3i pi = m_shape.clamp(m_particles[n].p/m_dx);
 			if( ! m_fluid.active(pi)) m_fluid.set(pi,m_fluid(pi));
 		}
 		m_fluid.dilate(dilate_width);
-		m_macadvection->advect_scalar(m_fluid,velocity,dt);
+		shared_array3<double> fluid_save(m_fluid);
+		m_macadvection->advect_scalar(m_fluid,velocity,fluid_save(),dt);
 		//
 		if( m_particles.size()) {
-			m_redistancer->redistance(m_fluid,m_dx);
+			m_redistancer->redistance(m_fluid,dilate_width,m_dx);
 			bool solid_exist = array_utility3::levelset_exist(m_solid);
 			//
 			// Erosion
@@ -984,7 +987,7 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 		//
 		// Re-initialize levelset
 		timer.tick(); console::dump( "Extrapolate and redistancing levelset..." );
-		m_redistancer->redistance(m_fluid,m_dx);
+		m_redistancer->redistance(m_fluid,dilate_width,m_dx);
 		m_gridutility->trim_narrowband(m_fluid,dilate_width);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 		console::dump("Done. Took %s\n", timer.stock("extrapolate_redistance").c_str());

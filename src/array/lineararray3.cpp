@@ -235,14 +235,14 @@ private:
 		std::stack<vec3i> queue;
 		auto markable = [&]( vec3i pi, bool default_result ) {
 			if( ! shape3(m_nx,m_ny,m_nz).out_of_bounds(pi)) {
-				auto pass_m_fill_mask = [&]( size_t n ) {
+				auto pass_fill_mask = [&]( size_t n ) {
 					return ! ((*(m_fill_mask+n/8) >> n%8) & 1U);
 				};
 				const size_t n = encode(pi[0],pi[1],pi[2]);
 				if( (*(m_bit_mask+n/8) >> n%8) & 1U ) {
-					return inside_func(m_buffer ? m_buffer+n*m_element_size : nullptr) && pass_m_fill_mask(n);
+					return inside_func(m_buffer ? m_buffer+n*m_element_size : nullptr) && pass_fill_mask(n);
 				} else {
-					return default_result && pass_m_fill_mask(n);
+					return default_result && pass_fill_mask(n);
 				}
 			} else {
 				return false;

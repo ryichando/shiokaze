@@ -104,9 +104,6 @@ private:
 						double derivative[DIM3];
 						array_derivative3::derivative(solid,p,derivative);
 						vec3d normal = vec3d(derivative).normal();
-						for( unsigned dim : DIMS3 ) {
-							p[dim] = std::min(1.0,std::max(0.0,p[dim]));
-						}
 						if( normal.norm2() ) {
 							vec3d index_p_n = vec3d(i,j,k)+(-solid_levelset/m_dx)*normal;
 							double value = array_interpolator3::interpolate<double>(old_fluid(),index_p_n);
@@ -291,7 +288,7 @@ private:
 	virtual void trim_narrowband( array3<double> &levelset, unsigned half_cells ) const override {
 		//
 		shared_array3<char> flag(levelset.shape());
-		mark_narrowband(levelset,flag(),levelset.get_levelset_halfwidth());
+		mark_narrowband(levelset,flag(),half_cells);
 		levelset.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			if( ! flag()(i,j,k)) it.set_off();
 		});

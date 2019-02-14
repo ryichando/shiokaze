@@ -293,19 +293,12 @@ public:
 			for( int u_dim : DIMS3 ) {
 				if( u_dim == dim ) u[u_dim] = (*this)[u_dim](i,j,k);
 				else {
-					vec3d p = vec3d(i,j,k)+0.5*vec3d(u_dim==0,u_dim==1,u_dim==2)-0.5*vec3d(dim==0,dim==1,dim==2);
-					if( dim == 0 ) {
-						for( int jj=0; jj<2; ++jj ) for( int kk=0; kk<2; ++kk ) {
-							u[u_dim] += (*this)[u_dim](m_shape.clamp(i,p[1]+jj,p[2]+kk));
-						}
-					} else if( dim == 1 ) {
-						for( int ii=0; ii<2; ++ii ) for( int kk=0; kk<2; ++kk ) {
-							u[u_dim] += (*this)[u_dim](m_shape.clamp(p[0]+ii,j,p[2]+kk));
-						}
-					} else if( dim == 2  ) {
-						for( int ii=0; ii<2; ++ii ) for( int jj=0; jj<2; ++jj ) {
-							u[u_dim] += (*this)[u_dim](m_shape.clamp(p[0]+ii,p[1]+jj,k));
-						}
+					const shape3 s = (*this)[u_dim].shape();
+					vec3i pi = vec3i(i,j,k)-vec3i(dim==0,dim==1,dim==2);
+					vec3i ivec = vec3i(dim==0,dim==1,dim==2);
+					vec3i jvec = vec3i(u_dim==0,u_dim==1,u_dim==2);
+					for( int ii=0; ii<2; ++ii ) for( int jj=0; jj<2; ++jj ) {
+						u[u_dim] += (*this)[u_dim](s.clamp(pi+ii*ivec+jj*jvec));
 					}
 					u[u_dim] /= 4.0;
 				}
@@ -490,14 +483,14 @@ public:
 	 \~japanese @brief アクティブセルを並列に処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void parallel_actives( std::function<void(typename array3<T>::iterator& it)> func ) { parallel_op(func,ACTIVES); }
+	void parallel_actives( std::function<void(typename array3<T>::iterator& it)> func ) { parallel_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in parallel.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルを並列に処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void parallel_all( std::function<void(typename array3<T>::iterator& it)> func ) { parallel_op(func,ALL); }
+	void parallel_all( std::function<void(typename array3<T>::iterator& it)> func ) { parallel_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in parallel.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -506,7 +499,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void parallel_op( std::function<void(typename array3<T>::iterator& it)> func, bool type=ALL ) {
+	void parallel_op( std::function<void(typename array3<T>::iterator& it)> func, bool type=ALL ) {
 		parallel_op([func](int dim, int i, int j, int k, typename array3<T>::iterator& it, int thread_index){
 			func(it);
 		},type);
@@ -517,14 +510,14 @@ public:
 	 \~japanese @brief アクティブセルを並列に処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void parallel_actives( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { parallel_op(func,ACTIVES); }
+	void parallel_actives( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { parallel_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in parallel.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルを並列に処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void parallel_all( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { parallel_op(func,ALL); }
+	void parallel_all( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { parallel_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in parallel.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -533,7 +526,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void parallel_op( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func, bool type=ALL ) {
+	void parallel_op( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func, bool type=ALL ) {
 		parallel_op([func](int dim, int i, int j, int k, typename array3<T>::iterator& it, int thread_index){
 			func(dim,i,j,k,it);
 		},type);
@@ -544,14 +537,14 @@ public:
 	 \~japanese @brief アクティブセルを並列に処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void parallel_actives( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it, int thread_index)> func ) { parallel_op(func,ACTIVES); }
+	void parallel_actives( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it, int thread_index)> func ) { parallel_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in parallel.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルを並列に処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void parallel_all( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it, int thread_index)> func ) { parallel_op(func,ALL); }
+	void parallel_all( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it, int thread_index)> func ) { parallel_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in parallel.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -560,7 +553,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void parallel_op( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it, int thread_index)> func, bool type=ALL ) {
+	void parallel_op( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it, int thread_index)> func, bool type=ALL ) {
 		for( int dim : DIMS3 ) {
 			(*this)[dim].parallel_op([&](int i, int j, int k, typename array3<T>::iterator& it, int thread_index) {
 				func(dim,i,j,k,it,thread_index);
@@ -573,14 +566,14 @@ public:
 	 \~japanese @brief アクティブセルを並列に読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_parallel_actives( std::function<void(const typename array3<T>::const_iterator& it)> func ) const { const_parallel_op(func,ACTIVES); }
+	void const_parallel_actives( std::function<void(const typename array3<T>::const_iterator& it)> func ) const { const_parallel_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルを並列に読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_parallel_all( std::function<void(const typename array3<T>::const_iterator& it)> func ) const { const_parallel_op(func,ALL); }
+	void const_parallel_all( std::function<void(const typename array3<T>::const_iterator& it)> func ) const { const_parallel_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -589,7 +582,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void const_parallel_op( std::function<void(const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
+	void const_parallel_op( std::function<void(const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
 		const_parallel_op([func](int dim, int i, int j, int k, const typename array3<T>::const_iterator& it, int thread_index){
 			func(it);
 		},type);
@@ -600,14 +593,14 @@ public:
 	 \~japanese @brief アクティブセルを並列に読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_parallel_actives( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_parallel_op(func,ACTIVES); }
+	void const_parallel_actives( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_parallel_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルを並列に読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_parallel_all( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_parallel_op(func,ALL); }
+	void const_parallel_all( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_parallel_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -616,7 +609,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void const_parallel_op( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
+	void const_parallel_op( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
 		const_parallel_op([func](int dim, int i, int j, int k, const typename array3<T>::const_iterator& it, int thread_index){
 			func(dim,i,j,k,it);
 		},type);
@@ -627,14 +620,14 @@ public:
 	 \~japanese @brief アクティブセルを並列に読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_parallel_actives( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it, int thread_index)> func ) const { const_parallel_op(func,ACTIVES); }
+	void const_parallel_actives( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it, int thread_index)> func ) const { const_parallel_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルを並列に読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_parallel_all( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it, int thread_index)> func ) const { const_parallel_op(func,ALL); }
+	void const_parallel_all( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it, int thread_index)> func ) const { const_parallel_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -643,7 +636,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void const_parallel_op( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it, int thread_index)> func, bool type=ALL ) const {
+	void const_parallel_op( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it, int thread_index)> func, bool type=ALL ) const {
 		for( int dim : DIMS3 ) {
 			(*this)[dim].const_parallel_op([&](int i, int j, int k, const typename array3<T>::const_iterator& it, int thread_index) {
 				func(dim,i,j,k,it,thread_index);
@@ -656,14 +649,14 @@ public:
 	 \~japanese @brief アクティブなセルをシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void serial_actives( std::function<void(typename array3<T>::iterator& it)> func ) { serial_op(func,ACTIVES); }
+	void serial_actives( std::function<void(typename array3<T>::iterator& it)> func ) { serial_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルをシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void serial_all( std::function<void(typename array3<T>::iterator& it)> func ) { serial_op(func,ALL); }
+	void serial_all( std::function<void(typename array3<T>::iterator& it)> func ) { serial_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in serial order.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -672,7 +665,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void serial_op( std::function<void(typename array3<T>::iterator& it)> func, bool type=ALL ) {
+	void serial_op( std::function<void(typename array3<T>::iterator& it)> func, bool type=ALL ) {
 		serial_op([func](int dim, int i, int j, int k, typename array3<T>::iterator& it) {
 			func(it);
 		},type);
@@ -683,14 +676,14 @@ public:
 	 \~japanese @brief アクティブなセルをシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void serial_actives( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { serial_op(func,ACTIVES); }
+	void serial_actives( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { serial_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルをシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void serial_all( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { serial_op(func,ALL); }
+	void serial_all( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { serial_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in serial order.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -699,7 +692,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void serial_op( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func, bool type=ALL ) {
+	void serial_op( std::function<void(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func, bool type=ALL ) {
 		for( int dim : DIMS3 ) {
 			(*this)[dim].serial_op([&](int i, int j, int k, typename array3<T>::iterator& it) {
 				func(dim,i,j,k,it);
@@ -712,14 +705,14 @@ public:
 	 \~japanese @brief アクティブなセルをシリアルに読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_serial_actives( std::function<void(const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
+	void const_serial_actives( std::function<void(const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルをシリアルに読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_serial_all( std::function<void(const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ALL); }
+	void const_serial_all( std::function<void(const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ALL); }
 	/**
 	 \~english @brief Loop over the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -728,7 +721,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void const_serial_op( std::function<void(const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
+	void const_serial_op( std::function<void(const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
 		const_serial_op([func](int dim, int i, int j, int k, const typename array3<T>::const_iterator& it) {
 			func(it);
 		},type);
@@ -739,14 +732,14 @@ public:
 	 \~japanese @brief アクティブなセルをシリアルに読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_serial_actives( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
+	void const_serial_actives( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルをシリアルに読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_serial_all( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ALL); }
+	void const_serial_all( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -755,7 +748,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void const_serial_op( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
+	void const_serial_op( std::function<void(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
 		for( int dim : DIMS3 ) {
 			(*this)[dim].const_serial_op([&](int i, int j, int k, const typename array3<T>::const_iterator& it) {
 				func(dim,i,j,k,it);
@@ -768,14 +761,14 @@ public:
 	 \~japanese @brief アクティブなセルをシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 */
-	inline void interruptible_serial_actives( std::function<bool(typename array3<T>::iterator& it)> func ) { serial_op(func,ACTIVES); }
+	void interruptible_serial_actives( std::function<bool(typename array3<T>::iterator& it)> func ) { serial_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
 	 \~japanese @brief 全てのセルをシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 */
-	inline void interruptible_serial_all( std::function<bool(typename array3<T>::iterator& it)> func ) { serial_op(func,ALL); }
+	void interruptible_serial_all( std::function<bool(typename array3<T>::iterator& it)> func ) { serial_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in serial order.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
@@ -784,7 +777,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void interruptible_serial_op( std::function<bool(typename array3<T>::iterator& it)> func, bool type=ALL ) {
+	void interruptible_serial_op( std::function<bool(typename array3<T>::iterator& it)> func, bool type=ALL ) {
 		serial_op([func](int dim, int i, int j, int k, typename array3<T>::iterator& it) {
 			func(it);
 		},type);
@@ -795,14 +788,14 @@ public:
 	 \~japanese @brief アクティブなセルをシリアルに処理する。\c true を返すと、ループを中断する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void interruptible_serial_actives( std::function<bool(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { serial_op(func,ACTIVES); }
+	void interruptible_serial_actives( std::function<bool(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { serial_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
 	 \~japanese @brief 全てのセルをシリアルに処理する。\c true を返すと、ループを中断する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void interruptible_serial_all( std::function<bool(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { serial_op(func,ALL); }
+	void interruptible_serial_all( std::function<bool(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func ) { serial_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in serial order.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -811,7 +804,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void interruptible_serial_op( std::function<bool(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func, bool type=ALL ) {
+	void interruptible_serial_op( std::function<bool(int dim, int i, int j, int k, typename array3<T>::iterator& it)> func, bool type=ALL ) {
 		for( int dim : DIMS3 ) {
 			(*this)[dim].serial_op([&](int i, int j, int k, typename array3<T>::iterator& it) {
 				func(dim,i,j,k,it);
@@ -824,14 +817,14 @@ public:
 	 \~japanese @brief アクティブなセルを読み込み可能に限定してシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 */
-	inline void interruptible_const_serial_actives( std::function<bool(const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
+	void interruptible_const_serial_actives( std::function<bool(const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
 	 \~japanese @brief 全てのセルを読み込み可能に限定してシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 */
-	inline void interruptible_const_serial_all( std::function<bool(const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ALL); }
+	void interruptible_const_serial_all( std::function<bool(const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
@@ -840,7 +833,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void interruptible_const_serial_op( std::function<bool(const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
+	void interruptible_const_serial_op( std::function<bool(const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
 		const_serial_op([func](int dim, int i, int j, int k, const typename array3<T>::const_iterator& it) {
 			func(it);
 		},type);
@@ -851,14 +844,14 @@ public:
 	 \~japanese @brief アクティブなセルを読み込み可能に限定してシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 */
-	inline void interruptible_const_serial_actives( std::function<bool(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
+	void interruptible_const_serial_actives( std::function<bool(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
 	 \~japanese @brief 全てのセルを読み込み可能に限定してシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 */
-	inline void interruptible_const_serial_all( std::function<bool(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ALL); }
+	void interruptible_const_serial_all( std::function<bool(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func ) const { const_serial_op(func,ALL); }
 	/**
 	 \~english @brief Loop over cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
@@ -867,7 +860,7 @@ public:
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 @param[in] type ターゲットセルのタイプ. ACTIVE か ALL。
 	 */
-	inline void interruptible_const_serial_op( std::function<bool(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
+	void interruptible_const_serial_op( std::function<bool(int dim, int i, int j, int k, const typename array3<T>::const_iterator& it)> func, bool type=ALL ) const {
 		for( int dim : DIMS3 ) {
 			(*this)[dim].const_serial_op([&](int i, int j, int k, const typename array3<T>::const_iterator& it) {
 				func(dim,i,j,k,it);

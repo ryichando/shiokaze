@@ -760,13 +760,14 @@ void macnbflip2::advect_levelset( const macarray2<double> &velocity, double dt, 
 	// Advect levelset
 	if( ! m_fluid_filled ) {
 		//
-		unsigned dilate_width = m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(velocity)*dt/m_dx);
+		unsigned dilate_width = 2+m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(velocity)*dt/m_dx);
 		m_fluid.dilate(dilate_width);
-		m_macadvection->advect_scalar(m_fluid,velocity,dt);
+		shared_array2<double> fluid_save(m_fluid);
+		m_macadvection->advect_scalar(m_fluid,velocity,fluid_save(),dt);
 		//
 		if( m_particles.size()) {
 			//
-			m_redistancer->redistance(m_fluid,m_dx);
+			m_redistancer->redistance(m_fluid,dilate_width,m_dx);
 			bool solid_exist = array_utility2::levelset_exist(m_solid);
 			//
 			// Erosion
@@ -809,7 +810,7 @@ void macnbflip2::advect_levelset( const macarray2<double> &velocity, double dt, 
 		}
 		//
 		// Re-initialize levelset
-		m_redistancer->redistance(m_fluid,m_dx);
+		m_redistancer->redistance(m_fluid,dilate_width,m_dx);
 		m_gridutility->trim_narrowband(m_fluid,dilate_width);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 	}

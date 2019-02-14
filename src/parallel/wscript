@@ -22,18 +22,21 @@
 #	CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 #	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
+import sys
+#
 def build(bld):
 #
 	bld.shlib(source = 'stdthread.cpp',
 			target = bld.get_target_name(bld,'stdthread'),
 			use = bld.get_target_name(bld,'core'))
 #
-#	TBB thread is not compilable at moment - to be fixed
+#	TBB is currently compilable for macOS
 #
-#	bld.shlib(source = 'tbbthread.cpp',
-#			target = bld.get_target_name(bld,'tbbthread'),
-#			lib = ['tbb'],
-#			use = bld.get_target_name(bld,'core'))
+	if sys.platform == 'darwin':
+		bld.shlib(source = 'tbbthread.cpp',
+				target = bld.get_target_name(bld,'tbbthread'),
+				lib = ['tbb'],
+				use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'sequential_splitter.cpp',
 			target = bld.get_target_name(bld,'sequential_splitter'),

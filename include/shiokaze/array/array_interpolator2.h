@@ -86,7 +86,7 @@ namespace array_interpolator2 {
 	 @param[in] dx Grid cell size
 	 @param[in] p Position in physical space.
 	 @param[out] result Interpolation result.
-	 \~japanese @brief 勾配を計算する。
+	 \~japanese @brief 補間を計算する。
 	 @param[in] array グリッド。
 	 @param[in] origin 原点。
 	 @param[in] dx Grid 格子セルの大きさ。

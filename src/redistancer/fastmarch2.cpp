@@ -46,7 +46,7 @@ typedef struct _node2 {
 	}
 } node2;
 //
-static bool fastMarch( std::vector<node2 *> &nodes, double maxdist, double mindist, const parallel_driver &parallel ) {
+static bool fast_march( std::vector<node2 *> &nodes, double maxdist, double mindist, const parallel_driver &parallel ) {
 	//
 	// Check the sign of coefficients
 	assert(mindist<=0);
@@ -196,10 +196,9 @@ private:
 	LONG_NAME("FastMarch 2D")
 	ARGUMENT_NAME("FastMarch")
 	//
-	virtual void redistance( array2<double> &phi_array, double dx ) override {
+	virtual void redistance( array2<double> &phi_array, unsigned width, double dx ) override {
 		//
-		unsigned half_cells = phi_array.get_levelset_halfwidth();
-		double half_bandwidth = dx * (double)half_cells;
+		double half_bandwidth = dx * width;
 		typedef struct { bool known; double dist; } grid;
 		//
 		// Generate contours
@@ -267,16 +266,16 @@ private:
 		});
 		//
 		// Trim to just near the surface
-		m_gridutility->mark_narrowband(phi_array,half_cells);
+		m_gridutility->mark_narrowband(phi_array,width);
 		//
 		// Setup network
-		shared_array2<node2 *> nodeArray(phi_array.shape());
-		nodeArray->activate_as(phi_array);
-		nodeArray->parallel_actives([&](int i, int j, auto &it) {
+		shared_array2<node2 *> node_array(phi_array.shape());
+		node_array->activate_as(phi_array);
+		node_array->parallel_actives([&](int i, int j, auto &it) {
 			it.set(new node2);
 		});
 		//
-		nodeArray->const_parallel_actives([&](int i, int j, const auto &it, int tn) {
+		node_array->const_parallel_actives([&](int i, int j, const auto &it, int tn) {
 			//
 			vec2d p = dx*vec2d(i,j);
 			const auto ptr = it();
@@ -293,29 +292,30 @@ private:
 			//
 			int q[][DIM2] = {{i-1,j},{i+1,j},{i,j-1},{i,j+1}};
 			for( unsigned n=0; n<4; n++ ) {
-				if( ! nodeArray->shape().out_of_bounds(q[n]) && nodeArray->active(q[n])) {
-					ptr->p2p.push_back(nodeArray()(q[n]));
+				if( ! node_array->shape().out_of_bounds(q[n]) && node_array->active(q[n])) {
+					ptr->p2p.push_back(node_array()(q[n]));
 				}
 			}
 		});
 		//
 		std::vector<node2 *> nodes;
-		nodeArray->const_serial_actives([&](const auto &it) {
+		node_array->const_serial_actives([&](const auto &it) {
 			nodes.push_back(it());
 		});
 		//
 		// Perform fast march
-		fastMarch(nodes,half_bandwidth,-half_bandwidth,m_parallel);
+		fast_march(nodes,half_bandwidth,-half_bandwidth,m_parallel);
 		//
 		phi_array.parallel_actives([&](int i, int j, auto &it, int tn) {
-			it.set(nodeArray()(i,j)->levelset);
+			it.set(node_array()(i,j)->levelset);
 		});
 		//
 		grids->serial_actives([&](const auto &it) {
 			const auto ptr = it();
 			if( ptr ) delete ptr;
 		});
-		nodeArray->serial_actives([&](auto &it) { delete it(); });
+		node_array->serial_actives([&](auto &it) { delete it(); });
+		//
 		phi_array.flood_fill();
 	}
 	//

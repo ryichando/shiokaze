@@ -133,9 +133,6 @@ void macliquid3::post_initialize() {
 		m_macproject->project(CFL*m_dx/max_u,m_velocity,m_solid,m_fluid);
 	}
 	//
-	// Export first mesh
-	export_mesh();
-	//
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
 }
 //
@@ -191,24 +188,25 @@ void macliquid3::extend_both() {
 	scoped_timer timer(this);
 	//
 	timer.tick(); console::dump( "Extending velocity field...");
-	char bandwidth_half = m_fluid.get_levelset_halfwidth();
-	auto current_CFL = std::ceil(m_timestepper->get_current_CFL());
-	macarray_extrapolator3::extrapolate<double>(m_velocity,bandwidth_half+current_CFL);
+	unsigned width = m_fluid.get_levelset_halfwidth()+m_timestepper->get_current_CFL();
+	macarray_extrapolator3::extrapolate<double>(m_velocity,width);
 	m_macutility->constrain_velocity(m_solid,m_velocity);
-	unsigned final_width = bandwidth_half+current_CFL;
-	m_fluid.dilate(final_width);
-	console::dump( "Done. Count=%d. Took %s\n", final_width, timer.stock("extend_velocity").c_str());
+	m_fluid.dilate(width);
+	console::dump( "Done. Count=%d. Took %s\n", width, timer.stock("extend_velocity").c_str());
 }
 //
 void macliquid3::idle() {
 	//
 	scoped_timer timer(this);
 	//
+	unsigned step = m_timestepper->get_step_count()+1;
+	timer.tick(); console::dump( ">>> %s step started...\n", console::nth(step).c_str());
+	//
 	// Compute the timestep size
+	timer.tick(); console::dump( "Computing time step...");
 	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity)/m_dx);
 	double CFL = m_timestepper->get_current_CFL();
-	unsigned step = m_timestepper->get_step_count();
-	timer.tick(); console::dump( ">>> %s step started (dt=%.2e,CFL=%.2f)...\n", dt, CFL, console::nth(step).c_str());
+	console::dump( "Done. dt=%.2e,CFL=%.2f. Took %s\n", dt, CFL, timer.stock("compute_timestep").c_str());
 	//
 	// Extend both the velocity field and the level set
 	extend_both();
@@ -220,7 +218,7 @@ void macliquid3::idle() {
 	//
 	// Velocity advection
 	shared_macarray3<double> velocity_save(m_velocity);
-	m_macadvection->advect_vector(m_velocity,velocity_save(),dt,"velocity");
+	m_macadvection->advect_vector(m_velocity,velocity_save(),m_fluid,dt,"velocity");
 	//
 	// Add external force
 	inject_external_force(m_velocity,dt);

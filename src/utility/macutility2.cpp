@@ -68,7 +68,7 @@ private:
 						array_derivative2::derivative(solid,p,derivative);
 						vec2d normal = vec2d(derivative)/m_dx;
 						if( normal.norm2() ) {
-							vec2d u = macarray_interpolator2::interpolate<double>(velocity_save(),vec2i(i,j).cell());
+							vec2d u = macarray_interpolator2::interpolate<double>(velocity_save(),p);
 							if( u * normal < 0.0 ) {
 								it.set((u-normal*(u*normal))[dim]);
 							}

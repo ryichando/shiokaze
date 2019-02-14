@@ -821,14 +821,14 @@ private:
 			shape3 global_shape = shape3(m_oi+m_Zx,m_oj+m_Zy,m_ok+m_Zz);
 			auto markable = [&]( vec3i pi, bool default_result ) {
 				if( ! local_shape.out_of_bounds(pi) && ! global_shape.out_of_bounds(pi+vec3i(m_oi,m_oj,m_ok))) {
-					auto pass_m_fill_mask = [&]( size_t n ) {
+					auto pass_fill_mask = [&]( size_t n ) {
 						return ! ((*(m_fill_mask+n/8) >> n%8) & 1U);
 					};
 					const size_t n = encode(pi[0],pi[1],pi[2]);
 					if( (*(m_bit_mask+n/8) >> n%8) & 1U ) {
-						return inside_func(m_buffer ? m_buffer+n*m_element_size : nullptr) && pass_m_fill_mask(n);
+						return inside_func(m_buffer ? m_buffer+n*m_element_size : nullptr) && pass_fill_mask(n);
 					} else {
-						return default_result && pass_m_fill_mask(n);
+						return default_result && pass_fill_mask(n);
 					}
 				} else {
 					return false;

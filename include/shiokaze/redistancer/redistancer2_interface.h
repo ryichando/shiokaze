@@ -45,7 +45,7 @@ public:
 	 @param[in-out] phi_array レベルセットグリッド。
 	 @param[in] dx セルの大きさ。
 	 */
-	virtual void redistance( array2<double> &phi_array, double dx ) = 0;
+	virtual void redistance( array2<double> &phi_array, unsigned width, double dx ) = 0;
 	//
 private:
 	virtual void initialize( const shape2 &shape, double dx ) {};

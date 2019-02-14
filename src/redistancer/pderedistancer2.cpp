@@ -36,15 +36,14 @@ private:
 	LONG_NAME("PDE Redistancer 2D")
 	ARGUMENT_NAME("PDERedist")
 	//
-	virtual void redistance( array2<double> &phi_array, double dx ) override {
+	virtual void redistance( array2<double> &phi_array, unsigned width, double dx ) override {
 		//
-		unsigned half_cells = phi_array.get_levelset_halfwidth();
-		double half_bandwidth = half_cells * dx;
+		double half_bandwidth = width * dx;
 		auto smoothed_sgn = []( double value, double dx ) {
 			return value / sqrt(value*value+dx*dx);
 		};
 		//
-		m_gridutility->trim_narrowband(phi_array,half_cells);
+		m_gridutility->trim_narrowband(phi_array,width);
 		shared_array2<double> phi_array0 (phi_array);
 		//
 		shared_array2<double> smoothed_sgns (phi_array.type());
@@ -111,7 +110,7 @@ private:
 		//
 		// Evolve by PDE
 		double dt = m_param.rate * dx;
-		for( int itcount=0; itcount<half_cells; ++itcount ) {
+		for( int itcount=0; itcount<width; ++itcount ) {
 			//
 			if( m_param.temporal_scheme == "Euler" ) {
 				//
@@ -155,7 +154,7 @@ private:
 			}
 		}
 		phi_array.parallel_actives([&](auto &it) {
-			if( std::abs(it()) > half_cells*dx ) it.set_off();
+			if( std::abs(it()) > width*dx ) it.set_off();
 		});
 		phi_array.flood_fill();
 	}

@@ -149,11 +149,10 @@ void macliquid2::set_volume_correction( macproject2_interface *macproject ) {
 //
 void macliquid2::extend_both() {
 	//
-	char bandwidth_half = m_fluid.get_levelset_halfwidth();
-	auto current_CFL = std::ceil(m_timestepper->get_current_CFL());
-	macarray_extrapolator2::extrapolate<double>(m_velocity,bandwidth_half+current_CFL);
+	unsigned width = m_fluid.get_levelset_halfwidth()+m_timestepper->get_current_CFL();
+	macarray_extrapolator2::extrapolate<double>(m_velocity,width);
 	m_macutility->constrain_velocity(m_solid,m_velocity);
-	m_fluid.dilate(bandwidth_half+current_CFL);
+	m_fluid.dilate(width);
 }
 //
 void macliquid2::idle() {
@@ -171,7 +170,7 @@ void macliquid2::idle() {
 	//
 	// Advect velocity
 	shared_macarray2<double> velocity_save(m_velocity);
-	m_macadvection->advect_vector(m_velocity,velocity_save(),dt);
+	m_macadvection->advect_vector(m_velocity,velocity_save(),m_fluid,dt);
 	//
 	// Add external force
 	inject_external_force(m_velocity,dt);

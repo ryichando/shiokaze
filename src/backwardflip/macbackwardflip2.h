@@ -43,7 +43,7 @@ private:
 	virtual bool fetch( macarray2<double> &u_reconstructed ) const override;
 	virtual bool fetch( array2<double> &density_reconstructed ) const override;
 	//
-	virtual void registerBuffer(
+	virtual void register_buffer(
 						const macarray2<double> &u1,				// Velocity at the end of the step
 						const macarray2<double> &u0,				// Velocity at the beggining of the step
 						const macarray2<double> *u_reconstructed,	// Reconstructed dirty velocity of the beggining of the step - can be nullptr

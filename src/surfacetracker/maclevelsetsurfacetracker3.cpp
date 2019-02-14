@@ -52,17 +52,22 @@ private:
 	virtual void advect( const macarray3<double> &u, double dt ) override {
 		//
 		scoped_timer timer(this);
-		m_macadvection->advect_scalar(m_fluid,u,dt,"levelset");
+		shared_array3<double> fluid_save(m_fluid);
+		m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt,"levelset");
+		//
+		timer.tick(); console::dump( "Computing redistancing width..." );
+		unsigned width = m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(u)*dt/m_dx);
+		console::dump( "Done. Count=%d. Took %s\n", width, timer.stock("compute_redist_width").c_str());
 		//
 		// Re-initialize
 		timer.tick(); console::dump( "Re-distancing fluid levelsets..." );
-		m_redistancer->redistance(m_fluid,m_dx);
-		console::dump( "Done. Took %s\n", timer.stock("maclevelsetsurfacetracker3_redistance_levelset").c_str());
+		m_redistancer->redistance(m_fluid,width,m_dx);
+		console::dump( "Done. Took %s\n", timer.stock("redistance_levelset").c_str());
 		//
 		// Extrapolation towards solid
 		timer.tick(); console::dump( "Extrapolating fluid levelsets towards solid walls...");
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
-		console::dump( "Done. Took %s\n", timer.stock("maclevelsetsurfacetracker3_exprapolate_levelset").c_str());
+		console::dump( "Done. Took %s\n", timer.stock("exprapolate_levelset").c_str());
 	}
 	//
 	virtual void get( array3<double> &fluid ) override { fluid.copy(m_fluid); }
@@ -74,14 +79,17 @@ private:
 							  std::function<vec3d(const vec3d &)> vertex_color_func=nullptr,
 							  std::function<vec2d(const vec3d &)> uv_coordinate_func=nullptr ) const override {
 		//
+		shared_array3<double> fluid_dilated(m_fluid);
+		fluid_dilated->dilate();
 		std::string path_wo_suffix = console::format_str("%s/%u_mesh", path_to_directory.c_str(), frame );
-		export_fluid_mesh(path_wo_suffix,m_fluid,true,vertex_color_func,uv_coordinate_func);
+		export_fluid_mesh(path_wo_suffix,fluid_dilated(),true,vertex_color_func,uv_coordinate_func);
 		//
 		shared_array3<double> fluid_closed(m_shape);
 		if( m_param.enclose_solid ) {
 			m_gridutility->combine_levelset(m_solid,m_fluid,fluid_closed());
+			fluid_closed->dilate();
 		} else {
-			fluid_closed->copy(m_fluid);
+			fluid_closed->copy(fluid_dilated());
 		}
 		const double eps (0.01*m_dx);
 		//
@@ -163,7 +171,6 @@ private:
 	}
 	//
 	virtual void configure( configuration &config ) override {
-		config.set_default_bool("LevelsetAdvection.MacCormack",false);
 		config.get_bool("EncloseSolid",m_param.enclose_solid,"Should remove faces in solid on mesh export");
 	}
 	//

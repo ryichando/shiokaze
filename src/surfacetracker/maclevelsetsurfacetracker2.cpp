@@ -29,6 +29,7 @@
 #include <shiokaze/visualizer/gridvisualizer2_interface.h>
 #include <shiokaze/redistancer/redistancer2_interface.h>
 #include <shiokaze/parallel/parallel_driver.h>
+#include <shiokaze/array/shared_array2.h>
 #include <cstdio>
 //
 SHKZ_USING_NAMESPACE
@@ -44,8 +45,10 @@ private:
 	}
 	virtual void advect( const macarray2<double> &u, double dt ) override {
 		//
-		m_macadvection->advect_scalar(m_fluid,u,dt);
-		m_redistancer->redistance(m_fluid,m_dx);
+		unsigned width = m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(u)*dt/m_dx);
+		shared_array2<double> fluid_save(m_fluid);
+		m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt);
+		m_redistancer->redistance(m_fluid,width,m_dx);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 	}
 	virtual void get( array2<double> &fluid ) override { fluid.copy(m_fluid); }
@@ -59,7 +62,6 @@ private:
 		m_macadvection.set_name("Levelset Advection 2D","LevelsetAdvection");
 	}
 	virtual void configure( configuration &config ) override {
-		config.set_default_bool("LevelsetAdvection.MacCormack",false);
 		config.get_bool("DrawActives",m_param.draw_actives,"Whether to draw active narrow band");
 	}
 	//

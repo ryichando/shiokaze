@@ -527,7 +527,7 @@ bool macbackwardflip2::fetch( array2<double> &density_reconstructed ) const {
 	}
 }
 //
-void macbackwardflip2::registerBuffer(
+void macbackwardflip2::register_buffer(
 									const macarray2<double> &u1,
 									const macarray2<double> &u0,
 									const macarray2<double> *u_reconstructed,

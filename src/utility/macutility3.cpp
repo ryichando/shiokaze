@@ -73,7 +73,7 @@ private:
 						array_derivative3::derivative(solid,p,derivative);
 						vec3d normal = vec3d(derivative)/m_dx;
 						if( normal.norm2() ) {
-							vec3d u = macarray_interpolator3::interpolate<double>(velocity_save(),vec3i(i,j,k).cell());
+							vec3d u = macarray_interpolator3::interpolate<double>(velocity_save(),p);
 							if( u * normal < 0.0 ) {
 								it.set((u-normal*(u*normal))[dim]);
 							}

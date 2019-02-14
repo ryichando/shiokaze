@@ -106,8 +106,10 @@ public:
 	 @param[in] p 物理空間の位置。
 	 @return 勾配の出力。
 	 */
-	template<class T> static vec2<T> derivative( const macarray2<T> &array, const vec2d &origin, double dx, const vec2d &p ) {
-		return derivative<T>(array,(p-origin)/dx);
+	template<class T> static vec2<T> derivative( const array2<T> &array, const vec2d &origin, double dx, const vec2d &p ) {
+		vec2<T> result;
+		derivative<T>(array,(p-origin)/dx,result.v);
+		return result/dx;
 	}
 };
 //

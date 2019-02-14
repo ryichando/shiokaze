@@ -65,8 +65,7 @@ private:
 	virtual void initialize( double dx ) = 0;
 	virtual void initialize( const configurable::environment_map &environment ) override {
 		assert(check_set(environment,{"dx"}));
-		double dx = *reinterpret_cast<const double *>(environment.at("dx"));
-		initialize(dx);
+		initialize(get_env<double>(environment,"dx"));
 	}
 };
 //
