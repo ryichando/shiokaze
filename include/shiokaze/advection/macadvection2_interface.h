@@ -41,11 +41,13 @@ public:
 	 \~english @brief Advect scalar field.
 	 @param[in] scalar Scalar to advect.
 	 @param[in] velocity Velocity field.
+	 @paran[in] fluid Fluid level set.
 	 @param[in] dt Time step.
 	 \~japanese @brief スカラー値を移流する。
 	 @param[in] scalar 移流するスカラー値。
 	 @param[in] velocity 速度場。
-	 @param[in] dt 時間幅.
+	 @paran[in] fluid 液体のレベルセット。
+	 @param[in] dt 時間幅。
 	 */
 	virtual void advect_scalar(	array2<double> &scalar,				// Cell-centered
 								const macarray2<double> &velocity,	// Face-located
@@ -55,10 +57,12 @@ public:
 	 \~english @brief Advect vector field.
 	 @param[in] u Vector field to advect.
 	 @param[in] velocity Velocity field.
+	 @paran[in] fluid Fluid level set.
 	 @param[in] dt Time step.
 	 \~japanese @brief ベクトル場を移流する。
 	 @param[in] u 移流するベクトル場。
 	 @param[in] velocity 速度場。
+	 @paran[in] fluid 液体のレベルセット。
 	 @param[in] dt 時間幅.
 	 */
 	virtual void advect_vector(	macarray2<double> &u,				// Face-located
