@@ -56,7 +56,7 @@ void macflipsmoke2::post_initialize () {
 void macflipsmoke2::idle() {
 	//
 	// Compute the timestep size
-	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity)/m_dx);
+	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	//
 	// Advect FLIP particles and get the levelset after the advection
 	m_flip->advect(m_velocity,m_timestepper->get_current_time(),dt);

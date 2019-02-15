@@ -252,6 +252,10 @@ private:
 		double half_bandwidth = dx * (double)width;
 		typedef struct { bool known; double dist; } grid;
 		//
+		// Flood fill and dilate
+		phi_array.flood_fill();
+		phi_array.dilate(2);
+		//
 		// Generate a mesh
 		std::vector<vec3d> vertices;
 		std::vector<std::vector<size_t> > faces;
@@ -346,7 +350,6 @@ private:
 			if( ptr ) delete ptr;
 		});
 		nodeArray->serial_actives([&](auto &it) { delete it(); });
-		//
 		phi_array.flood_fill();
 	}
 	//

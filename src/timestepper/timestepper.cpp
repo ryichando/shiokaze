@@ -44,8 +44,9 @@ public:
 	}
 	//
 	// Advance time by the maximal velocity. Returns delta t (time step size)
-	virtual double advance( double max_unit_u ) override {
+	virtual double advance( double max_velocity, double dx ) override {
 		//
+		double max_unit_u = max_velocity / dx;
 		assert( m_FPS && m_CFL );
 		double max_dt = std::max( m_min_dt, 1.0 / m_FPS );
 		//

@@ -56,7 +56,7 @@ void macflipliquid2::post_initialize () {
 void macflipliquid2::idle() {
 	//
 	// Compute the timestep size
-	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity)/m_dx);
+	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	unsigned step = m_timestepper->get_step_count();
 	//
 	shared_macarray2<double> face_density(m_shape);

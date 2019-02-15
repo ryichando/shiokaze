@@ -201,29 +201,33 @@ private:
 		double half_bandwidth = dx * width;
 		typedef struct { bool known; double dist; } grid;
 		//
+		// Flood fill and dilate
+		phi_array.flood_fill();
+		phi_array.dilate(2);
+		//
 		// Generate contours
 		shared_array2<std::vector<vec2d> > contours(phi_array.shape()-shape2(1,1));
 		contours->activate_as(phi_array);
 		contours->parallel_actives([&](int i, int j, auto &it, int tn) {
-			auto _do = [&]( int i, int j ) {
-				vec2d lines[8];	double v[2][2]; int pnum; vec2d vertices[2][2];
-				for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
+			vec2d lines[8];	double v[2][2]; int pnum; vec2d vertices[2][2];
+			bool skip (false);
+			for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
+				if( skip ) break;
+				if( phi_array.active(i+ni,j+nj)) {
 					v[ni][nj] = phi_array(i+ni,j+nj);
 					vertices[ni][nj] = dx*vec2d(i+ni,j+nj);
+				} else {
+					skip = true;
+					break;
 				}
+			}
+			if( ! skip ) {
 				m_meshutility->march_points(v,vertices,lines,pnum,false);
 				if( pnum ) {
 					for( unsigned n=0; n<pnum; ++n ) {
 						auto ptr = it.ptr();
 						if( ptr ) ptr->push_back(lines[n]);
 						else it.set({lines[n]});
-					}
-				}
-			};
-			for( int ii=0; ii<=1; ++ii ) for( int jj=0; jj<=1; ++jj ) {
-				if( i-ii >= 0 && j-jj >= 0 ) {
-					if( (ii==0 && jj==0) || ! contours->active(i-ii,j-jj)) {
-						_do(i-ii,j-jj);
 					}
 				}
 			}
@@ -315,7 +319,6 @@ private:
 			if( ptr ) delete ptr;
 		});
 		node_array->serial_actives([&](auto &it) { delete it(); });
-		//
 		phi_array.flood_fill();
 	}
 	//

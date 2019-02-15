@@ -240,7 +240,7 @@ void macsmoke3::idle() {
 	scoped_timer timer(this);
 	//
 	// Compute the timestep size
-	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity)/m_dx);
+	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	double CFL = m_timestepper->get_current_CFL();
 	unsigned step = m_timestepper->get_step_count();
 	timer.tick(); console::dump( ">>> %s step started (dt=%.2e,CFL=%.2f)...\n", dt, CFL, console::nth(step).c_str());

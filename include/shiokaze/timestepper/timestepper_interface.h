@@ -38,11 +38,15 @@ public:
 	DEFINE_MODULE(timestepper_interface,"Adaptive Time Stepper","TimeStepper","Time stepper module")
 	/**
 	 \~english @brief Advance time by the maximal velocity.
+	 @param[in] max_velocity The magnitude of the maximal velocity in the domain.
+	 @param[in] dx Grid cell size.
 	 @return Time step size.
+	 @param[in] max_velocity 計算領域内の最大速度。
+	 @param[in] dx グリッドセルの大きさ。
 	 \~japanese @brief 時間を最大速度場で進める。
 	 @return タイムステップサイズ。
 	 */
-	virtual double advance( double max_unit_u ) = 0;
+	virtual double advance( double max_velocity, double dx ) = 0;
 	/**
 	 \~english @brief Get if video frame should be exported.
 	 @return Frame number if a video frame should be exported. Zero otherwise.

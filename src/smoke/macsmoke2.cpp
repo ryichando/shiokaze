@@ -221,7 +221,7 @@ void macsmoke2::add_buoyancy_force( macarray2<double> &velocity, const array2<do
 void macsmoke2::idle() {
 	//
 	// Compute the timestep size
-	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity)/m_dx);
+	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	//
 	// Advect density and velocity
 	if( m_param.use_dust ) advect_dust_particles(m_velocity,dt);

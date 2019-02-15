@@ -158,7 +158,7 @@ void macliquid2::extend_both() {
 void macliquid2::idle() {
 	//
 	// Compute the timestep size
-	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity)/m_dx);
+	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	//
 	// Extend both the velocity field and the level set
 	extend_both();

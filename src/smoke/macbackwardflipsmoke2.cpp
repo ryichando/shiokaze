@@ -39,7 +39,7 @@ void macbackwardflipsmoke2::configure( configuration &config ) {
 void macbackwardflipsmoke2::idle() {
 	//
 	// Compute the timestep size
-	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity)/m_dx);
+	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	//
 	// Set of variables
 	shared_macarray2<double> velocity_reconstructed(m_shape);

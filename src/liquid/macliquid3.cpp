@@ -204,7 +204,7 @@ void macliquid3::idle() {
 	//
 	// Compute the timestep size
 	timer.tick(); console::dump( "Computing time step...");
-	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity)/m_dx);
+	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	double CFL = m_timestepper->get_current_CFL();
 	console::dump( "Done. dt=%.2e,CFL=%.2f. Took %s\n", dt, CFL, timer.stock("compute_timestep").c_str());
 	//
