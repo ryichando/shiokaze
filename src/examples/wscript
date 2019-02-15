@@ -59,13 +59,3 @@ def build(bld):
 			use = bld.get_target_name(bld,'core'),
 			lib=['z'])
 #
-	bld.shlib(source = 'octree2-example.cpp',
-			target = bld.get_target_name(bld,'octree2-example'),
-			cxxflags = ['-DSPATIAL_DIM=2'],
-			use = bld.get_target_name(bld,['core','octree2']))
-#
-	bld.shlib(source = 'octree3-example.cpp',
-			target = bld.get_target_name(bld,'octree3-example'),
-			cxxflags = ['-DSPATIAL_DIM=3'],
-			use = bld.get_target_name(bld,['core','octree3']))
-#
