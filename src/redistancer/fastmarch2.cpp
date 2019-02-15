@@ -38,7 +38,7 @@ private:
 	LONG_NAME("FastMarch 2D")
 	ARGUMENT_NAME("FastMarch")
 	//
-	virtual void redistance( array2<double> &phi_array, unsigned width, double dx ) override {
+	virtual void redistance( array2<double> &phi_array, unsigned width ) override {
 		//
 		std::vector<vec2d> positions;
 		std::vector<std::vector<size_t> > connections;
@@ -67,7 +67,7 @@ private:
 				}
 				//
 				levelset[index] = it();
-				positions[index] = dx * vec2i(i,j).cell();
+				positions[index] = m_dx * vec2i(i,j).cell();
 			}
 		});
 		//
@@ -76,17 +76,22 @@ private:
 		//
 		phi_array.parallel_actives([&](int i, int j, auto &it, int tn) {
 			double value = levelset[indices()(i,j)];
-			if( std::abs(value) > (double)width*dx ) it.set_off();
+			if( std::abs(value) > (double)width*m_dx ) it.set_off();
 			else it.set(value);
 		});
 		//
 		phi_array.flood_fill();
 	}
 	//
+	virtual void initialize( const shape2 &shape, double dx ) override {
+		m_dx = dx;
+	}
+	//
 	meshutility2_driver m_meshutility{this,"meshutility2"};
 	gridutility2_driver m_gridutility{this,"gridutility2"};
 	parallel_driver m_parallel{this};
 	//
+	double m_dx;
 };
 //
 extern "C" module * create_instance() {

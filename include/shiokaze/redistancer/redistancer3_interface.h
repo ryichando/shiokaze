@@ -40,12 +40,12 @@ public:
 	/**
 	 \~english @brief Redistance a level set grid.
 	 @param[in-out] phi_array Level set grid.
-	 @param[in] dx Grid cell size.
+	 @param[in] width Redistancing half bandwidth cell count.
 	 \~japanese @brief レベルセットグリッドの再初期化を行う。
 	 @param[in-out] phi_array レベルセットグリッド。
-	 @param[in] dx セルの大きさ。
+	 @param[in] width 再初期化を行う半分のバンド幅 (セル幅)。
 	 */
-	virtual void redistance( array3<double> &phi_array, unsigned width, double dx ) = 0;
+	virtual void redistance( array3<double> &phi_array, unsigned width ) = 0;
 	//
 private:
 	virtual void initialize( const shape3 &shape, double dx ) {};

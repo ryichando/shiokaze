@@ -36,11 +36,11 @@ public:
 	LONG_NAME("PDE Redistancer 3D")
 	ARGUMENT_NAME("PDERedist")
 	//
-	virtual void redistance( array3<double> &phi_array, unsigned width, double dx ) override {
+	virtual void redistance( array3<double> &phi_array, unsigned width ) override {
 		//
-		double half_bandwidth = width * dx;
-		auto smoothed_sgn = []( double value, double dx ) {
-			return value / sqrt(value*value+dx*dx);
+		double half_bandwidth = width * m_dx;
+		auto smoothed_sgn = []( double value, double m_dx ) {
+			return value / sqrt(value*value+m_dx*m_dx);
 		};
 		//
 		m_gridutility->trim_narrowband(phi_array,width);
@@ -49,7 +49,7 @@ public:
 		shared_array3<double> smoothed_sgns (phi_array.type());
 		smoothed_sgns->activate_as(phi_array);
 		smoothed_sgns->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
-			it.set(smoothed_sgn(phi_array0()(i,j,k),dx));
+			it.set(smoothed_sgn(phi_array0()(i,j,k),m_dx));
 		});
 		//
 		auto derivative = [&]( const array3<double> &phi_array, array3<double> &phi_array_derivative ) {
@@ -86,19 +86,19 @@ public:
 						phi_backward0 = phi_array0()(i-(dim==0),j-(dim==1),k-(dim==2));
 						double frac = utility::fraction(phi0,phi_backward0);
 						if( frac == 1.0 || frac == 0.0 ) {
-							g = (phi-phi_backward) / dx;
+							g = (phi-phi_backward) / m_dx;
 						} else {
-							if( sgn0 < 0.0 ) g = phi / (dx * frac);
-							else g = phi / (dx * (1.0-frac));
+							if( sgn0 < 0.0 ) g = phi / (m_dx * frac);
+							else g = phi / (m_dx * (1.0-frac));
 						}
 					} else if( select_direction == 1 ) {
 						phi_forward0 = phi_array0()(i+(dim==0),j+(dim==1),k+(dim==2));
 						double frac = utility::fraction(phi0,phi_forward0);
 						if( frac == 1.0 || frac == 0.0 ) {
-							g = (phi_forward-phi) / dx;
+							g = (phi_forward-phi) / m_dx;
 						} else {
-							if( sgn0 < 0.0 ) g = -phi / (dx * frac);
-							else g = -phi / (dx * (1.0-frac));
+							if( sgn0 < 0.0 ) g = -phi / (m_dx * frac);
+							else g = -phi / (m_dx * (1.0-frac));
 						}
 					}
 					gradient[dim] = g;
@@ -109,7 +109,7 @@ public:
 		};
 		//
 		// Evolve by PDE
-		double dt = m_param.rate * dx;
+		double dt = m_param.rate * m_dx;
 		for( int itcount=0; itcount<width; ++itcount ) {
 			//
 			if( m_param.temporal_scheme == "Euler" ) {
@@ -155,7 +155,7 @@ public:
 		}
 		//
 		phi_array.parallel_actives([&](auto &it) {
-			if( std::abs(it()) > width*dx ) it.set_off();
+			if( std::abs(it()) > width*m_dx ) it.set_off();
 		});
 		phi_array.flood_fill();
 	}
@@ -167,12 +167,17 @@ protected:
 		config.get_string("RedistTemporalScheme",m_param.temporal_scheme,"Temporal integration scheme");
 	}
 	//
+	virtual void initialize( const shape3 &shape, double dx ) override {
+		m_dx = dx;
+	}
+	//
 	struct Parameters {
 		double rate {0.75};
 		std::string temporal_scheme {"Euler"};
 	};
 	Parameters m_param;
 	gridutility3_driver m_gridutility{this,"gridutility3"};
+	double m_dx;
 };
 //
 extern "C" module * create_instance() {

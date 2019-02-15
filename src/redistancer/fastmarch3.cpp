@@ -41,7 +41,7 @@ private:
 	LONG_NAME("FastMarch 3D")
 	ARGUMENT_NAME("FastMarch")
 	//
-	virtual void redistance( array3<double> &phi_array, unsigned width, double dx ) override {
+	virtual void redistance( array3<double> &phi_array, unsigned width ) override {
 		//
 		std::vector<vec3d> positions;
 		std::vector<std::vector<size_t> > connections;
@@ -70,7 +70,7 @@ private:
 				}
 				//
 				levelset[index] = it();
-				positions[index] = dx * vec3i(i,j,k).cell();
+				positions[index] = m_dx * vec3i(i,j,k).cell();
 			}
 		});
 		//
@@ -79,11 +79,15 @@ private:
 		//
 		phi_array.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			double value = levelset[indices()(i,j,k)];
-			if( std::abs(value) > (double)width*dx ) it.set_off();
+			if( std::abs(value) > (double)width*m_dx ) it.set_off();
 			else it.set(value);
 		});
 		//
 		phi_array.flood_fill();
+	}
+	//
+	virtual void initialize( const shape3 &shape, double dx ) override {
+		m_dx = dx;
 	}
 	//
 	cellmesher3_driver m_mesher{this,"marchingcubes"};
@@ -92,6 +96,7 @@ private:
 	gridutility3_driver m_gridutility{this,"gridutility3"};
 	parallel_driver m_parallel{this};
 	//
+	double m_dx;
 };
 //
 extern "C" module * create_instance() {

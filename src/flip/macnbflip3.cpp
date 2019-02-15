@@ -933,7 +933,7 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 		m_macadvection->advect_scalar(m_fluid,velocity,fluid_save(),dt);
 		//
 		if( m_particles.size()) {
-			m_redistancer->redistance(m_fluid,dilate_width,m_dx);
+			m_redistancer->redistance(m_fluid,dilate_width);
 			bool solid_exist = array_utility3::levelset_exist(m_solid);
 			//
 			// Erosion
@@ -987,7 +987,7 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 		//
 		// Re-initialize levelset
 		timer.tick(); console::dump( "Extrapolate and redistancing levelset..." );
-		m_redistancer->redistance(m_fluid,dilate_width,m_dx);
+		m_redistancer->redistance(m_fluid,dilate_width);
 		m_gridutility->trim_narrowband(m_fluid,dilate_width);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 		console::dump("Done. Took %s\n", timer.stock("extrapolate_redistance").c_str());

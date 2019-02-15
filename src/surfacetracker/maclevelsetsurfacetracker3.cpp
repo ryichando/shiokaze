@@ -61,7 +61,7 @@ private:
 		//
 		// Re-initialize
 		timer.tick(); console::dump( "Re-distancing fluid levelsets..." );
-		m_redistancer->redistance(m_fluid,width,m_dx);
+		m_redistancer->redistance(m_fluid,width);
 		console::dump( "Done. Took %s\n", timer.stock("redistance_levelset").c_str());
 		//
 		// Extrapolation towards solid

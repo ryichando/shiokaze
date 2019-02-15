@@ -48,7 +48,7 @@ private:
 		unsigned width = m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(u)*dt/m_dx);
 		shared_array2<double> fluid_save(m_fluid);
 		m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt);
-		m_redistancer->redistance(m_fluid,width,m_dx);
+		m_redistancer->redistance(m_fluid,width);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 	}
 	virtual void get( array2<double> &fluid ) override { fluid.copy(m_fluid); }
@@ -66,6 +66,7 @@ private:
 	}
 	//
 	virtual void initialize( const shape2 &shape, double dx ) override {
+		//
 		m_shape = shape;
 		m_dx = dx;
 		//
