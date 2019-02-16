@@ -88,7 +88,7 @@ protected:
 		bool use_apic {true};
 		double flip_convexhull_max_dist {3.0};
 		double fit_particle_dist {3};
-		unsigned levelset_half_bandwidth {2};
+		unsigned levelset_half_bandwidth_count {2};
 		unsigned narrowband {3};
 		unsigned correct_depth {3};
 		int RK_order {2};

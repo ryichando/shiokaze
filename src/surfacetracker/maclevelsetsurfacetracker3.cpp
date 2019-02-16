@@ -57,7 +57,7 @@ private:
 		//
 		// Re-initialize
 		timer.tick(); console::dump( "Re-distancing fluid levelsets..." );
-		m_redistancer->redistance(m_fluid,m_param.levelset_half_bandwidth);
+		m_redistancer->redistance(m_fluid,m_param.levelset_half_bandwidth_count);
 		console::dump( "Done. Took %s\n", timer.stock("redistance_levelset").c_str());
 		//
 		// Extrapolation towards solid
@@ -168,7 +168,7 @@ private:
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_bool("EncloseSolid",m_param.enclose_solid,"Should remove faces in solid on mesh export");
-		config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth,"Level set half bandwidth");
+		config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth_count,"Level set half bandwidth");
 	}
 	//
 	virtual void initialize( const shape3 &shape, double dx ) override {
@@ -195,7 +195,7 @@ private:
 	//
 	struct Parameters {
 		bool enclose_solid {false};
-		unsigned levelset_half_bandwidth {2};
+		unsigned levelset_half_bandwidth_count {2};
 	};
 	Parameters m_param;
 };

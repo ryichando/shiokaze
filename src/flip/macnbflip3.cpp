@@ -74,7 +74,7 @@ void macnbflip3::configure( configuration &config ) {
 	config.set_default_unsigned("HighresRasterizer.NeighborLookUpCells",2);
 	//
 	config.get_bool("APIC",m_param.use_apic,"Whether to use APIC");
-	config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth,"Level set half bandwidth");
+	config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth_count,"Level set half bandwidth");
 	config.get_unsigned("Narrowband",m_param.narrowband,"Narrowband bandwidth");
 	config.get_unsigned("CorrectDepth",m_param.correct_depth,"Position correction depth");
 	config.get_double("FitParticleDist",m_param.fit_particle_dist,"FLIP particle fitting threshold");
@@ -875,13 +875,13 @@ void macnbflip3::additionally_apply_velocity_derivative( macarray3<double> &mome
 void macnbflip3::initialize_fluid() {
 	//
 	m_fluid.initialize(m_shape);
-	m_fluid.set_as_levelset(m_dx*(double)m_param.levelset_half_bandwidth);
+	m_fluid.set_as_levelset(m_dx*(double)m_param.levelset_half_bandwidth_count);
 }
 //
 void macnbflip3::initialize_solid() {
 	//
 	m_solid.initialize(m_shape.nodal());
-	m_solid.set_as_levelset(m_dx*(double)m_param.levelset_half_bandwidth);
+	m_solid.set_as_levelset(m_dx*(double)m_param.levelset_half_bandwidth_count);
 }
 //
 void macnbflip3::seed_set_fluid( const array3<double> &fluid ) {
@@ -922,7 +922,7 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 		scoped_timer timer(this);
 		timer.tick(); console::dump( ">>> Levelset advection\n");
 		//
-		unsigned dilate_width = m_param.levelset_half_bandwidth;
+		unsigned dilate_width = m_param.levelset_half_bandwidth_count;
 		for( int n=0; n<m_particles.size(); ++n ) {
 			vec3i pi = m_shape.clamp(m_particles[n].p/m_dx);
 			if( ! m_fluid.active(pi)) m_fluid.set(pi,m_fluid(pi));

@@ -47,7 +47,7 @@ private:
 		//
 		shared_array2<double> fluid_save(m_fluid);
 		m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt);
-		m_redistancer->redistance(m_fluid,m_param.levelset_half_bandwidth);
+		m_redistancer->redistance(m_fluid,m_param.levelset_half_bandwidth_count);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 	}
 	virtual void get( array2<double> &fluid ) override { fluid.copy(m_fluid); }
@@ -62,7 +62,7 @@ private:
 	}
 	virtual void configure( configuration &config ) override {
 		config.get_bool("DrawActives",m_param.draw_actives,"Whether to draw active narrow band");
-		config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth,"Level set half bandwidth");
+		config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth_count,"Level set half bandwidth");
 	}
 	//
 	virtual void initialize( const shape2 &shape, double dx ) override {
@@ -84,7 +84,7 @@ private:
 	//
 	struct Parameters {
 		bool draw_actives {true};
-		unsigned levelset_half_bandwidth {2};
+		unsigned levelset_half_bandwidth_count {2};
 	};
 	//
 	Parameters m_param;
