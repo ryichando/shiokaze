@@ -201,10 +201,8 @@ public:
 	}
 	/**
 	 \~english @brief Set the grid as level set.
-	 @param[in] dx grid cell size.
 	 @param[in] bandwidth_half half bandwidth size of the level set.
 	 \~japanese @brief グリッドをレベルセットとして定義する。
-	 @param[in] dx グリッド幅。
 	 @param[in] bandwidth_half レベルセットの半分のバンド幅。
 	 */
 	void set_as_levelset( double bandwidth_half ) {
