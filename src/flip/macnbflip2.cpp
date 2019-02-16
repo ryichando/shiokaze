@@ -790,7 +790,7 @@ void macnbflip2::advect_levelset( const macarray2<double> &velocity, double dt, 
 				mask->set(mask->shape().clamp(p/m_dx));
 			}
 			//
-			mask().dilate([&](int i, int j, auto &it, int tn ) { it.set(); },2);
+			mask().dilate(2);
 			m_fluid.activate_as(mask());
 			//
 			shared_array2<double> particle_levelset(m_shape,0.125*m_dx);
