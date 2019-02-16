@@ -73,8 +73,6 @@ void macnbflip3::configure( configuration &config ) {
 	config.set_default_double("HighresRasterizer.WeightFactor",2.0);
 	config.set_default_unsigned("HighresRasterizer.NeighborLookUpCells",2);
 	//
-	config.set_default_bool("LevelsetAdvectionFLIP.MacCormack",false);
-	//
 	config.get_bool("APIC",m_param.use_apic,"Whether to use APIC");
 	config.get_unsigned("Narrowband",m_param.narrowband,"Narrowband bandwidth");
 	config.get_unsigned("CorrectDepth",m_param.correct_depth,"Position correction depth");
@@ -964,9 +962,6 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 			}
 			//
 			mask().dilate([&](int i, int j, int k, auto &it, int tn ) { it.set(); },2);
-			mask->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
-				if( m_fluid(i,j,k) < 0.0 ) it.set_off();
-			});
 			m_fluid.activate_as(mask());
 			//
 			shared_array3<double> particle_levelset(m_shape,0.125*m_dx);
@@ -988,7 +983,6 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 		// Re-initialize levelset
 		timer.tick(); console::dump( "Extrapolate and redistancing levelset..." );
 		m_redistancer->redistance(m_fluid,dilate_width);
-		m_gridutility->trim_narrowband(m_fluid,dilate_width);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 		console::dump("Done. Took %s\n", timer.stock("extrapolate_redistance").c_str());
 		console::dump("<<< Done. Took %s.\n", timer.stock("levelset_advection").c_str());

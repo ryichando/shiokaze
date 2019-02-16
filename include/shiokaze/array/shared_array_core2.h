@@ -31,7 +31,7 @@
 SHKZ_BEGIN_NAMESPACE
 //
 /** @file */
-/// \~english @brief Abstract storage class that enables sharing pre-allocated bit arrays.
+/// \~english @brief Abstract storage class that enables sharing pre-allocated arrays.
 /// \~japanese @brief 事前に確保されたビットグリッドの共有を可能にする抽象クラス。
 class shared_array_core2 {
 public:

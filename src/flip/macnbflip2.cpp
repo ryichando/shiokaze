@@ -65,8 +65,6 @@ macnbflip2::macnbflip2() {
 //
 void macnbflip2::configure( configuration &config ) {
 	//
-	config.set_default_bool("LevelsetAdvectionFLIP.MacCormack",false);
-	//
 	config.get_bool("APIC",m_param.use_apic,"Whether to use APIC");
 	config.get_unsigned("Narrowband",m_param.narrowband,"Narrowband bandwidth");
 	config.get_unsigned("CorrectDepth",m_param.correct_depth,"Position correction depth");
@@ -793,9 +791,6 @@ void macnbflip2::advect_levelset( const macarray2<double> &velocity, double dt, 
 			}
 			//
 			mask().dilate([&](int i, int j, auto &it, int tn ) { it.set(); },2);
-			mask->parallel_actives([&](int i, int j, auto &it, int tn) {
-				if( m_fluid(i,j) < 0.0 ) it.set_off();
-			});
 			m_fluid.activate_as(mask());
 			//
 			shared_array2<double> particle_levelset(m_shape,0.125*m_dx);
@@ -811,7 +806,6 @@ void macnbflip2::advect_levelset( const macarray2<double> &velocity, double dt, 
 		//
 		// Re-initialize levelset
 		m_redistancer->redistance(m_fluid,dilate_width);
-		m_gridutility->trim_narrowband(m_fluid,dilate_width);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 	}
 }
