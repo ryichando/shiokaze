@@ -213,11 +213,9 @@ public:
 	}
 	/**
 	 \~english @brief Set the grid as a grid that is fillable by flood fill.
-	 @param[in] outside_background_value outside value.
-	 @param[in] inside_background_value inside value.
+	 @param[in] fill_value fill_value
 	 \~japanese @brief グリッドを Flood Fill で塗りつぶし可能にする。
-	 @param[in] outside_background_value 外側の数値。
-	 @param[in] inside_background_value 内側に数値。
+	 @param[in] fill_value 塗りつぶしの値。
 	 */
 	void set_as_fillable( const T& fill_value ) {
 		m_levelset = false;
