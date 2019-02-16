@@ -196,9 +196,8 @@ public:
 		m_core->initialize(shape.w,shape.h,sizeof(T));
 		m_shape = shape;
 		m_background_value = value;
-		m_negative_background_value = m_isovalue = T();
-		m_is_fillable = false;
-		m_levelset_halfwidth = 0;
+		m_fillable = false;
+		m_levelset = false;
 	}
 	/**
 	 \~english @brief Set the grid as level set.
@@ -208,12 +207,11 @@ public:
 	 @param[in] dx グリッド幅。
 	 @param[in] bandwidth_half レベルセットの半分のバンド幅。
 	 */
-	void set_as_levelset( const T& dx, unsigned char bandwidth_half=2, const T& isovalue=T() ) {
-		m_background_value = isovalue+dx*bandwidth_half;
-		m_negative_background_value = isovalue-dx*bandwidth_half;
-		m_isovalue = isovalue;
-		m_levelset_halfwidth = bandwidth_half;
-		m_is_fillable = false;
+	void set_as_levelset( double bandwidth_half ) {
+		m_levelset = true;
+		m_fillable = false;
+		m_background_value = bandwidth_half;
+		m_fill_value = -bandwidth_half;
 	}
 	/**
 	 \~english @brief Set the grid as a grid that is fillable by flood fill.
@@ -223,11 +221,10 @@ public:
 	 @param[in] outside_background_value 外側の数値。
 	 @param[in] inside_background_value 内側に数値。
 	 */
-	void set_as_fillable( const T& outside_background_value, const T& inside_background_value ) {
-		m_background_value = outside_background_value;
-		m_negative_background_value = m_isovalue = inside_background_value;
-		m_is_fillable = true;
-		m_levelset_halfwidth = 0;
+	void set_as_fillable( const T& fill_value ) {
+		m_levelset = false;
+		m_fillable = true;
+		m_fill_value = fill_value;
 	}
 	/**
 	 \~english @brief Set the grid as fillable as same as an input array.
@@ -236,9 +233,7 @@ public:
 	 @param[in] array 目標となる塗りつぶしに関する情報をコピーするグリッド。
 	 */
 	void set_as_fillable_as( const array2 &array ) { 
-		set_as_levelset_as(array);
-		m_is_fillable = true;
-		m_levelset_halfwidth = 0;
+		set_as_fillable(array.m_fill_value);
 	}
 	/**
 	 \~english @brief Set the grid as level set as same as an input array.
@@ -247,11 +242,7 @@ public:
 	 @param[in] array 目標となるレベルセットに関する情報をコピーするグリッド。
 	 */
 	void set_as_levelset_as( const array2 &array ) {
-		m_background_value = array.m_background_value;
-		m_negative_background_value = array.m_negative_background_value;
-		m_levelset_halfwidth = array.m_levelset_halfwidth;
-		m_isovalue = array.m_isovalue;
-		m_is_fillable = false;
+		set_as_levelset(array.m_background_value);
 	}
 	/**
 	 \~english @brief Return if the grid is set fillable.
@@ -260,7 +251,7 @@ public:
 	 @return グリッドが塗りつぶし可能に設定されているか。
 	 */
 	bool is_fillable() const {
-		return m_is_fillable;
+		return m_fillable;
 	}
 	/**
 	 \~english @brief Return if the grid is set level set.
@@ -269,29 +260,20 @@ public:
 	 @return グリッドがレベルセットに設定されているか。
 	 */
 	bool is_levelset() const {
-		return get_levelset_halfwidth() != 0;
-	}
-	/**
-	 \~english @brief Return the level set half bandwidth size.
-	 @return Half bandwidth size of the level set.
-	 \~japanese @brief レベルセットの半分のバンド幅を取得する関数。
-	 @return レベルセットの半分のバンド幅。
-	 */
-	char get_levelset_halfwidth() const {
-		return m_levelset_halfwidth;
+		return m_levelset;
 	}
 	/**
 	 \~english @brief Perform flood fill. Grid should be set either level set of fillable beforehand.
 	 \~japanese @brief 塗りつぶし処理を行う。グリッドは事前にレベルセットかぶり潰し可能に設定されている必要がある。
 	 */
 	void flood_fill() {
-		if( m_is_fillable ) {
+		if( m_fillable ) {
 			m_core->flood_fill([&](const void *value_ptr) {
-				return *(T *)value_ptr == m_negative_background_value;
+				return *(T *)value_ptr == m_fill_value;
 			},m_parallel);
-		} else if( m_levelset_halfwidth ) {
+		} else if( m_levelset ) {
 			m_core->flood_fill([&](const void *value_ptr) {
-				return *(T *)value_ptr < m_isovalue;
+				return *(T *)value_ptr < 0.0;
 			},m_parallel);
 		} else {
 			printf( "Flood fill attempted without being set either levelset or fillable.\n");
@@ -469,16 +451,6 @@ public:
 	 */
 	void set_background_value( const T& value ) { m_background_value = value; }
 	/**
-	 \~english @brief Get the negative background value of the grid, assuming that the grid is set level set or fillable.
-	 \~japanese @brief グリッドの負のバックグランドの値を得る。グリッドはレベルセットが塗りつぶし可能と設定されていることを想定。
-	 */
-	T get_negative_background_value () const { return m_negative_background_value; }
-	/**
-	 \~english @brief Get the iso value of the grid, assuming that the grid is set level set.
-	 \~japanese @brief グリッドの isolvaue 値得る。グリッドは、レベルセットに設定されていることを想定。
-	 */
-	T get_isovalue () const { return m_isovalue; }
-	/**
 	 \~english @brief Clear out the grid.
 	 *
 	 Note that size, the memory allocation, background values and the information regarding level set or fillable left intact.
@@ -501,7 +473,6 @@ public:
 	 */
 	void clear(T v) {
 		m_background_value = v;
-		m_negative_background_value = m_isovalue = T();
 		clear();
 	}
 	/**
@@ -747,7 +718,7 @@ public:
 		bool filled (false);
 		const T* ptr = (T *)(*m_core)(i,j,filled);
 		if( ptr ) return *ptr;
-		else return filled ? m_negative_background_value : m_background_value;
+		else return filled ? m_fill_value : m_background_value;
 	}
 	/**
 	 \~english @brief Get the the value at a position on grid
@@ -1154,12 +1125,12 @@ public:
 	void parallel_op( std::function<void(int i, int j, iterator& it, int thread_index)> func, bool type=ALL ) {
 		if( type == ACTIVES ) {
 			m_core->parallel_actives([&](int i, int j, void *value_ptr, bool &active, const bool &filled, int thread_n ){
-				iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				func(i,j,it,thread_n);
 			},m_parallel);
 		} else {
 			m_core->parallel_all([&](int i, int j, void *value_ptr, bool &active, const bool &filled, int thread_n ){
-				iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				func(i,j,it,thread_n);
 			},m_parallel);
 		}
@@ -1266,12 +1237,12 @@ public:
 		if( type == ACTIVES ) {
 			m_core->const_parallel_actives([&](int i, int j, const void *value_ptr, const bool &filled, int thread_n ){
 				bool active(true);
-				const_iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				const_iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				func(i,j,it,thread_n);
 			},m_parallel);
 		} else {
 			m_core->const_parallel_all([&](int i, int j, const void *value_ptr, const bool &active, const bool &filled, int thread_n ){
-				const_iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				const_iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				func(i,j,it,thread_n);
 			},m_parallel);
 		}
@@ -1284,7 +1255,7 @@ public:
 	 */
 	void const_parallel_inside( std::function<void(int i, int j, const const_iterator& it, int thread_index)> func ) const {
 		m_core->const_parallel_inside([&](int i, int j, const void *value_ptr, const bool &active, int thread_n ){
-			const_iterator it(value_ptr,active,true,m_negative_background_value);
+			const_iterator it(value_ptr,active,true,m_fill_value);
 			func(i,j,it,thread_n);
 		},m_parallel);
 	}
@@ -1340,13 +1311,13 @@ public:
 	void serial_op( std::function<void(int i, int j, iterator& it)> func, bool type=ALL ) {
 		if( type == ACTIVES ) {
 			m_core->serial_actives([&](int i, int j, void *value_ptr, bool &active, const bool &filled ){
-				iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				func(i,j,it);
 				return false;
 			});
 		} else {
 			m_core->serial_all([&](int i, int j, void *value_ptr, bool &active, const bool &filled ){
-				iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				func(i,j,it);
 				return false;
 			});
@@ -1416,13 +1387,13 @@ public:
 		if( type == ACTIVES ) {
 			m_core->const_serial_actives([&](int i, int j, const void *value_ptr, const bool &filled ){
 				bool active(true);
-				const_iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				const_iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				func(i,j,it);
 				return false;
 			});
 		} else {
 			m_core->const_serial_all([&](int i, int j, const void *value_ptr, const bool &active, const bool &filled ){
-				const_iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				const_iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				func(i,j,it);
 				return false;
 			});
@@ -1436,7 +1407,7 @@ public:
 	 */
 	void const_serial_inside( std::function<void(int i, int j, const const_iterator& it)> func ) const {
 		m_core->const_serial_inside([&](int i, int j, const void *value_ptr, const bool &active ){
-			const_iterator it(value_ptr,active,true,m_negative_background_value);
+			const_iterator it(value_ptr,active,true,m_fill_value);
 			func(i,j,it);
 			return false;
 		});
@@ -1493,12 +1464,12 @@ public:
 	void interruptible_serial_op( std::function<bool(int i, int j, iterator& it)> func, bool type=ALL ) {
 		if( type == ACTIVES ) {
 			m_core->serial_actives([&](int i, int j, void *value_ptr, bool &active, const bool &filled ){
-				iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				return func(i,j,it);
 			});
 		} else {
 			m_core->serial_all([&](int i, int j, void *value_ptr, bool &active, const bool &filled ){
-				iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				return func(i,j,it);
 			});
 		}
@@ -1567,12 +1538,12 @@ public:
 		if( type == ACTIVES ) {
 			m_core->const_serial_actives([&](int i, int j, const void *value_ptr, const bool &filled ){
 				bool active(true);
-				const_iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				const_iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				return func(i,j,it);
 			});
 		} else {
 			m_core->const_serial_all([&](int i, int j, const void *value_ptr, const bool &active, const bool &filled ){
-				const_iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				const_iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				return func(i,j,it);
 			});
 		}
@@ -1585,7 +1556,7 @@ public:
 	 */
 	void interruptible_const_serial_inside( std::function<bool(int i, int j, iterator& it)> func ) const {
 		m_core->const_serial_inside([&](int i, int j, const void *value_ptr, const bool &active ){
-			iterator it(value_ptr,active,true,m_negative_background_value);
+			iterator it(value_ptr,active,true,m_fill_value);
 			return func(i,j,it);
 		});
 	}
@@ -1600,7 +1571,7 @@ public:
 	void dilate( std::function<void(int i, int j, iterator& it, int thread_index)> func, int count=1 ) {
 		for( int n=0; n<count; ++n ) {
 			m_core->dilate([&](int i, int j, void *value_ptr, bool &active, const bool &filled, int thread_index) {
-				iterator it(value_ptr,active,filled,filled ? m_negative_background_value : m_background_value);
+				iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				func(i,j,it,thread_index);
 			},m_parallel);
 		}
@@ -1639,11 +1610,11 @@ public:
 		m_core.swap(rhs.m_core);
 		std::swap(m_shape,rhs.m_shape);
 		std::swap(m_background_value,rhs.m_background_value);
-		std::swap(m_negative_background_value,rhs.m_negative_background_value);
-		std::swap(m_isovalue,rhs.m_isovalue);
 		std::swap(m_core_name,rhs.m_core_name);
 		std::swap(m_touch_only_actives,rhs.m_touch_only_actives);
-		std::swap(m_is_fillable,rhs.m_is_fillable);
+		std::swap(m_levelset,rhs.m_levelset);
+		std::swap(m_fillable,rhs.m_fillable);
+		std::swap(m_fill_value,rhs.m_fill_value);
 	}
 	/**
 	 \~english @brief Get the instance of `parallel_driver` of this grid.
@@ -1691,30 +1662,25 @@ public:
 		 */
 		T background_value;
 		/**
-		 \~english @brief Negative background value. Reserved for level set.
-		 \~japanese @brief 負のバックグランドの値。レベルセットのための値。
+		 \~english @brief Fill value.
+		 \~japanese @brief 塗りつぶしの値。
 		 */
-		T negative_background_value;
-		/**
-		 \~english @brief Isovalue. Reserved for level set.
-		 \~japanese @brief Isovalue の値。レベルセットのための値。
-		 */
-		T isovalue;
+		T fill_value;
 		/**
 		 \~english @brief Is grid fillable.
 		 \~japanese @brief 塗りつぶし可能なグリッドか。
 		 */
 		bool is_fillable;
 		/**
+		 \~english @brief Is grid level set.
+		 \~japanese @brief レベルセットグリッドか。
+		 */
+		bool is_levelset;
+		/**
 		 \~english @brief Are grid operations only allowed on active cells.
 		 \~japanese @brief 演算子によるグリッド操作がアクティブセルだけに影響を与えるべきか。
 		 */
 		bool touch_only_actives;
-		/**
-		 \~english @brief Integer half bandwidth of narrow band for level set.
-		 \~japanese @brief 整数値で与えられるレベルセットのナローバンドの半分の大きさ。
-		 */
-		char levelset_halfwidth;
 	};
 	/**
 	 \~english @brief Get the type of this grid.
@@ -1722,7 +1688,7 @@ public:
 	 \~japanese @brief このグリッドの type を取得する。
 	 @return このグリッドの type。
 	 */
-	type2 type() const { return { get_core_name(),shape(),m_background_value,m_negative_background_value,m_isovalue,m_is_fillable,m_touch_only_actives,m_levelset_halfwidth}; }
+	type2 type() const { return { get_core_name(),shape(),m_background_value,m_fill_value,m_fillable,m_levelset,m_touch_only_actives}; }
 	/**
 	 \~english @brief Set the type of this grid.
 	 @param[in] type An instance of type to set.
@@ -1733,20 +1699,18 @@ public:
 		m_core_name = type.core_name;
 		m_shape = type.shape;
 		m_background_value = type.background_value;
-		m_negative_background_value = type.negative_background_value;
-		m_isovalue = type.isovalue;
 		m_touch_only_actives = type.touch_only_actives;
-		m_is_fillable = type.is_fillable;
-		m_levelset_halfwidth = type.levelset_halfwidth;
+		m_fillable = type.is_fillable;
+		m_fill_value = type.fill_value;
+		m_levelset = type.is_levelset;
 	}
 	//
 private:
 	//
 	shape2 m_shape;
 	parallel_driver m_parallel{this};
-	T m_background_value {T()}, m_negative_background_value {T()}, m_isovalue{T()};
-	bool m_touch_only_actives {false}, m_is_fillable {false};
-	char m_levelset_halfwidth {0};
+	T m_background_value {T()}, m_fill_value {T()};
+	bool m_touch_only_actives {false}, m_fillable {false}, m_levelset {false};
 	array2_ptr m_core;
 	std::string m_core_name;
 };

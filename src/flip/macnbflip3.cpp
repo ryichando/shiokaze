@@ -74,6 +74,7 @@ void macnbflip3::configure( configuration &config ) {
 	config.set_default_unsigned("HighresRasterizer.NeighborLookUpCells",2);
 	//
 	config.get_bool("APIC",m_param.use_apic,"Whether to use APIC");
+	config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth,"Level set half bandwidth");
 	config.get_unsigned("Narrowband",m_param.narrowband,"Narrowband bandwidth");
 	config.get_unsigned("CorrectDepth",m_param.correct_depth,"Position correction depth");
 	config.get_double("FitParticleDist",m_param.fit_particle_dist,"FLIP particle fitting threshold");
@@ -874,13 +875,13 @@ void macnbflip3::additionally_apply_velocity_derivative( macarray3<double> &mome
 void macnbflip3::initialize_fluid() {
 	//
 	m_fluid.initialize(m_shape);
-	m_fluid.set_as_levelset(m_dx);
+	m_fluid.set_as_levelset(m_dx*(double)m_param.levelset_half_bandwidth);
 }
 //
 void macnbflip3::initialize_solid() {
 	//
 	m_solid.initialize(m_shape.nodal());
-	m_solid.set_as_levelset(m_dx);
+	m_solid.set_as_levelset(m_dx*(double)m_param.levelset_half_bandwidth);
 }
 //
 void macnbflip3::seed_set_fluid( const array3<double> &fluid ) {
@@ -921,7 +922,7 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 		scoped_timer timer(this);
 		timer.tick(); console::dump( ">>> Levelset advection\n");
 		//
-		unsigned dilate_width = 2+m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(velocity)*dt/m_dx);
+		unsigned dilate_width = m_param.levelset_half_bandwidth;
 		for( int n=0; n<m_particles.size(); ++n ) {
 			vec3i pi = m_shape.clamp(m_particles[n].p/m_dx);
 			if( ! m_fluid.active(pi)) m_fluid.set(pi,m_fluid(pi));
@@ -937,7 +938,6 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 			// Erosion
 			timer.tick(); console::dump( "Levelset erosion...");
 			shared_array3<double> save_fluid (m_fluid);
-			//
 			m_fluid.parallel_actives([&]( int i, int j, int k, auto &it ) {
 				if( solid_exist ) {
 					if( this->interpolate_solid(m_dx*vec3i(i,j,k).cell()) > 0.5*m_dx ) {
@@ -962,6 +962,9 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 			}
 			//
 			mask().dilate(2);
+			mask->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
+				if( m_fluid(i,j,k) < -m_dx ) it.set_off();
+			});
 			m_fluid.activate_as(mask());
 			//
 			shared_array3<double> particle_levelset(m_shape,0.125*m_dx);
@@ -990,6 +993,7 @@ void macnbflip3::advect_levelset( const macarray3<double> &velocity, double dt, 
 }
 //
 void macnbflip3::sizing_func( array3<double> &sizing_array, const bitarray3 &mask, const macarray3<double> &velocity, double dt ) {
+	//
 	sizing_array.clear(1.0);
 }
 //

@@ -66,6 +66,7 @@ macnbflip2::macnbflip2() {
 void macnbflip2::configure( configuration &config ) {
 	//
 	config.get_bool("APIC",m_param.use_apic,"Whether to use APIC");
+	config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth,"Level set half bandwidth");
 	config.get_unsigned("Narrowband",m_param.narrowband,"Narrowband bandwidth");
 	config.get_unsigned("CorrectDepth",m_param.correct_depth,"Position correction depth");
 	config.get_double("FitParticleDist",m_param.fit_particle_dist,"FLIP particle fitting threshold");
@@ -713,13 +714,13 @@ void macnbflip2::additionally_apply_velocity_derivative( macarray2<double> &mome
 void macnbflip2::initialize_fluid() {
 	//
 	m_fluid.initialize(m_shape);
-	m_fluid.set_as_levelset(m_dx);
+	m_fluid.set_as_levelset(m_dx*(double)m_param.levelset_half_bandwidth);
 }
 //
 void macnbflip2::initialize_solid() {
 	//
 	m_solid.initialize(m_shape.nodal());
-	m_solid.set_as_levelset(m_dx);
+	m_solid.set_as_levelset(m_dx*(double)m_param.levelset_half_bandwidth);
 }
 //
 void macnbflip2::seed_set_fluid( const array2<double> &fluid ) {
@@ -758,7 +759,7 @@ void macnbflip2::advect_levelset( const macarray2<double> &velocity, double dt, 
 	// Advect levelset
 	if( ! m_fluid_filled ) {
 		//
-		unsigned dilate_width = 2+m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(velocity)*dt/m_dx);
+		unsigned dilate_width = m_param.levelset_half_bandwidth;
 		m_fluid.dilate(dilate_width);
 		shared_array2<double> fluid_save(m_fluid);
 		m_macadvection->advect_scalar(m_fluid,velocity,fluid_save(),dt);
@@ -770,7 +771,6 @@ void macnbflip2::advect_levelset( const macarray2<double> &velocity, double dt, 
 			//
 			// Erosion
 			shared_array2<double> save_fluid (m_fluid);
-			//
 			m_fluid.parallel_actives([&]( int i, int j, auto &it ) {
 				if( solid_exist ) {
 					if( this->interpolate_solid(m_dx*vec2i(i,j).cell()) > 0.5*m_dx ) {
@@ -791,6 +791,9 @@ void macnbflip2::advect_levelset( const macarray2<double> &velocity, double dt, 
 			}
 			//
 			mask().dilate(2);
+			mask->parallel_actives([&](int i, int j, auto &it, int tn) {
+				if( m_fluid(i,j) < -m_dx ) it.set_off();
+			});
 			m_fluid.activate_as(mask());
 			//
 			shared_array2<double> particle_levelset(m_shape,0.125*m_dx);
@@ -825,7 +828,7 @@ void macnbflip2::collision_levelset( std::function<double(const vec2d& p)> level
 	});
 }
 //
-void macnbflip2::drawCircle ( graphics_engine &g, const vec2d &p, double r, bool bullet, double sizing_value ) const {
+void macnbflip2::draw_flip_circle ( graphics_engine &g, const vec2d &p, double r, bool bullet, double sizing_value ) const {
 	const unsigned num_v = 20;
 	double alpha = m_fluid_filled ? 0.25 : 0.75;
 	if( bullet ) {
@@ -860,7 +863,7 @@ void macnbflip2::draw( graphics_engine &g, double time ) const {
 	if( m_param.draw_particles ) {
 		for( const Particle &particle : m_particles ) {
 			const vec2d &p = particle.p;
-			drawCircle(g,p,particle.r,particle.bullet,
+			draw_flip_circle(g,p,particle.r,particle.bullet,
 				array_interpolator2::interpolate(m_sizing_array,p/m_dx-vec2d(0.5,0.5)));
 		}
 	}

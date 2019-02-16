@@ -93,7 +93,7 @@ private:
 			m_parallel.for_each( DIM2, [&]( size_t dim ) {
 				areas[dim].activate_as(solid);
 				areas[dim].activate_as(solid,-vec2i(dim!=0,dim!=1));
-				areas[dim].set_as_fillable(0.0,1.0);
+				areas[dim].set_as_fillable(1.0);
 			});
 			//
 			areas.parallel_actives([&](int dim, int i, int j, auto &it, int tn) {
@@ -130,7 +130,7 @@ private:
 			m_parallel.for_each( DIM2, [&]( size_t dim ) {
 				rhos[dim].activate_as(fluid);
 				rhos[dim].activate_as(fluid,vec2i(dim==0,dim==1));
-				rhos[dim].set_as_fillable(0.0,1.0);
+				rhos[dim].set_as_fillable(1.0);
 			});
 			//
 			rhos.parallel_actives([&](int dim, int i, int j, auto &it, int tn) {
@@ -216,7 +216,7 @@ private:
 		//
 		// Assign solid levelset
 		if( solid ) {
-			solid->set_as_levelset(m_dx);
+			solid->set_as_levelset(sqrt2*m_dx);
 			auto solid_func = reinterpret_cast<double(*)(const vec2d &)>(dylib.load_symbol("solid"));
 			if( solid_func ) {
 				solid->parallel_all([&](int i, int j, auto &it) {
@@ -229,7 +229,7 @@ private:
 		//
 		// Assign fluid levelset
 		if( fluid ) {
-			fluid->set_as_levelset(m_dx);
+			fluid->set_as_levelset(sqrt2*m_dx);
 			auto fluid_func = reinterpret_cast<double(*)(const vec2d &)>(dylib.load_symbol("fluid"));
 			auto solid_func = reinterpret_cast<double(*)(const vec2d &)>(dylib.load_symbol("solid"));
 			if( fluid_func ) {

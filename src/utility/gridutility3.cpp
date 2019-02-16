@@ -70,7 +70,6 @@ private:
 			} else {
 				convert_to_cell(solid,copy_solid());
 			}
-			copy_solid->set_as_levelset(m_dx);
 			copy_solid->flood_fill();
 			//
 			combined.activate_as(fluid);
@@ -78,7 +77,7 @@ private:
 			combined.parallel_actives([&](int i, int j, int k, auto& it, int tn) {
 				it.set(std::max(fluid(i,j,k),-solid_offset-copy_solid()(i,j,k)));
 			});
-			combined.set_as_levelset(m_dx);
+			combined.set_type(fluid.type());
 			combined.flood_fill();
 		} else {
 			combined.copy(fluid);
@@ -454,11 +453,11 @@ private:
 		solid.clear(1.0);
 		//
 		if( solid_visualize_func ) {
-			solid.set_as_levelset(dx);
 			solid.parallel_all([&](int i, int j, int k, auto &it) {
 				double value = (*solid_visualize_func)( is_nodal ? dx*vec3i(i,j,k).nodal() : dx*vec3i(i,j,k).cell());
 				if( std::abs(value) < 3.0*dx ) it.set(value);
 			});
+			solid.set_as_levelset(dx);
 			solid.flood_fill();
 			return true;
 		} else {

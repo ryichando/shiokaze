@@ -98,7 +98,6 @@ void macsmoke3::post_initialize () {
 	m_external_force.initialize(m_shape);
 	//
 	m_solid.initialize(m_shape.nodal());
-	m_solid.set_as_levelset(m_dx);
 	m_fluid.initialize(m_shape.cell(),-1.0);
 	m_density.initialize(m_shape.cell(),0.0);
 	//

@@ -80,6 +80,7 @@ private:
 			else it.set(value);
 		});
 		//
+		phi_array.set_as_levelset(m_dx*(double)width);
 		phi_array.flood_fill();
 	}
 	//

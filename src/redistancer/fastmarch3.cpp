@@ -79,10 +79,11 @@ private:
 		//
 		phi_array.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			double value = levelset[indices()(i,j,k)];
-			if( std::abs(value) > (double)width*m_dx ) it.set_off();
+			if( std::abs(value) > m_dx*(double)width ) it.set_off();
 			else it.set(value);
 		});
 		//
+		phi_array.set_as_levelset(m_dx*(double)width);
 		phi_array.flood_fill();
 	}
 	//

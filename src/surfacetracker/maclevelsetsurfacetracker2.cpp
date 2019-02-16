@@ -45,10 +45,9 @@ private:
 	}
 	virtual void advect( const macarray2<double> &u, double dt ) override {
 		//
-		unsigned width = m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(u)*dt/m_dx);
 		shared_array2<double> fluid_save(m_fluid);
 		m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt);
-		m_redistancer->redistance(m_fluid,width);
+		m_redistancer->redistance(m_fluid,m_param.levelset_half_bandwidth);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 	}
 	virtual void get( array2<double> &fluid ) override { fluid.copy(m_fluid); }
@@ -63,6 +62,7 @@ private:
 	}
 	virtual void configure( configuration &config ) override {
 		config.get_bool("DrawActives",m_param.draw_actives,"Whether to draw active narrow band");
+		config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth,"Level set half bandwidth");
 	}
 	//
 	virtual void initialize( const shape2 &shape, double dx ) override {
@@ -71,9 +71,7 @@ private:
 		m_dx = dx;
 		//
 		m_fluid.initialize(shape.cell());
-		m_fluid.set_as_levelset(m_dx);
 		m_solid.initialize(shape.nodal());
-		m_solid.set_as_levelset(m_dx);
 	}
 	//
 	array2<double> m_solid{this}, m_fluid{this};
@@ -86,6 +84,7 @@ private:
 	//
 	struct Parameters {
 		bool draw_actives {true};
+		unsigned levelset_half_bandwidth {2};
 	};
 	//
 	Parameters m_param;

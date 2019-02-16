@@ -88,6 +88,7 @@ protected:
 		bool use_apic {true};
 		double flip_convexhull_max_dist {3.0};
 		double fit_particle_dist {3};
+		unsigned levelset_half_bandwidth {2};
 		unsigned narrowband {3};
 		unsigned correct_depth {3};
 		int RK_order {2};
@@ -163,7 +164,7 @@ protected:
 	virtual double interpolate_solid( const vec2d &p ) const;
 	virtual vec2d interpolate_fluid_gradient( const vec2d &p ) const;
 	virtual vec2d interpolate_solid_gradient( const vec2d &p ) const;
-	virtual void drawCircle ( graphics_engine &g, const vec2d &p, double r, bool bullet, double sizing_value ) const;
+	virtual void draw_flip_circle ( graphics_engine &g, const vec2d &p, double r, bool bullet, double sizing_value ) const;
 	//
 	virtual void fit_particle( std::function<double(const vec2d &p)> fluid, Particle &particle, const vec2d &gradient ) const;
 	virtual void compute_narrowband();

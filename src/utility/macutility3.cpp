@@ -110,7 +110,7 @@ private:
 						areas[dim].activate_as(solid,vec3i(ii,jj,0));
 					}
 				}
-				areas[dim].set_as_fillable(0.0,1.0);
+				areas[dim].set_as_fillable(1.0);
 			});
 			//
 			areas.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn) {
@@ -170,7 +170,7 @@ private:
 			m_parallel.for_each( DIM3, [&]( size_t dim ) {
 				rhos[dim].activate_as(fluid);
 				rhos[dim].activate_as(fluid,vec3i(dim==0,dim==1,dim==2));
-				rhos[dim].set_as_fillable(0.0,1.0);
+				rhos[dim].set_as_fillable(1.0);
 			});
 			//
 			rhos.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn) {
@@ -261,7 +261,6 @@ private:
 		//
 		// Assign solid levelset
 		if( solid ) {
-			solid->set_as_levelset(m_dx);
 			auto solid_func = reinterpret_cast<double(*)(const vec3d &)>(dylib.load_symbol("solid"));
 			if( solid_func ) {
 				timer.tick(); console::dump( "Assigning solid levelset..." );
@@ -271,12 +270,12 @@ private:
 				});
 				console::dump( "Done. Took %s.\n", timer.stock("evaluate_solid").c_str());
 			}
+			solid->set_as_levelset(sqrt3*m_dx);
 			solid->flood_fill();
 		}
 		//
 		// Assign fluid levelsets
 		if( fluid ) {
-			fluid->set_as_levelset(m_dx);
 			auto fluid_func = reinterpret_cast<double(*)(const vec3d &)>(dylib.load_symbol("fluid"));
 			auto solid_func = reinterpret_cast<double(*)(const vec3d &)>(dylib.load_symbol("solid"));
 			if( fluid_func ) {
@@ -295,6 +294,7 @@ private:
 					});
 				}
 			}
+			fluid->set_as_levelset(sqrt3*m_dx);
 			fluid->flood_fill();
 		}
 		//

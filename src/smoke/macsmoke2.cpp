@@ -88,7 +88,6 @@ void macsmoke2::post_initialize () {
 	//
 	m_solid.initialize(m_shape.nodal());
 	m_fluid.initialize(m_shape.cell(),-1.0);
-	m_solid.set_as_levelset(m_dx);
 	m_density.initialize(m_shape.cell(),0.0);
 	//
 	if( m_param.use_dust ) {

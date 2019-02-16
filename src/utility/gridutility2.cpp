@@ -66,7 +66,6 @@ private:
 			} else {
 				convert_to_cell(solid,copy_solid());
 			}
-			copy_solid->set_as_levelset(m_dx);
 			copy_solid->flood_fill();
 			//
 			combined.activate_as(fluid);
@@ -74,7 +73,7 @@ private:
 			combined.parallel_actives([&](int i, int j, auto& it, int tn) {
 				it.set(std::max(fluid(i,j),-solid_offset-copy_solid()(i,j)));
 			});
-			combined.set_as_levelset(m_dx);
+			combined.set_type(fluid.type());
 			combined.flood_fill();
 			//
 		} else {

@@ -188,7 +188,7 @@ void macliquid3::extend_both() {
 	scoped_timer timer(this);
 	//
 	timer.tick(); console::dump( "Extending velocity field...");
-	unsigned width = m_fluid.get_levelset_halfwidth()+m_timestepper->get_current_CFL();
+	unsigned width = 2+m_timestepper->get_current_CFL();
 	macarray_extrapolator3::extrapolate<double>(m_velocity,width);
 	m_macutility->constrain_velocity(m_solid,m_velocity);
 	m_fluid.dilate(width);

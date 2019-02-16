@@ -149,7 +149,7 @@ void macliquid2::set_volume_correction( macproject2_interface *macproject ) {
 //
 void macliquid2::extend_both() {
 	//
-	unsigned width = m_fluid.get_levelset_halfwidth()+m_timestepper->get_current_CFL();
+	unsigned width = 2+m_timestepper->get_current_CFL();
 	macarray_extrapolator2::extrapolate<double>(m_velocity,width);
 	m_macutility->constrain_velocity(m_solid,m_velocity);
 	m_fluid.dilate(width);

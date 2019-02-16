@@ -55,13 +55,9 @@ private:
 		shared_array3<double> fluid_save(m_fluid);
 		m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt,"levelset");
 		//
-		timer.tick(); console::dump( "Computing redistancing width..." );
-		unsigned width = m_fluid.get_levelset_halfwidth()+std::ceil(m_macutility->compute_max_u(u)*dt/m_dx);
-		console::dump( "Done. Count=%d. Took %s\n", width, timer.stock("compute_redist_width").c_str());
-		//
 		// Re-initialize
 		timer.tick(); console::dump( "Re-distancing fluid levelsets..." );
-		m_redistancer->redistance(m_fluid,width);
+		m_redistancer->redistance(m_fluid,m_param.levelset_half_bandwidth);
 		console::dump( "Done. Took %s\n", timer.stock("redistance_levelset").c_str());
 		//
 		// Extrapolation towards solid
@@ -172,19 +168,16 @@ private:
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_bool("EncloseSolid",m_param.enclose_solid,"Should remove faces in solid on mesh export");
+		config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth,"Level set half bandwidth");
 	}
 	//
 	virtual void initialize( const shape3 &shape, double dx ) override {
 		//
 		m_shape = shape;
 		m_dx = dx;
-	}
-	virtual void post_initialize() override {
 		//
-		m_fluid.initialize(m_shape.cell());
-		m_fluid.set_as_levelset(m_dx);
-		m_solid.initialize(m_shape.nodal());
-		m_solid.set_as_levelset(m_dx);
+		m_fluid.initialize(shape.cell());
+		m_solid.initialize(shape.nodal());
 	}
 	//
 	array3<double> m_solid{this}, m_fluid{this};
@@ -202,6 +195,7 @@ private:
 	//
 	struct Parameters {
 		bool enclose_solid {false};
+		unsigned levelset_half_bandwidth {2};
 	};
 	Parameters m_param;
 };

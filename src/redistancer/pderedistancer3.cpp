@@ -155,8 +155,9 @@ public:
 		}
 		//
 		phi_array.parallel_actives([&](auto &it) {
-			if( std::abs(it()) > width*m_dx ) it.set_off();
+			if( std::abs(it()) > m_dx*(double)width ) it.set_off();
 		});
+		phi_array.set_as_levelset(m_dx*(double)width);
 		phi_array.flood_fill();
 	}
 	//

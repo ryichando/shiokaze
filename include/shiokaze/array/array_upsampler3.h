@@ -59,8 +59,8 @@ namespace array_upsampler3 {
 			it.set(array_interpolator3::interpolate<double>(array,p));
 		});
 		//
-		if( array.get_levelset_halfwidth()) {
-			doubled_array.set_as_levelset(0.5*dx);
+		if( array.is_levelset()) {
+			doubled_array.set_as_levelset(0.5*array.get_background_value());
 			doubled_array.flood_fill();
 		}
 	}
@@ -91,8 +91,8 @@ namespace array_upsampler3 {
 			it.set(array_interpolator3::interpolate<double>(array,p));
 		});
 		//
-		if( array.get_levelset_halfwidth()) {
-			doubled_array.set_as_levelset(0.5*dx);
+		if( array.is_levelset()) {
+			doubled_array.set_as_levelset(0.5*array.get_background_value());
 			doubled_array.flood_fill();
 		}
 	}

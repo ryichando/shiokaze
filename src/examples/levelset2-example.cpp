@@ -70,7 +70,7 @@ private:
 	virtual void post_initialize() override {
 		//
 		array.initialize(shape);
-		array.set_as_levelset(dx);
+		array.set_as_levelset(2.0*dx);
 		time = 0.0;
 		fill(time);
 	}
