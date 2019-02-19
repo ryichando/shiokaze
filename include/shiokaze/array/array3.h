@@ -469,7 +469,7 @@ public:
 	 *
 	 レベルセットや塗る潰しに関する情報として使われるバックグランド値は破棄される。ただし、グリッドの大きさやメモリ確保は変更されない。
 	 */
-	void clear(T v) {
+	void clear(const T &v) {
 		m_background_value = v;
 		clear();
 	}
@@ -798,7 +798,7 @@ public:
 	 \~japanese @brief グリッドの全てのセルの値を入力値に設定する。
 	 @param[in] v 設定する値。
 	 */
-	void operator=(T v) {
+	void operator=(const T &v) {
 		parallel_op([&](iterator& it) {
 			it.set(v);
 		},m_touch_only_actives);
@@ -837,7 +837,7 @@ public:
 	 \~japanese @brief グリッドの全てのセルの値を入力値だけ加算する。
 	 @param[in] v 加算する値。
 	 */
-	void operator+=(T v) {
+	void operator+=(const T &v) {
 		parallel_op([&](iterator& it) {
 			it.increment(v);
 		},m_touch_only_actives);
@@ -848,7 +848,7 @@ public:
 	 \~japanese @brief グリッドの全てのセルの値を入力値だけ減算する。
 	 @param[in] v 減算する値。
 	 */
-	void operator-=(T v) {
+	void operator-=(const T &v) {
 		parallel_op([&](iterator& it) {
 			it.subtract(v);
 		},m_touch_only_actives);
@@ -859,7 +859,7 @@ public:
 	 \~japanese @brief グリッドの全てのセルの値を入力値で乗算する。
 	 @param[in] v 乗算する値。
 	 */
-	void operator*=(T v) {
+	void operator*=(const T &v) {
 		parallel_op([&](iterator& it) {
 			it.multiply(v);
 		},m_touch_only_actives);
