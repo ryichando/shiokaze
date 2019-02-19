@@ -710,7 +710,7 @@ public:
 	 \~japanese @brief グリッドの指定した位置での値へのポインターを得る。
 	 @param[in] pi グリッドの位置。
 	 */
-	T* ptr( const vec3i pi ) {
+	T* ptr( const vec3i &pi ) {
 		return ptr(pi[0],pi[1],pi[2]);
 	}
 	/**
@@ -719,7 +719,7 @@ public:
 	 \~japanese @brief グリッドの指定した位置での値への const なポインターを得る。
 	 @param[in] pi グリッドの位置。
 	 */
-	const T* ptr( const vec3i pi ) const {
+	const T* ptr( const vec3i &pi ) const {
 		return const_cast<array3<T> *>(this)->ptr(pi);
 	}
 	/**
@@ -871,7 +871,7 @@ public:
 	 @param[in] number スレッドの数。
 	 */
 	void set_thread_num( int number ) {
-		m_parallel.set_maximal_threads(number);
+		m_parallel.set_thread_num(number);
 	}
 	/**
 	 \~english @brief Get the current number of threads for parallel processing on this grid.
@@ -880,7 +880,7 @@ public:
 	 @return number スレッドの数。
 	 */
 	int get_thread_num() const {
-		return m_parallel.get_maximal_threads();
+		return m_parallel.get_thread_num();
 	}
 	/// \~english @brief Writable iterator.
 	/// \~japanese @brief 書き込み可能なイテレーター。

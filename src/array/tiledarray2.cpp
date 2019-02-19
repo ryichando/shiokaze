@@ -72,7 +72,7 @@ public:
 	}
 	//
 	virtual size_t count( const parallel_driver &parallel ) const override {
-		std::vector<size_t> total_slots(parallel.get_maximal_threads());
+		std::vector<size_t> total_slots(parallel.get_thread_num());
 		parallel.for_each(m_bx*m_by,[&]( size_t n, int thread_index ) {
 			if( m_tiles[n] ) {
 				total_slots[thread_index] += m_tiles[n]->count();
@@ -211,7 +211,7 @@ public:
 			j = n / m_nx;
 		};
 		//
-		std::vector<std::vector<size_t> > dilate_coords(parallel.get_maximal_threads());
+		std::vector<std::vector<size_t> > dilate_coords(parallel.get_thread_num());
 		parallel.for_each(m_bx*m_by,[&]( size_t n, int thread_index ) {
 			if( m_tiles[n] ) {
 				unsigned Zx = m_tiles[n]->m_Zx;
@@ -295,7 +295,7 @@ public:
 		std::vector<size_t> result;
 		result.assign(assembled.begin(),assembled.end());
 		//
-		std::vector<active_state2> active_states[parallel.get_maximal_threads()];
+		std::vector<active_state2> active_states[parallel.get_thread_num()];
 		parallel.for_each(result.size(),[&]( size_t q, int thread_index ) {
 			size_t n = result[q];
 			int i, j;

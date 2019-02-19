@@ -76,7 +76,7 @@ size_t bitcount::count( unsigned char *bit_mask, size_t bit_mask_size, const par
 	//
 	if( parallel ) {
 		using T = uint64_t;
-		size_t num_threads = parallel->get_maximal_threads();
+		size_t num_threads = parallel->get_thread_num();
 		std::vector<size_t> total_slots(num_threads);
 		size_t chunk_size = bit_mask_size / num_threads;
 		size_t end_n (0);

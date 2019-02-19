@@ -34,7 +34,7 @@ std::vector<size_t> dilate3::dilate( const shape3 &shape, unsigned char *bit_mas
 	//
 	const size_t nx(shape.w), ny(shape.h), nz(shape.d);
 	const size_t size = nx*ny*nz;
-	const size_t thread_size = parallel ? parallel->get_maximal_threads() : 1;
+	const size_t thread_size = parallel ? parallel->get_thread_num() : 1;
 	const size_t plane_size = nx*ny;
 	std::vector<std::vector<size_t> > dilate_coords(thread_size);
 	//
@@ -183,7 +183,7 @@ std::vector<size_t> dilate3::dilate( const shape3 &shape, const ordering_core *o
 	//
 	const size_t nx(shape.w), ny(shape.h), nz(shape.d);
 	const size_t size = nx*ny*nz;
-	const size_t thread_size = parallel ? parallel->get_maximal_threads() : 1;
+	const size_t thread_size = parallel ? parallel->get_thread_num() : 1;
 	//
 	auto encoder = ordering->get_encoder_func3(context);
 	auto decoders = ordering->get_decoder_func3(context);

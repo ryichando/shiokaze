@@ -75,7 +75,7 @@ public:
 	 \~japanese @brief 最大のスレッドの数を得る。
 	 @return スレッドの数を得る。
 	 */
-	int get_maximal_threads() const {
+	int get_thread_num() const {
 		return m_maximal_threads;
 	}
 	/**
@@ -84,7 +84,7 @@ public:
 	 \~japanese @brief 最大のスレッドの数をセットする。
 	 @param maximal_threads セットするスレッドの数。
 	 */
-	void set_maximal_threads( int maximal_threads ) {
+	void set_thread_num( int maximal_threads ) {
 		m_maximal_threads = maximal_threads;
 	}
 	/**

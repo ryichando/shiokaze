@@ -204,7 +204,7 @@ private:
 		std::vector<size_t> dilate_coords;
 		dilate_coords = dilate2::dilate(shape2(m_nx,m_ny),m_bit_mask,m_bit_mask_size,&parallel);
 		//
-		std::vector<size_t> active_states[parallel.get_maximal_threads()];
+		std::vector<size_t> active_states[parallel.get_thread_num()];
 		parallel.for_each(dilate_coords.size(),[&]( size_t q, int thread_index ) {
 			size_t n = dilate_coords[q];
 			int i, j;

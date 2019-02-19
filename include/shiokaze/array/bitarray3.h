@@ -375,7 +375,7 @@ public:
 	 @param[in] number スレッドの数。
 	 */
 	void set_thread_num( int number ) {
-		m_parallel.set_maximal_threads(number);
+		m_parallel.set_thread_num(number);
 	}
 	/**
 	 \~english @brief Get the current number of threads for parallel processing on this grid.
@@ -384,7 +384,7 @@ public:
 	 @return number スレッドの数。
 	 */
 	int get_thread_num() const {
-		return m_parallel.get_maximal_threads();
+		return m_parallel.get_thread_num();
 	}
 	/// \~english @brief Writable iterator.
 	/// \~japanese @brief 書き込み可能なイテレーター。

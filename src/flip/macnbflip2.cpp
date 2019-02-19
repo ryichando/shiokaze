@@ -471,7 +471,7 @@ void macnbflip2::fit_particle( std::function<double(const vec2d &p)> fluid_func,
 //
 size_t macnbflip2::reseed( const macarray2<double> &velocity, bool loose_interior ) {
 	//
-	std::vector<std::vector<Particle> > new_particles_t(m_parallel.get_maximal_threads());
+	std::vector<std::vector<Particle> > new_particles_t(m_parallel.get_thread_num());
 	std::vector<char> remove_particles(m_particles.size(),0);
 	//
 	// Bucket cell method to remove too dense particles

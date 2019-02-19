@@ -34,7 +34,7 @@ std::vector<size_t> dilate2::dilate( const shape2 &shape, unsigned char *bit_mas
 	//
 	const size_t nx(shape.w), ny(shape.h);
 	const size_t size = nx*ny;
-	const size_t thread_size = parallel ? parallel->get_maximal_threads() : 1;
+	const size_t thread_size = parallel ? parallel->get_thread_num() : 1;
 	std::vector<std::vector<size_t> > dilate_coords(thread_size);
 	//
 	// Do upward
@@ -153,7 +153,7 @@ std::vector<size_t> dilate2::dilate( const shape2 &shape, unsigned char *bit_mas
 std::vector<size_t> dilate2::dilate( const shape2 &shape, const ordering_core *ordering, const void *context, unsigned char *bit_mask, size_t bit_mask_size, const parallel_driver *parallel ) {
 	//
 	const size_t nx(shape.w), ny(shape.h);
-	const size_t thread_size = parallel ? parallel->get_maximal_threads() : 1;
+	const size_t thread_size = parallel ? parallel->get_thread_num() : 1;
 	//
 	auto encoder = ordering->get_encoder_func2(context);
 	auto decoders = ordering->get_decoder_func2(context);
