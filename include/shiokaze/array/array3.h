@@ -151,7 +151,7 @@ public:
 			assert(m_core);
 			if( array.m_core ) {
 				m_core->copy(*array.m_core.get(),[&](void *target, const void *src) {
-					new (target) T(*(T *)src);
+					new (target) T(*static_cast<const T *>(src));
 				},&m_parallel);
 			}
 		}
@@ -265,11 +265,11 @@ public:
 	void flood_fill() {
 		if( m_fillable ) {
 			m_core->flood_fill([&](const void *value_ptr) {
-				return *(T *)value_ptr == m_fill_value;
+				return *static_cast<const T *>(value_ptr) == m_fill_value;
 			},m_parallel);
 		} else if( m_levelset ) {
 			m_core->flood_fill([&](const void *value_ptr) {
-				return *(T *)value_ptr < 0.0;
+				return *static_cast<const T *>(value_ptr) < 0.0;
 			},m_parallel);
 		} else {
 			printf( "Flood fill attempted without being set either levelset or fillable.\n");
@@ -488,7 +488,7 @@ public:
 	void set( int i, int j, int k, const T& value) {
 		m_core->set(i,j,k,[&](void *value_ptr, bool &active){
 			if( ! active ) new (value_ptr) T(value);
-			else *(T *)value_ptr = value;
+			else *static_cast<T *>(value_ptr) = value;
 			active = true;
 		});
 	}
@@ -542,7 +542,7 @@ public:
 	 */
 	void set_off( int i, int j, int k ) {
 		m_core->set(i,j,k,[&](void *value_ptr, bool &active){
-			if( active ) ((T *)value_ptr)->~T();
+			if( active ) (static_cast<T *>(value_ptr))->~T();
 			active = false;
 		});
 	}
@@ -569,9 +569,9 @@ public:
 	 */
 	void increment( int i, int j, int k, const T& value) {
 		m_core->set(i,j,k,[&](void *value_ptr, bool &active){
-			if( active ) *(T *)value_ptr += value;
+			if( active ) *static_cast<T *>(value_ptr) += value;
 			else {
-				*(T *)value_ptr = m_background_value + value;
+				*static_cast<T *>(value_ptr) = m_background_value + value;
 				active = true;
 			}
 		});
@@ -601,9 +601,9 @@ public:
 	 */
 	void subtract( int i, int j, int k, const T& value) {
 		m_core->set(i,j,k,[&](void *value_ptr, bool &active){
-			if( active ) *(T *)value_ptr -= value;
+			if( active ) *static_cast<T *>(value_ptr) -= value;
 			else {
-				*(T *)value_ptr = m_background_value - value;
+				*static_cast<T *>(value_ptr) = m_background_value - value;
 				active = true;
 			}
 		});
@@ -633,9 +633,9 @@ public:
 	 */
 	void multiply( int i, int j, int k, const T& value ) {
 		m_core->set(i,j,k,[&](void *value_ptr, bool &active){
-			if( active ) *(T *)value_ptr *= value;
+			if( active ) *static_cast<T *>(value_ptr) *= value;
 			else {
-				*(T *)value_ptr = m_background_value * value;
+				*static_cast<T *>(value_ptr) = m_background_value * value;
 				active = true;
 			}
 		});
@@ -689,7 +689,7 @@ public:
 	 */
 	T* ptr(unsigned i, unsigned j, unsigned k ) {
 		bool filled (false);
-		return (T *)(*m_core)(i,j,k,filled);
+		return const_cast<T *>(static_cast<const T *>((*m_core)(i,j,k,filled)));
 	}
 	/**
 	 \~english @brief Get the const pointer to the value at a position on grid
@@ -734,7 +734,7 @@ public:
 	 */
 	const T& operator()(int i, int j, int k ) const {
 		bool filled (false);
-		const T* ptr = (T *)(*m_core)(i,j,k,filled);
+		const T* ptr = static_cast<const T *>((*m_core)(i,j,k,filled));
 		if( ptr ) return *ptr;
 		else return filled ? m_fill_value : m_background_value;
 	}
@@ -895,7 +895,7 @@ public:
 		 */
 		void set( const T &value ) {
 			if( ! m_active ) allocate(value);
-			else *(T *)m_value_ptr = value;
+			else *static_cast<T *>(m_value_ptr) = value;
 			m_active = true;
 		}
 		/**
@@ -914,7 +914,7 @@ public:
 		 */
 		void increment( const T& value ) {
 			if( m_active ) {
-				*(T *)m_value_ptr += value;
+				*static_cast<T *>(m_value_ptr) += value;
 			} else {
 				allocate(m_background_value + value);
 				m_active = true;
@@ -928,7 +928,7 @@ public:
 		 */
 		void subtract( const T& value ) {
 			if( m_active ) {
-				*(T *)m_value_ptr -= value;
+				*static_cast<T *>(m_value_ptr) -= value;
 			} else {
 				allocate(m_background_value - value);
 				m_active = true;
@@ -942,7 +942,7 @@ public:
 		 */
 		void multiply( const T& value ) {
 			if( m_active ) {
-				*(T *)m_value_ptr *= value;
+				*static_cast<T *>(m_value_ptr) *= value;
 			} else {
 				allocate(m_background_value * value);
 				m_active = true;
@@ -979,7 +979,7 @@ public:
 		 */
 		const T& operator()() const {
 			if( m_active ) {
-				return *(T *)m_value_ptr;
+				return *static_cast<const T *>(m_value_ptr);
 			} else {
 				return m_background_value;
 			}
@@ -990,14 +990,14 @@ public:
 		 \~japanese @brief 値へのポインターを得る。
 		 @return セルでの値へのポインター。
 		 */
-		T* ptr() { return m_active ? (T *)m_value_ptr : nullptr; }
+		T* ptr() { return m_active ? static_cast<T *>(m_value_ptr) : nullptr; }
 		/**
 		 \~english @brief Get const pointer to the value.
 		 @return Const pointer to the value on the cell.
 		 \~japanese @brief 値への const なポインターを得る。
 		 @return セルでの値への const なポインター。
 		 */
-		const T* ptr() const { return m_active ? (const T *)m_value_ptr : nullptr; }
+		const T* ptr() const { return m_active ? static_cast<const T *>(m_value_ptr) : nullptr; }
 	private:
 		iterator( void *value_ptr, bool &_active, bool _filled, const T& m_background_value ) 
 			: m_value_ptr(value_ptr), m_active(_active), m_filled(_filled), m_background_value(m_background_value) {}
@@ -1006,7 +1006,7 @@ public:
 			new (m_value_ptr) T(value);
 		}
 		void deallocate() {
-			((T *)m_value_ptr)->~T();
+			(static_cast<T *>(m_value_ptr))->~T();
 		}
 		bool &m_active;
 		bool m_filled;
@@ -1040,7 +1040,7 @@ public:
 		 */
 		const T& operator()() const {
 			if( m_active ) {
-				return *(T *)m_value_ptr;
+				return *static_cast<const T *>(m_value_ptr);
 			} else {
 				return m_background_value;
 			}
@@ -1051,7 +1051,7 @@ public:
 		 \~japanese @brief 値への const なポインターを得る。
 		 @return セルでの値への const なポインター。
 		 */
-		const T* ptr() const { return m_active ? (const T *)m_value_ptr : nullptr; }
+		const T* ptr() const { return m_active ? static_cast<const T *>(m_value_ptr) : nullptr; }
 	private:
 		const_iterator( const void *value_ptr, const bool &_active, bool _filled, const T& m_background_value ) 
 			: m_value_ptr(value_ptr), m_active(_active), m_filled(_filled), m_background_value(m_background_value) {}
