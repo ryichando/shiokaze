@@ -114,7 +114,7 @@ private:
 						max_value = std::max(max_value,value);
 					}
 					double2 d2;
-					bool within_narrowband = array_interpolator3::interpolate(fluid,face_p-vec3d(0.5,0.5,0.5)) > -(double)m_param.trim_narrowband * m_dx;
+					bool within_narrowband = array_interpolator3::interpolate(fluid,face_p-vec3d(0.5,0.5,0.5)) > -m_dx * (double)m_param.trim_narrowband;
 					d2.v[0] = min_value;
 					d2.v[1] = max_value;
 					d2.within_narrowband = within_narrowband;
@@ -123,7 +123,7 @@ private:
 					if( minMax ) {
 						vec3d face_p = vec3i(i,j,k).face(dim);
 						double2 d2;
-						bool within_narrowband = array_interpolator3::interpolate(fluid,face_p-vec3d(0.5,0.5,0.5)) > -(double)m_param.trim_narrowband * m_dx;
+						bool within_narrowband = array_interpolator3::interpolate(fluid,face_p-vec3d(0.5,0.5,0.5)) > -m_dx * (double)m_param.trim_narrowband;
 						d2.v[0] = d2.v[1] = v_in[dim](i,j,k);
 						d2.within_narrowband = within_narrowband;
 						it.set(d2);
@@ -222,14 +222,14 @@ private:
 						max_value = std::max(max_value,value);
 					}
 					double2 d2;
-					bool within_narrowband = array_interpolator3::interpolate(fluid,p) > -(double)m_param.trim_narrowband * m_dx;
+					bool within_narrowband = array_interpolator3::interpolate(fluid,p) > -m_dx * (double)m_param.trim_narrowband;
 					d2.v[0] = min_value;
 					d2.v[1] = max_value;
 					d2.within_narrowband = within_narrowband;
 					it.set(d2);
 				} else {
 					double2 d2;
-					bool within_narrowband = fluid(i,j,k) > -(double)m_param.trim_narrowband * m_dx;
+					bool within_narrowband = fluid(i,j,k) > -m_dx * (double)m_param.trim_narrowband;
 					d2.v[0] = d2.v[1] = q_in(i,j,k);
 					d2.within_narrowband = within_narrowband;
 					it.set(d2);
