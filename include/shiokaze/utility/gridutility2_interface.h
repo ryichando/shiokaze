@@ -89,9 +89,9 @@ public:
 	 */
 	virtual unsigned mark_topology( const array2<char> &flag, array2<unsigned> &topology_array ) const = 0;
 	/**
-	 \~english @brief Trim narrow band of a level set within a specified band width.
+	 \~english @brief Trim narrow band of a level set within one cell away from the interface.
 	 @param[in] levelset Fluid level set.
-	 \~japanese @brief レベルセットを指定されたナローバンド幅にトリミングする。
+	 \~japanese @brief レベルセットを境界から1セルだけ離れたセルにトリミングする。
 	 @param[in] levelset 流体のレベルセット。
 	 */
 	virtual void trim_narrowband( array2<double> &levelset ) const = 0;
