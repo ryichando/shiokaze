@@ -89,23 +89,12 @@ public:
 	 */
 	virtual unsigned mark_topology( const array2<char> &flag, array2<unsigned> &topology_array ) const = 0;
 	/**
-	 \~english @brief Mark narrow band of a level set. Narrow band cells are marked with signed numbers how far from the interface.
-	 @param[in] levelset Fluid level set.
-	 @param[in] half_cells Half bandwidth of cells.
-	 \~japanese @brief レベルセットのナローバンドをマーキングする。ナローバンドのセルは境界からの何個遠いかの符号付き番号が記録される。
-	 @param[in] levelset 流体のレベルセット。
-	 @param[in] half_cells セルのバンド幅の半分。
-	 */
-	virtual void mark_narrowband( array2<double> &levelset, unsigned half_cells ) const = 0;
-	/**
 	 \~english @brief Trim narrow band of a level set within a specified band width.
 	 @param[in] levelset Fluid level set.
-	 @param[in] half_cells Half bandwidth of cells.
 	 \~japanese @brief レベルセットを指定されたナローバンド幅にトリミングする。
 	 @param[in] levelset 流体のレベルセット。
-	 @param[in] half_cells セルのバンド幅の半分。
 	 */
-	virtual void trim_narrowband( array2<double> &levelset, unsigned half_cells ) const = 0;
+	virtual void trim_narrowband( array2<double> &levelset ) const = 0;
 	/**
 	 \~english @brief Get the area of fluid level set.
 	 @param[in] solid Solid level set.

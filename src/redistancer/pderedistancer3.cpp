@@ -43,7 +43,10 @@ public:
 			return value / sqrt(value*value+m_dx*m_dx);
 		};
 		//
-		m_gridutility->trim_narrowband(phi_array,width);
+		m_gridutility->trim_narrowband(phi_array);
+		phi_array.flood_fill();
+		phi_array.dilate(width);
+		//
 		shared_array3<double> phi_array0 (phi_array);
 		//
 		shared_array3<double> smoothed_sgns (phi_array.type());

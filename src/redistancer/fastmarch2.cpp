@@ -44,7 +44,66 @@ private:
 		std::vector<std::vector<size_t> > connections;
 		std::vector<double> levelset;
 		//
-		m_gridutility->trim_narrowband(phi_array,width);
+		// Generate contours
+		shared_array2<std::vector<vec2d> > contours(phi_array.shape()-shape2(1,1));
+		contours->activate_as(phi_array);
+		contours->parallel_actives([&](int i, int j, auto &it, int tn) {
+			vec2d lines[8];	double v[2][2]; int pnum; vec2d vertices[2][2];
+			bool skip (false);
+			for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
+				if( skip ) break;
+				if( phi_array.active(i+ni,j+nj)) {
+					v[ni][nj] = phi_array(i+ni,j+nj);
+					vertices[ni][nj] = m_dx*vec2d(i+ni,j+nj);
+				} else {
+					skip = true;
+					break;
+				}
+			}
+			if( ! skip ) {
+				m_meshutility->march_points(v,vertices,lines,pnum,false);
+				if( pnum ) {
+					for( unsigned n=0; n<pnum; ++n ) {
+						auto ptr = it.ptr();
+						if( ptr ) ptr->push_back(lines[n]);
+						else it.set({lines[n]});
+					}
+				}
+			}
+		});
+		//
+		// Compute the closest distance
+		shared_array2<double> fixed_dists(phi_array.shape());
+		fixed_dists->activate_as(phi_array);
+		fixed_dists->parallel_actives([&](int i, int j, auto &it, int tn) {
+			//
+			double min_d = 1.0;
+			vec2d origin = m_dx*vec2d(i,j);
+			double sgn = (phi_array(i,j)>0.0 ? 1.0 : -1.0);
+			//
+			int w (1);
+			for( int ni=i-w; ni<=i+w-1; ++ni ) for( int nj=j-w; nj<=j+w-1; ++nj ) {
+				if( ! contours->shape().out_of_bounds(ni,nj)) {
+					if( contours->active(ni,nj) ) {
+						const std::vector<vec2d> &lines = contours()(ni,nj);
+						for( int m=0; m<lines.size(); m+=2 ) {
+							vec2d out = origin;
+							m_meshutility->distance(lines[m],lines[m+1],out);
+							double d = (out-origin).len();
+							if( d < min_d ) {
+								min_d = d;
+							}
+						}
+					}
+				}
+			}
+			if( min_d < 1.0 ) it.set(sgn * min_d);
+			else it.set_off();
+		});
+		//
+		m_gridutility->trim_narrowband(phi_array);
+		phi_array.flood_fill();
+		phi_array.dilate(width);
 		//
 		size_t maximal_index (0);
 		shared_array2<size_t> indices(phi_array.shape());
@@ -55,6 +114,7 @@ private:
 		positions.resize(maximal_index);
 		connections.resize(maximal_index);
 		levelset.resize(maximal_index);
+		std::vector<char> fixed(maximal_index);
 		//
 		phi_array.const_parallel_actives([&](int i, int j, const auto &it, int tn) {
 			//
@@ -66,13 +126,14 @@ private:
 					connections[index].push_back(indices()(q));
 				}
 				//
-				levelset[index] = it();
+				levelset[index] = fixed_dists->active(i,j) ? fixed_dists()(i,j) : it();
 				positions[index] = m_dx * vec2i(i,j).cell();
+				fixed[index] = fixed_dists->active(i,j);
 			}
 		});
 		//
 		// Perform fast march
-		unstructured_fastmarch2::fastmarch(positions,connections,levelset,1.0,m_parallel,m_meshutility.get());
+		unstructured_fastmarch2::fastmarch(positions,connections,levelset,fixed,1.0,m_parallel,m_meshutility.get());
 		//
 		phi_array.parallel_actives([&](int i, int j, auto &it, int tn) {
 			double value = levelset[indices()(i,j)];

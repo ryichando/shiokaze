@@ -39,6 +39,7 @@ public:
 					const std::vector<vec2d> &positions,
 					const std::vector<std::vector<size_t> > &_connections,
 					std::vector<double> &levelset,
+					std::vector<char> &fixed,
 					double distance,
 					const parallel_driver &parallel,
 					const meshutility2_interface *meshutility ) {
@@ -47,36 +48,38 @@ public:
 		std::vector<std::vector<size_t> > connections = _connections;
 		//
 		// Find intersections
-		std::vector<char> fixed(positions.size());
+		fixed.resize(positions.size());
 		parallel.for_each(fixed.size(),[&]( size_t n ) {
 			//
-			double levelset0 = levelset[n];
-			std::vector<vec2d> intersections;
-			for( unsigned k=0; k<connections[n].size(); ++k ) {
-				size_t m = connections[n][k];
-				double levelset1 = levelset[m];
-				if( levelset0 * levelset1 < 0.0 ) {
-					double a = levelset0/(levelset0-levelset1);
-					intersections.push_back((1.0-a)*positions[n]+a*positions[m]);
-				}
-			}
-			if( intersections.size() ) {
-				std::vector<double> length;
-				if( intersections.size() > 1 ) {
-					for( unsigned k=0; k<intersections.size(); ++k ) {
-						length.push_back((positions[n]-intersections[k]).norm2());
+			if( ! fixed[n] ) {
+				double levelset0 = levelset[n];
+				std::vector<vec2d> intersections;
+				for( unsigned k=0; k<connections[n].size(); ++k ) {
+					size_t m = connections[n][k];
+					double levelset1 = levelset[m];
+					if( levelset0 * levelset1 < 0.0 ) {
+						double a = levelset0/(levelset0-levelset1);
+						intersections.push_back((1.0-a)*positions[n]+a*positions[m]);
 					}
-					std::vector<size_t> order_map(intersections.size());
-					std::iota(order_map.begin(), order_map.end(), 0);
-					std::sort(order_map.begin(), order_map.end(), [&](size_t a, size_t b){ return length[a] < length[b]; });
-					//
-					vec2d p = positions[n];
-					meshutility->distance(intersections[order_map[0]],intersections[order_map[1]],p);
-					levelset[n] = std::copysign((positions[n]-p).len(),levelset[n]);
-				} else {
-					levelset[n] = std::copysign((positions[n]-intersections[0]).len(),levelset[n]);
 				}
-				fixed[n] = true;
+				if( intersections.size() ) {
+					std::vector<double> length;
+					if( intersections.size() > 1 ) {
+						for( unsigned k=0; k<intersections.size(); ++k ) {
+							length.push_back((positions[n]-intersections[k]).norm2());
+						}
+						std::vector<size_t> order_map(intersections.size());
+						std::iota(order_map.begin(), order_map.end(), 0);
+						std::sort(order_map.begin(), order_map.end(), [&](size_t a, size_t b){ return length[a] < length[b]; });
+						//
+						vec2d p = positions[n];
+						meshutility->distance(intersections[order_map[0]],intersections[order_map[1]],p);
+						levelset[n] = std::copysign((positions[n]-p).len(),levelset[n]);
+					} else {
+						levelset[n] = std::copysign((positions[n]-intersections[0]).len(),levelset[n]);
+					}
+					fixed[n] = true;
+				}
 			}
 		});
 		//

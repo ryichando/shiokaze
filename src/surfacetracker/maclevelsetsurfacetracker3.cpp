@@ -75,17 +75,14 @@ private:
 							  std::function<vec3d(const vec3d &)> vertex_color_func=nullptr,
 							  std::function<vec2d(const vec3d &)> uv_coordinate_func=nullptr ) const override {
 		//
-		shared_array3<double> fluid_dilated(m_fluid);
-		fluid_dilated->dilate();
 		std::string path_wo_suffix = console::format_str("%s/%u_mesh", path_to_directory.c_str(), frame );
-		export_fluid_mesh(path_wo_suffix,fluid_dilated(),true,vertex_color_func,uv_coordinate_func);
+		export_fluid_mesh(path_wo_suffix,m_fluid,true,vertex_color_func,uv_coordinate_func);
 		//
 		shared_array3<double> fluid_closed(m_shape);
 		if( m_param.enclose_solid ) {
 			m_gridutility->combine_levelset(m_solid,m_fluid,fluid_closed());
-			fluid_closed->dilate();
 		} else {
-			fluid_closed->copy(fluid_dilated());
+			fluid_closed->copy(m_fluid);
 		}
 		const double eps (0.01*m_dx);
 		//

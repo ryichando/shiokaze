@@ -182,65 +182,11 @@ private:
 		});
 		return topology_index;
 	}
-	virtual void mark_narrowband( array2<double> &levelset, unsigned half_cells ) const override {
+	virtual void trim_narrowband( array2<double> &levelset ) const override {
 		//
-		shared_array2<double> old_levelset(levelset);
-		levelset.parallel_actives([&](int i, int j, auto &it, int tn) {
-			//
-			vec2i ij (i,j);
-			const double &phi = it();
-			bool should_set_off(true);
-			for( int dim : DIMS2 ) {
-				if( ij[dim] > 0 ) {
-					vec2i np(i-(dim==0),j-(dim==1));
-					if( old_levelset->active(np) ) {
-						if( phi * old_levelset()(np) < 0.0 ) {
-							should_set_off = false;
-							break;
-						}
-					}
-				}
-				if( ij[dim] < levelset.shape()[dim]-1 ) {
-					vec2i np(i+(dim==0),j+(dim==1));
-					if( old_levelset->active(np) ) {
-						if( phi * old_levelset()(i+(dim==0),j+(dim==1)) < 0.0 ) {
-							should_set_off = false;
-							break;
-						}
-					}
-				}
-			}
-			if( should_set_off ) it.set_off();
-		});
-		//
-		if( half_cells > 1 ) {
-			for( int count=0; count<half_cells-1; ++count) levelset.dilate([&](int i, int j, auto &it, int tn) {
-				vec2i query[] = {vec2i(i+1,j),vec2i(i-1,j),vec2i(i,j+1),vec2i(i,j-1)};
-				double extrapolated_value (0.0);
-				for( int nq=0; nq<4; nq++ ) {
-					const vec2i &qi = query[nq];
-					if( ! levelset.shape().out_of_bounds(qi) ) {
-						if( levelset.active(qi) ) {
-							const double &value = levelset(qi);
-							if( value < 0.0 ) {
-								extrapolated_value = std::min(extrapolated_value,extrapolated_value-m_dx);
-								break;
-							} else {
-								extrapolated_value = std::max(extrapolated_value,extrapolated_value+m_dx);
-								break;
-							}
-						}
-					}
-				}
-				it.set(extrapolated_value);
-			});
-		}
-	}
-	void mark_narrowband( const array2<double> &levelset, array2<char> &flag, unsigned half_cells ) const {
-		//
-		flag.clear(0);
-		flag.activate_as(levelset);
-		flag.parallel_actives([&](int i, int j, auto &it, int tn) {
+		shared_array2<char> flag(levelset.shape());
+		flag->activate_as(levelset);
+		flag->parallel_actives([&](int i, int j, auto &it, int tn) {
 			//
 			vec2i ij (i,j);
 			const double &phi = levelset(i,j);
@@ -265,26 +211,6 @@ private:
 			if( should_set_off ) it.set_off();
 		});
 		//
-		if( half_cells > 1 ) {
-			for( int count=0; count<half_cells-1; ++count) flag.dilate([&](int i, int j, auto &it, int tn) {
-				vec2i query[] = {vec2i(i+1,j),vec2i(i-1,j),vec2i(i,j+1),vec2i(i,j-1)};
-				for( int nq=0; nq<4; nq++ ) {
-					const vec2i &qi = query[nq];
-					if( ! flag.shape().out_of_bounds(qi) ) {
-						const char &value = flag(qi);
-						if( value ) {
-							it.set(value < 0 ? -2-(char)count : 2+(char)count);
-							break;
-						}
-					}
-				}
-			});
-		}
-	}
-	virtual void trim_narrowband( array2<double> &levelset, unsigned half_cells ) const override {
-		//
-		shared_array2<char> flag(levelset.shape());
-		mark_narrowband(levelset,flag(),half_cells);
 		levelset.parallel_actives([&](int i, int j, auto &it, int tn) {
 			if( ! flag()(i,j)) it.set_off();
 		});

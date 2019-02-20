@@ -47,7 +47,44 @@ private:
 		std::vector<std::vector<size_t> > connections;
 		std::vector<double> levelset;
 		//
-		m_gridutility->trim_narrowband(phi_array,width);
+		// Generate a mesh
+		std::vector<vec3d> vertices;
+		std::vector<std::vector<size_t> > faces;
+		m_mesher->generate_mesh(phi_array,vertices,faces);
+		//
+		// Sort triangles
+		std::vector<vec3d> face_centers(faces.size());
+		m_parallel.for_each(faces.size(),[&](size_t n) {
+			vec3d center = (vertices[faces[n][0]]+vertices[faces[n][1]]+vertices[faces[n][2]]) / 3.0;
+			face_centers[n] = center;
+		});
+		m_hashtable->sort_points(face_centers);
+		//
+		// Compute the closest distance
+		shared_array3<double> fixed_dists(phi_array.shape());
+		fixed_dists->activate_as(phi_array);
+		fixed_dists->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
+			//
+			double min_d = 1.0;
+			double sgn = (phi_array(i,j,k) > 0.0 ? 1.0 : -1.0);
+			//
+			std::vector<size_t> face_neighbors = m_hashtable->get_cell_neighbors(vec3i(i,j,k),pointgridhash3_interface::USE_NODAL);
+			for( unsigned n=0; n<face_neighbors.size(); ++n ) {
+				const unsigned &idx = face_neighbors[n];
+				vec3d p = m_dx*vec3d(i+0.5,j+0.5,k+0.5);
+				vec3d out;
+				double d = m_meshutility->point_triangle_distance(p,vertices[faces[idx][0]],vertices[faces[idx][1]],vertices[faces[idx][2]],out);
+				if( d < min_d ) {
+					min_d = d;
+				}
+			}
+			if( min_d < 1.0 ) it.set(sgn * min_d);
+			else it.set_off();
+		});
+		//
+		m_gridutility->trim_narrowband(phi_array);
+		phi_array.flood_fill();
+		phi_array.dilate(width);
 		//
 		size_t maximal_index (0);
 		shared_array3<size_t> indices(phi_array.shape());
@@ -58,6 +95,7 @@ private:
 		positions.resize(maximal_index);
 		connections.resize(maximal_index);
 		levelset.resize(maximal_index);
+		std::vector<char> fixed(maximal_index);
 		//
 		phi_array.const_parallel_actives([&](int i, int j, int k, const auto &it, int tn) {
 			//
@@ -69,13 +107,14 @@ private:
 					connections[index].push_back(indices()(q));
 				}
 				//
-				levelset[index] = it();
+				levelset[index] = fixed_dists->active(i,j,k) ? fixed_dists()(i,j,k) : it();
 				positions[index] = m_dx * vec3i(i,j,k).cell();
+				fixed[index] = fixed_dists->active(i,j,k);
 			}
 		});
 		//
 		// Perform fast march
-		unstructured_fastmarch3::fastmarch(positions,connections,levelset,1.0,m_parallel,m_meshutility.get());
+		unstructured_fastmarch3::fastmarch(positions,connections,levelset,fixed,1.0,m_parallel,m_meshutility.get());
 		//
 		phi_array.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			double value = levelset[indices()(i,j,k)];
