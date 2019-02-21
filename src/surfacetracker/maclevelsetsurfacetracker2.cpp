@@ -62,7 +62,7 @@ private:
 	}
 	virtual void configure( configuration &config ) override {
 		config.get_bool("DrawActives",m_param.draw_actives,"Whether to draw active narrow band");
-		config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth_count,"Level set half bandwidth");
+		config.get_unsigned("LevelsetHalfWidth",m_param.levelset_half_bandwidth_count,"Level set half bandwidth");
 	}
 	//
 	virtual void initialize( const shape2 &shape, double dx ) override {

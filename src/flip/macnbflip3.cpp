@@ -74,7 +74,7 @@ void macnbflip3::configure( configuration &config ) {
 	config.set_default_unsigned("HighresRasterizer.NeighborLookUpCells",2);
 	//
 	config.get_bool("APIC",m_param.use_apic,"Whether to use APIC");
-	config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth_count,"Level set half bandwidth");
+	config.get_unsigned("LevelsetHalfWidth",m_param.levelset_half_bandwidth_count,"Level set half bandwidth");
 	config.get_unsigned("Narrowband",m_param.narrowband,"Narrowband bandwidth");
 	config.get_unsigned("CorrectDepth",m_param.correct_depth,"Position correction depth");
 	config.get_double("FitParticleDist",m_param.fit_particle_dist,"FLIP particle fitting threshold");

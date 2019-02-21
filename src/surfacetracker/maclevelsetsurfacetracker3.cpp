@@ -165,7 +165,7 @@ private:
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_bool("EncloseSolid",m_param.enclose_solid,"Should remove faces in solid on mesh export");
-		config.get_unsigned("LevelsetHalfwidth",m_param.levelset_half_bandwidth_count,"Level set half bandwidth");
+		config.get_unsigned("LevelsetHalfWidth",m_param.levelset_half_bandwidth_count,"Level set half bandwidth");
 	}
 	//
 	virtual void initialize( const shape3 &shape, double dx ) override {
