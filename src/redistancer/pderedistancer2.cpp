@@ -45,7 +45,28 @@ private:
 		//
 		m_gridutility->trim_narrowband(phi_array);
 		phi_array.flood_fill();
-		phi_array.dilate(width);
+		if( width > 1 ) {
+			for( int count=0; count<width-1; ++count) phi_array.dilate([&](int i, int j, auto &it, int tn) {
+				vec2i query[] = {vec2i(i+1,j),vec2i(i-1,j),vec2i(i,j+1),vec2i(i,j-1)};
+				double extrapolated_value (0.0);
+				for( int nq=0; nq<4; nq++ ) {
+					const vec2i &qi = query[nq];
+					if( ! phi_array.shape().out_of_bounds(qi) ) {
+						if( phi_array.active(qi) ) {
+							const double &value = phi_array(qi);
+							if( value < 0.0 ) {
+								extrapolated_value = std::min(extrapolated_value,extrapolated_value-m_dx);
+								break;
+							} else {
+								extrapolated_value = std::max(extrapolated_value,extrapolated_value+m_dx);
+								break;
+							}
+						}
+					}
+				}
+				it.set(extrapolated_value);
+			});
+		}
 		//
 		shared_array2<double> phi_array0 (phi_array);
 		//
