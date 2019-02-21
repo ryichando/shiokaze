@@ -113,7 +113,7 @@ public:
 		//
 		// Evolve by PDE
 		double dt = m_param.rate * m_dx;
-		for( int itcount=0; itcount<width; ++itcount ) {
+		for( int itcount=0; itcount < std::ceil(((double)width)/m_param.rate); ++itcount ) {
 			//
 			if( m_param.temporal_scheme == "Euler" ) {
 				//
