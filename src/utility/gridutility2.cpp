@@ -193,14 +193,14 @@ private:
 			//
 			for( int dim : DIMS2 ) {
 				if( should_set_off && ij[dim] > 0 ) {
-					if( phi * levelset(i-(dim==0),j-(dim==1)) < 0.0 ) {
+					if( levelset.active(i-(dim==0),j-(dim==1)) && phi * levelset(i-(dim==0),j-(dim==1)) < 0.0 ) {
 						it.set(phi < 0.0 ? -1 : 1);
 						should_set_off = false;
 						break;
 					}
 				}
 				if( should_set_off && ij[dim] < levelset.shape()[dim]-1 ) {
-					if( phi * levelset(i+(dim==0),j+(dim==1)) < 0.0 ) {
+					if( levelset.active(i+(dim==0),j+(dim==1)) && phi * levelset(i+(dim==0),j+(dim==1)) < 0.0 ) {
 						it.set(phi < 0.0 ? -1 : 1);
 						should_set_off = false;
 						break;
