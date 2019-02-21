@@ -509,8 +509,13 @@ int ui::run ( int argc, const char* argv[] ) {
 	//
 	// Set root path
 	std::string path_to_log;
+	//
+	using boost::posix_time::ptime;
+	using boost::posix_time::second_clock;
+	ptime now = second_clock::universal_time();
+	//
 #ifndef USE_OPENGL
-	path_to_log = "log";
+	path_to_log = "log_" + boost::posix_time::to_iso_string(now);
 #endif
 	//
 	config.get_string("Log",path_to_log,"Path to the directory to export log files");
@@ -538,9 +543,6 @@ int ui::run ( int argc, const char* argv[] ) {
 	};
 	console::dump( "   Arguments: %s\n", colored_str(parser.get_arg_string()).c_str());
 	//
-	using boost::posix_time::ptime;
-	using boost::posix_time::second_clock;
-	ptime now = second_clock::universal_time();
 	console::dump( "   Date = \e[36m%s UTC\e[39m\n", boost::posix_time::to_simple_string(now).c_str());
 	//
 	std::string cpu_name;
