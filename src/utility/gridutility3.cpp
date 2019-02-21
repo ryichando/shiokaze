@@ -87,18 +87,14 @@ private:
 		//
 		if( array_utility3::levelset_exist(solid) ) {
 			//
-			shared_array3<double> combined(fluid.type());
-			combine_levelset(solid,fluid,combined(),m_dx);
-			fluid.copy(combined());
 			shared_array3<double> old_fluid = shared_array3<double>(fluid);
-			//
 			bool is_fluid_nodal = fluid.shape() == m_shape.nodal();
 			//
 			const double limit_y = sin(M_PI/4.0);
 			fluid.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 				vec3d p = is_fluid_nodal ? vec3d(i,j,k) : vec3i(i,j,k).cell();
 				double solid_levelset = is_fluid_nodal ? solid(i,j,k) : array_interpolator3::interpolate<double>(solid,p);
-				if( solid_levelset < threshold && solid_levelset > -m_param.extrapolation_toward_solid*m_dx ) {
+				if( solid_levelset < threshold ) {
 					if( m_param.solid_wall_extrapolation ) {
 						double derivative[DIM3];
 						array_derivative3::derivative(solid,p,derivative);
@@ -142,6 +138,9 @@ private:
 				}
 			});
 			//
+			shared_array3<double> combined(fluid.type());
+			combine_levelset(solid,fluid,combined(),m_dx);
+			fluid.copy(combined());
 			fluid.flood_fill();
 		}
 	}
