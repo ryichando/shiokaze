@@ -75,7 +75,7 @@ public:
 				dt = max_dt;
 			} else {
 				if( max_unit_u ) {
-					dt = std::min( max_dt, m_CFL / max_unit_u );
+					dt = std::max( m_min_dt, std::min( max_dt, m_CFL / max_unit_u ));
 				} else {
 					dt = m_min_dt;
 				}
