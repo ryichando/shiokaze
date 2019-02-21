@@ -42,21 +42,21 @@ SHKZ_USING_NAMESPACE
 static const double default_mass = 1.0 / 8.0;
 //
 double macnbflip3::grid_kernel( const vec3d &r, double dx ) {
-	double x = ( r[0] > 0.0 ? r[0] : -r[0] ) / dx;
-	double y = ( r[1] > 0.0 ? r[1] : -r[1] ) / dx;
-	double z = ( r[2] > 0.0 ? r[2] : -r[2] ) / dx;
+	double x = std::abs(r[0]) / dx;
+	double y = std::abs(r[1]) / dx;
+	double z = std::abs(r[2]) / dx;
 	return std::max(0.0,1.0-x) * std::max(0.0,1.0-y) * std::max(0.0,1.0-z);
 }
 //
 vec3d macnbflip3::grid_gradient_kernel( const vec3d &r, double dx ) {
-	double x = ( r[0] > 0.0 ? r[0] : -r[0] ) / dx;
-	double y = ( r[1] > 0.0 ? r[1] : -r[1] ) / dx;
-	double z = ( r[2] > 0.0 ? r[2] : -r[2] ) / dx;
+	double x = std::abs(r[0]) / dx;
+	double y = std::abs(r[1]) / dx;
+	double z = std::abs(r[2]) / dx;
 	if( x <= 1.0 && y <= 1.0 && z <= 1.0 ) {
-		double x_sgn = r[0] <= 0.0 ? -1.0 : 1.0;
-		double y_sgn = r[1] <= 0.0 ? -1.0 : 1.0;
-		double z_sgn = r[2] <= 0.0 ? -1.0 : 1.0;
-		return vec3d(x_sgn*(y-1.0)*(z-1.0),y_sgn*(x-1.0)*(z-1.0),z_sgn*(x-1.0)*(y-1.0)) / dx;
+		double u = std::copysign((y-1.0)*(z-1.0),r[0]);
+		double v = std::copysign((x-1.0)*(z-1.0),r[1]);
+		double w = std::copysign((x-1.0)*(y-1.0),r[2]);
+		return vec3d(u,v,w) / dx;
 	} else {
 		return vec3d();
 	}

@@ -40,19 +40,19 @@ static const double default_mass = 1.0 / 4.0;
 //
 double macnbflip2::grid_kernel( const vec2d &r, double dx ) {
 	//
-	double x = ( r[0] > 0.0 ? r[0] : -r[0] ) / dx;
-	double y = ( r[1] > 0.0 ? r[1] : -r[1] ) / dx;
+	double x = std::abs(r[0]) / dx;
+	double y = std::abs(r[1]) / dx;
 	return std::max(0.0,1.0-x) * std::max(0.0,1.0-y);
 }
 //
 vec2d macnbflip2::grid_gradient_kernel( const vec2d &r, double dx ) {
 	//
-	double x = ( r[0] > 0.0 ? r[0] : -r[0] ) / dx;
-	double y = ( r[1] > 0.0 ? r[1] : -r[1] ) / dx;
+	double x = std::abs(r[0]) / dx;
+	double y = std::abs(r[1]) / dx;
 	if( x <= 1.0 && y <= 1.0 ) {
-		double x_sgn = r[0] <= 0.0 ? 1.0 : -1.0;
-		double y_sgn = r[1] <= 0.0 ? 1.0 : -1.0;
-		return vec2d(x_sgn*(y-1.0),y_sgn*(x-1.0)) / dx;
+		double u = std::copysign(1.0-y,r[0]);
+		double v = std::copysign(1.0-x,r[1]);
+		return vec2d(u,v) / dx;
 	} else {
 		return vec2d();
 	}
