@@ -81,15 +81,6 @@ public:
 	 */
 	virtual void compute_gradient( const array3<double> &levelset, array3<vec3d> &gradient ) const = 0;
 	/**
-	 \~english @brief Enumerate topology.
-	 @param[in] flag Binary array to enumerate.
-	 @param[out] topology_array Output grid filled with topologocal number.
-	 \~japanese @brief トポロジーを数え上げる。
-	 @param[in] flag 数えるトポロジーのバイナリフラグを記録したグリッド。
-	 @param[out] topology_array トポロジーの番号が記録されたグリッドの出力。
-	 */
-	virtual unsigned mark_topology( const array3<char> &flag, array3<unsigned> &topology_array ) const = 0;
-	/**
 	 \~english @brief Trim narrow band of a level set within one cell away from the interface.
 	 @param[in] levelset Fluid level set.
 	 \~japanese @brief レベルセットを境界から1セルだけ離れたセルにトリミングする。

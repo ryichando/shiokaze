@@ -215,6 +215,22 @@ public:
 		});
 	}
 	/**
+	 \~english @brief Activate cells at the same positons where an input array is active with an offset.
+	 @param[in] array Target array.
+	 @param[in] offset Offset applied to the target array.
+	 \~japanese @brief 入力のグリッドのアクティブセルと同じ場所のセルを offset だけずらして、アクティブにする。
+	 @param[in] array 目標となるグリッド。
+	 @param[in] offset 目標となるグリッドに適用されるオフセット。
+	 */
+	template <class Y> void activate_as( const Y &array, const vec3i &offset=vec3i() ) {
+		array.const_serial_actives([&](int i, int j, int k, const auto &it) {
+			const vec3i &pi = vec3i(i,j,k) + offset;
+			if( ! this->shape().out_of_bounds(pi) && ! (*this)(pi)) {
+				this->set(pi);
+			}
+		});
+	}
+	/**
 	 \~english @brief Activate all the cells.
 	 \~japanese @brief 全てのセルをアクティブにする。
 	 */

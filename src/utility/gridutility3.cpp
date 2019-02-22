@@ -24,6 +24,7 @@
 //
 #include <shiokaze/utility/gridutility3_interface.h>
 #include <shiokaze/array/shared_array3.h>
+#include <shiokaze/array/shared_bitarray3.h>
 #include <shiokaze/array/array_utility3.h>
 #include <shiokaze/array/array_interpolator3.h>
 #include <shiokaze/array/array_derivative3.h>
@@ -158,36 +159,10 @@ private:
 			it.set(grad/m_dx);
 		});
 	}
-	virtual unsigned mark_topology( const array3<char> &flag, array3<unsigned> &topology_array ) const override {
-		//
-		auto markable = [&]( const vec3i &q ) { return flag(q) && ! topology_array(q); };
-		auto recursive_mark = [&]( vec3i node, unsigned topology_index ) {
-			std::stack<vec3i> queue;
-			queue.push(node);
-			while(! queue.empty()) {
-				vec3i q = queue.top();
-				queue.pop();
-				topology_array.set(q,topology_index);
-				vec3i nq;
-				for( unsigned dim : DIMS3 ) {
-					if( q[dim]<flag.shape()[dim]-1 && markable(nq=(q+vec3i(dim==0,dim==1,dim==2)))) queue.push(nq);
-					if( q[dim]>0 && markable(nq=(q-vec3i(dim==0,dim==1,dim==2)))) queue.push(nq);
-				}
-			}
-		};
-		//
-		unsigned topology_index (0);
-		flag.const_serial_actives([&](int i, int j, int k, const auto &it) {
-			if( markable(vec3i(i,j,k)) ) {
-				recursive_mark(vec3i(i,j,k),++topology_index);
-			}
-		});
-		return topology_index;
-	}
 	virtual void trim_narrowband( array3<double> &levelset ) const override {
 		//
-		shared_array3<char> flag(levelset.shape());
-		flag->activate_as(levelset);
+		shared_bitarray3 flag(levelset.shape());
+		flag->activate_as<array3<double> >(levelset);
 		flag->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			//
 			vec3i ijk (i,j,k);
@@ -197,14 +172,14 @@ private:
 			for( int dim : DIMS3 ) {
 				if( should_set_off && ijk[dim] > 0 ) {
 					if( levelset.active(i-(dim==0),j-(dim==1),k-(dim==2)) && phi * levelset(i-(dim==0),j-(dim==1),k-(dim==2)) < 0.0 ) {
-						it.set(phi < 0.0 ? -1 : 1);
+						it.set();
 						should_set_off = false;
 						break;
 					}
 				}
 				if( should_set_off && ijk[dim] < levelset.shape()[dim]-1 ) {
 					if( levelset.active(i+(dim==0),j+(dim==1),k+(dim==2)) && phi * levelset(i+(dim==0),j+(dim==1),k+(dim==2)) < 0.0 ) {
-						it.set(phi < 0.0 ? -1 : 1);
+						it.set();
 						should_set_off = false;
 						break;
 					}
