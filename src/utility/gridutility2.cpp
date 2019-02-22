@@ -159,7 +159,7 @@ private:
 	virtual void trim_narrowband( array2<double> &levelset ) const override {
 		//
 		shared_bitarray2 flag(levelset.shape());
-		flag->activate_as<array2<double> >(levelset);
+		flag->activate_as<double>(levelset);
 		flag->parallel_actives([&](int i, int j, auto &it, int tn) {
 			//
 			vec2i ij (i,j);

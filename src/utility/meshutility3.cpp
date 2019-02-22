@@ -23,7 +23,9 @@
 */
 //
 #include <shiokaze/utility/meshutility3_interface.h>
+#include <shiokaze/utility/utility.h>
 #include <cmath>
+#include "../cellmesher/mc_table.h"
 //
 SHKZ_USING_NAMESPACE
 //
@@ -31,6 +33,59 @@ class meshutility3 : public meshutility3_interface {
 private:
 	//
 	AUTHOR_NAME("Christopher Batty")
+	//
+	virtual std::vector<std::array<vec3d,3> > polygonise_levelset( const double levelset[2][2][2] ) const override {
+		//
+		std::vector<std::array<vec3d,3> > result;
+		double value[8];
+		int flag (0);
+		for(int n=0; n<8; ++n ) {
+			value[n] = levelset[a2fVertexOffset[n][0]][a2fVertexOffset[n][1]][a2fVertexOffset[n][2]];
+			if(value[n] < 0.0) flag |= 1 << n;
+		}
+		//
+		int edge_flag = aiCubeEdgeFlags[flag];
+		if( edge_flag ) {
+			std::vector<vec3d> edge_vertices(12);
+			for( int n=0; n<12; ++n ) {
+				if(edge_flag & (1<<n)) {
+					//
+					size_t edge0 = a2iEdgeConnection[n][0];
+					size_t edge1 = a2iEdgeConnection[n][1];
+					//
+					vec3d p1 = vec3d(
+						a2fVertexOffset[edge0][0],
+						a2fVertexOffset[edge0][1],
+						a2fVertexOffset[edge0][2]);
+					//
+					vec3d p2 = vec3d(
+						a2fVertexOffset[edge1][0],
+						a2fVertexOffset[edge1][1],
+						a2fVertexOffset[edge1][2]);
+					//
+					double v1 = value[edge0];
+					double v2 = value[edge1];
+					double fraction = utility::fraction(v1,v2);
+					vec3d p;
+					if( v1 < 0.0 ) {
+						p = fraction*p2+(1.0-fraction)*p1;
+					} else {
+						p = fraction*p1+(1.0-fraction)*p2;
+					}
+					edge_vertices[n] = p;
+				}
+			}
+			for( int n=0; n<=5; ++n) {
+				if(a2iTriangleConnectionTable[flag][3*n] < 0) break;
+				std::array<vec3d,3> tri;
+				for( int m=0; m<3; ++m) {
+					tri[m] = edge_vertices[a2iTriangleConnectionTable[flag][3*n+m]];
+				}
+				result.push_back(tri);
+			}
+		}
+		return result;
+	}
 	//
 	virtual double point_segment_distance(const vec3d &x0, const vec3d &x1, const vec3d &x2, vec3d &out ) const override {
 		//

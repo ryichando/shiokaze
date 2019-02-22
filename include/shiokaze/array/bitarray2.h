@@ -40,6 +40,7 @@ SHKZ_BEGIN_NAMESPACE
 /** @file */
 /// \~english @brief Two dimensional bit grid class designed to be defined as instance member in recursive_configurable class.
 /// \~japanese @brief recursive_configurable インスタンスのメンバーインスタンスとして定義可能な2次元ビット配列クラス。
+template <class T> class array2;
 class bitarray2 : public recursive_configurable {
 public:
 	/**
@@ -228,7 +229,7 @@ public:
 	 @param[in] array 目標となるグリッド。
 	 @param[in] offset 目標となるグリッドに適用されるオフセット。
 	 */
-	template <class Y> void activate_as( const Y &array, const vec2i &offset=vec2i() ) {
+	template <class Y> void activate_as( const array2<Y> &array, const vec2i &offset=vec2i() ) {
 		array.const_serial_actives([&](int i, int j, const auto &it) {
 			const vec2i &pi = vec2i(i,j) + offset;
 			if( ! this->shape().out_of_bounds(pi) && ! (*this)(pi)) {

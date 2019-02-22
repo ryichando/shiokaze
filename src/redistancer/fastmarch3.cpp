@@ -23,7 +23,6 @@
 */
 //
 #include <shiokaze/pointgridhash/pointgridhash3_interface.h>
-#include <shiokaze/cellmesher/cellmesher3_interface.h>
 #include <shiokaze/redistancer/redistancer3_interface.h>
 #include <shiokaze/utility/meshutility3_interface.h>
 #include <shiokaze/utility/gridutility3_interface.h>
@@ -48,17 +47,29 @@ private:
 		std::vector<double> levelset;
 		//
 		// Generate a mesh
-		std::vector<vec3d> vertices;
-		std::vector<std::vector<size_t> > faces;
-		m_mesher->generate_mesh(phi_array,vertices,faces);
-		//
-		// Sort triangles
-		std::vector<vec3d> face_centers(faces.size());
-		m_parallel.for_each(faces.size(),[&](size_t n) {
-			vec3d center = (vertices[faces[n][0]]+vertices[faces[n][1]]+vertices[faces[n][2]]) / 3.0;
-			face_centers[n] = center;
+		shared_array3<std::vector<std::array<vec3d,3> > > triangles(phi_array.shape()-shape3(1,1,1));
+		triangles->activate_as(phi_array);
+		triangles->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
+			bool skip (false);
+			double v[2][2][2];
+			for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) for( int nk=0; nk<2; nk++ ) {
+				if( skip ) break;
+				if( phi_array.active(i+ni,j+nj,k+nk)) {
+					v[ni][nj][nk] = phi_array(i+ni,j+nj,k+nk);
+				} else {
+					skip = true;
+					break;
+				}
+			}
+			if( ! skip ) {
+				auto patches = m_meshutility->polygonise_levelset(v);
+				for( unsigned n=0; n<patches.size(); ++n ) {
+					auto ptr = it.ptr();
+					if( ptr ) ptr->push_back(patches[n]);
+					else it.set({patches[n]});
+				}
+			}
 		});
-		m_hashtable->sort_points(face_centers);
 		//
 		// Compute the closest distance
 		shared_array3<double> fixed_dists(phi_array.shape());
@@ -66,16 +77,27 @@ private:
 		fixed_dists->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			//
 			double min_d = 1.0;
-			double sgn = (phi_array(i,j,k) > 0.0 ? 1.0 : -1.0);
+			vec3d origin = m_dx*vec3d(i,j,k);
+			double sgn = std::copysign(1.0,phi_array(i,j,k));
 			//
-			std::vector<size_t> face_neighbors = m_hashtable->get_cell_neighbors(vec3i(i,j,k),pointgridhash3_interface::USE_NODAL);
-			for( unsigned n=0; n<face_neighbors.size(); ++n ) {
-				const unsigned &idx = face_neighbors[n];
-				vec3d p = m_dx*vec3d(i+0.5,j+0.5,k+0.5);
-				vec3d out;
-				double d = m_meshutility->point_triangle_distance(p,vertices[faces[idx][0]],vertices[faces[idx][1]],vertices[faces[idx][2]],out);
-				if( d < min_d ) {
-					min_d = d;
+			int w (1);
+			for( int ni=i-w; ni<=i+w-1; ++ni ) for( int nj=j-w; nj<=j+w-1; ++nj ) for( int nk=k-w; nk<=k+w-1; ++nk ) {
+				if( ! triangles->shape().out_of_bounds(ni,nj,nk)) {
+					if( triangles->active(ni,nj,nk) ) {
+						const std::vector<std::array<vec3d,3> > &patches = triangles()(ni,nj,nk);
+						for( int m=0; m<patches.size(); ++m ) {
+							const std::array<vec3d,3> &patch = patches[m];
+							vec3d o = m_dx*vec3d(ni,nj,nk);
+							vec3d out;
+							vec3d p0 = m_dx*patch[0]+o;
+							vec3d p1 = m_dx*patch[1]+o;
+							vec3d p2 = m_dx*patch[2]+o;
+							double d = m_meshutility->point_triangle_distance(origin,p0,p1,p2,out);
+							if( d < min_d ) {
+								min_d = d;
+							}
+						}
+					}
 				}
 			}
 			if( min_d < 1.0 ) it.set(sgn * min_d);
@@ -130,7 +152,6 @@ private:
 		m_dx = dx;
 	}
 	//
-	cellmesher3_driver m_mesher{this,"marchingcubes"};
 	meshutility3_driver m_meshutility{this,"meshutility3"};
 	pointgridhash3_driver m_hashtable{this,"pointgridhash3"};
 	gridutility3_driver m_gridutility{this,"gridutility3"};

@@ -28,6 +28,7 @@
 #include <shiokaze/core/recursive_configurable_module.h>
 #include <shiokaze/math/vec.h>
 #include <vector>
+#include <array>
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -38,6 +39,15 @@ class meshutility3_interface : public recursive_configurable_module {
 public:
 	//
 	DEFINE_MODULE(meshutility3_interface,"Mesh Utility 3D","MeshUtility","Mesh utility module")
+	/**
+	 \~english @brief Extract triangle meshes from the level set values on 8 vertices of a unit box.
+	 @param[in] levelset Level set values on 8 vertices.
+	 @param[out] Triangles
+	 \~japanese @brief 単位ボックスの8つのレベルセット値から三角形メッシュを抽出する。
+	 @param[in] levelset 8つの頂点のレベルセットの値。
+	 @param[out] 三角形メッシュ。
+	 */
+	virtual std::vector<std::array<vec3d,3> > polygonise_levelset( const double levelset[2][2][2] ) const = 0;
 	/**
 	 \~english @brief Compute the distance from a point to a segment.
 	 @param[in] x0 Query point.

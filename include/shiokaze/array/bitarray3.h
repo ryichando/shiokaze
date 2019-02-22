@@ -40,6 +40,7 @@ SHKZ_BEGIN_NAMESPACE
 /** @file */
 /// \~english @brief Three dimensional bit grid class designed to be defined as instance member in recursive_configurable class.
 /// \~japanese @brief recursive_configurable インスタンスのメンバーインスタンスとして定義可能な3次元ビット配列クラス。
+template <class T> class array3;
 class bitarray3 : public recursive_configurable {
 public:
 	/**
@@ -222,7 +223,7 @@ public:
 	 @param[in] array 目標となるグリッド。
 	 @param[in] offset 目標となるグリッドに適用されるオフセット。
 	 */
-	template <class Y> void activate_as( const Y &array, const vec3i &offset=vec3i() ) {
+	template <class Y> void activate_as( const array3<Y> &array, const vec3i &offset=vec3i() ) {
 		array.const_serial_actives([&](int i, int j, int k, const auto &it) {
 			const vec3i &pi = vec3i(i,j,k) + offset;
 			if( ! this->shape().out_of_bounds(pi) && ! (*this)(pi)) {

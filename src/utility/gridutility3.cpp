@@ -34,7 +34,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <stack>
-#include "mc_table3.h"
+#include "../cellmesher/mc_table.h"
 #define _USE_MATH_DEFINES
 #include <cmath>
 //
@@ -162,7 +162,7 @@ private:
 	virtual void trim_narrowband( array3<double> &levelset ) const override {
 		//
 		shared_bitarray3 flag(levelset.shape());
-		flag->activate_as<array3<double> >(levelset);
+		flag->activate_as<double>(levelset);
 		flag->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			//
 			vec3i ijk (i,j,k);
