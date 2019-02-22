@@ -84,7 +84,7 @@ private:
 	//
 	struct Parameters {
 		bool draw_actives {true};
-		unsigned levelset_half_bandwidth_count {2};
+		unsigned levelset_half_bandwidth_count {3};
 	};
 	//
 	Parameters m_param;

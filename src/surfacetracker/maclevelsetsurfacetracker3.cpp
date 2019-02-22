@@ -192,7 +192,7 @@ private:
 	//
 	struct Parameters {
 		bool enclose_solid {false};
-		unsigned levelset_half_bandwidth_count {2};
+		unsigned levelset_half_bandwidth_count {3};
 	};
 	Parameters m_param;
 };
