@@ -65,11 +65,18 @@ private:
 		m_macutility->compute_fluid_fraction(fluid,rhos());
 		//
 		// Enforce first order accuracy
-		if( ! m_param.second_order_accurate ) {
+		if( ! m_param.second_order_accurate_fluid ) {
 			rhos->parallel_actives([&]( auto &it ) {
 				if( it() ) it.set(1.0);
 			});
 		}
+		//
+		if( ! m_param.second_order_accurate_solid ) {
+			areas->parallel_actives([&]( auto &it ) {
+				if( it() ) it.set(1.0);
+			});
+		}
+		//
 		console::dump( "Done. Took %s\n", timer.stock("solid_fluid_fractions").c_str());
 		///
 		// Compute curvature and substitute to the right hand side for the surface tension force
@@ -246,7 +253,8 @@ private:
 	}
 	//
 	virtual void configure( configuration &config ) override {
-		config.get_bool("SecondOrderAccurate",m_param.second_order_accurate,"Whether to enforce second order accuracy");
+		config.get_bool("SecondOrderAccurateFluid",m_param.second_order_accurate_fluid,"Whether to enforce second order accuracy");
+		config.get_bool("SecondOrderAccurateSolid",m_param.second_order_accurate_solid,"Whether to enforce second order accuracy for solid surfaces");
 		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tenstion coefficient");
 		config.get_double("Gain",m_param.gain,"Rate for volume correction");
 		config.set_default_bool("ReportProgress",false);
@@ -270,7 +278,8 @@ private:
 		double eps_fluid {1e-2};
 		double eps_solid {1e-2};
 		bool ignore_solid {false};
-		bool second_order_accurate {true};
+		bool second_order_accurate_fluid {true};
+		bool second_order_accurate_solid {true};
 	};
 	Parameters m_param;
 	//

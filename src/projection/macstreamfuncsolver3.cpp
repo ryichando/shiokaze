@@ -86,8 +86,14 @@ private:
 		m_macutility->compute_fluid_fraction(fluid,rhos());
 		//
 		// Enforce first order accuracy
-		if( ! m_param.second_order_accurate ) {
+		if( ! m_param.second_order_accurate_fluid ) {
 			rhos->parallel_actives([&]( auto &it ) {
+				if( it() ) it.set(1.0);
+			});
+		}
+		//
+		if( ! m_param.second_order_accurate_solid ) {
+			areas->parallel_actives([&]( auto &it ) {
 				if( it() ) it.set(1.0);
 			});
 		}
@@ -869,6 +875,8 @@ private:
 	//
 	virtual void configure( configuration &config ) override {
 		//
+		config.get_bool("SecondOrderAccurateFluid",m_param.second_order_accurate_fluid,"Whether to enforce second order accuracy");
+		config.get_bool("SecondOrderAccurateSolid",m_param.second_order_accurate_solid,"Whether to enforce second order accuracy for solid surfaces");
 		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tension force coefficient");
 		config.get_double("CorrectionGain",m_param.gain,"Volume correctino gain");
 		config.get_bool("DiffSolve",m_param.diff_solve,"Whether we should perform difference-based linear system solve");
@@ -891,7 +899,8 @@ private:
 		double surftens_k {0.0};
 		double gain {1.0};
 		bool diff_solve {true};
-		bool second_order_accurate {true};
+		bool second_order_accurate_fluid {true};
+		bool second_order_accurate_solid {true};
 	};
 	Parameters m_param;
 	//
