@@ -56,6 +56,13 @@ private:
 		m_macutility->compute_area_fraction(solid,areas());
 		m_macutility->compute_fluid_fraction(fluid,rhos());
 		//
+		// Enforce first order accuracy
+		if( ! m_param.second_order_accurate ) {
+			rhos->parallel_actives([&]( auto &it ) {
+				if( it() ) it.set(1.0);
+			});
+		}
+		//
 		// Compute curvature and substitute to the right hand side for the surface tension force
 		if( m_param.surftens_k ) {
 			//
@@ -214,6 +221,7 @@ private:
 	}
 	//
 	virtual void configure( configuration &config ) override {
+		config.get_bool("SecondOrderAccurate",m_param.second_order_accurate,"Whether to enforce second order accuracy");
 		config.get_bool("DrawPressure",m_param.draw_pressure,"Whether to draw pressure");
 		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tenstion coefficient");
 		config.get_double("Gain",m_param.gain,"Rate for volume correction");
@@ -238,6 +246,7 @@ private:
 		double gain {1.0};
 		bool ignore_solid {false};
 		bool draw_pressure {true};
+		bool second_order_accurate {true};
 	};
 	Parameters m_param;
 	//

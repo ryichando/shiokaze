@@ -85,6 +85,13 @@ private:
 		m_macutility->compute_area_fraction(solid,areas());
 		m_macutility->compute_fluid_fraction(fluid,rhos());
 		//
+		// Enforce first order accuracy
+		if( ! m_param.second_order_accurate ) {
+			rhos->parallel_actives([&]( auto &it ) {
+				if( it() ) it.set(1.0);
+			});
+		}
+		//
 		console::dump( "Done. Took %s\n", timer.stock("solid_fluid_fractions").c_str());
 		//
 		// Compute curvature and substitute to the right hand side for the surface tension force
@@ -884,6 +891,7 @@ private:
 		double surftens_k {0.0};
 		double gain {1.0};
 		bool diff_solve {true};
+		bool second_order_accurate {true};
 	};
 	Parameters m_param;
 	//
