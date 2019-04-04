@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <cmath>
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -221,7 +222,8 @@ struct shape2 {
 	 \~japanese @brief この形状のハッシュの数字を取得する。
 	 */
 	size_t hash() const {
-		return w ^ (h << 1);
+		unsigned log2h = (unsigned)log2(h)+1;
+		return w ^ (h << log2h);
 	}
 	/**
 	 \~english @brief Get the shape for the cell-centered grid from this shape.
@@ -608,7 +610,9 @@ struct shape3 {
 	 \~japanese @brief この形状のハッシュの数字を取得する。
 	 */
 	size_t hash() const {
-		return w ^ (h << 1) ^ (d << 2);
+		unsigned log2h = (unsigned)log2(h)+1;
+		unsigned log2d = (unsigned)log2(d)+1;
+		return w ^ (h << log2h) ^ (d << (log2h+log2d));
 	}
 	/**
 	 \~english @brief Get the shape for the cell-centered grid from this shape.
