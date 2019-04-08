@@ -14,11 +14,11 @@ Shiokaze framework (Shiokaze) is developed to make it easy to start research in 
 
 \li It consists of a collection of dynamic libraries that are completely independent to each other.
 \li Each library focuses on separated individual problems.
-\li Shiokaze selects which library to load at runtime, allowing one to quickly switch different implementations.
-\li It is designed such that you can pick some specific part of the code and adapt to your own (not limited to fluid) project.
+\li Libraries to load are selected at runtime, allowing one to quickly switch different implementations.
+\li Source codes are highly independent so that you can pick some specific part of the code and adapt to your own (not limited to fluid) project.
 \li All the codes are licensed either MIT, CC, Apache, or public domain.
 \li Simulation configuration can be dynamically changed via the command line interface or in the scene file.
-\li It comes with implementations of various algorithms to let you quickly compare or test against different methods.
+\li Various algorithms are provided to let you quickly compare or test against different methods.
 \li Shiokaze is delivered through the [Docker](https://www.docker.com) image - eliminating chance of failure to compile and allow anyone to run out of the box.
 
 <HR>
