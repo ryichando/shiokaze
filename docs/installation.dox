@@ -69,7 +69,7 @@ brew install libpng tbb openexr boost gsl
 
 \subsection compiling_linux Debian (Ubuntu Linux)
 
-On Debian, we need to install required libraries as well. They can be installed by:
+First, make sure that the version of GCC compiler is version 6 or higher. On Debian, we need to install required libraries as well. They can be installed by:
 
 ~~~{.sh}
 sudo apt-get install build-essential ocl-icd-opencl-dev libglfw3-dev freeglut3-dev libboost-all-dev libtbb-dev libgsl0-dev gnuplot libpng-dev zlib1g-dev libopenexr-dev libblas-dev
@@ -167,7 +167,7 @@ brew install libpng tbb openexr boost gsl
 
 \subsection compiling_linux Debian (Ubuntu Linux)
 
-潮風を Debian でコンパイルするには、必要なパッケージがインストールされている必要があります。これは、次を実行して行います。
+まず、GCC のコンパイラのバージョンが 6 以上であることを確認して下さい。潮風を Debian でコンパイルするには、必要なパッケージがインストールされている必要があります。これは、次を実行して行います。
 
 ~~~{.sh}
 sudo apt-get install build-essential ocl-icd-opencl-dev libglfw3-dev freeglut3-dev libboost-all-dev libtbb-dev libgsl0-dev gnuplot libpng-dev zlib1g-dev libopenexr-dev libblas-dev
