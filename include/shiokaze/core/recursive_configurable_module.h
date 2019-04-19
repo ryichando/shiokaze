@@ -83,9 +83,7 @@ public:
 	 @param[in] name モジュール名。
 	 @param[in] argname このインスタンスの変数名.
 	 */
-	recursive_configurable_driver ( std::string name, std::string argname="" ) : m_name(name), m_argname(argname) {
-		setup_now();
-	}
+	recursive_configurable_driver ( std::string name, std::string argname="" ) : m_name(name), m_argname(argname) {}
 	/**
 	 \~english @brief Constructor for recursive_configurable_driver.
 	 @param[in] parent Full mame for this instance.
@@ -120,6 +118,17 @@ public:
 		m_argname = argname;
 	}
 	/**
+	 \~english @brief Set the pointer to an environmental value associated with an input name.
+	 @param[in] name Name for the environmental value to set.
+	 @param[in] value Pointer to the value to set.
+	 \~japanese @brief 入力名に関連した環境変数の値へのポインターを設定する。
+	 @param[in] name 設定する環境変数への名前。
+	 @param[in] value 設定する変数の値へのポインター。
+	 */
+	void set_environment( std::string name, const void *value ) {
+		m_environment[name] = value;
+	}
+	/**
 	 \~english @brief Do loading.
 	 @param[in] config Configuration setting.
 	 \~japanese @brief 読み込みを行う。
@@ -147,7 +156,9 @@ public:
 	 @param[in] environment 環境変数。
 	 */
 	virtual void initialize( const configurable::environment_map &environment ) override {
-		m_object->recursive_initialize(environment);
+		configurable::environment_map merged_environment(m_environment);
+		merged_environment.insert(environment.begin(),environment.end());
+		m_object->recursive_initialize(merged_environment);
 	}
 	/**
 	 \~english @brief Get the raw pointer.
@@ -182,6 +193,7 @@ private:
 	//
 	std::string m_name, m_long_name, m_argname;
 	std::unique_ptr<T> m_object;
+	configurable::environment_map m_environment;
 	//
 	recursive_configurable_driver( const recursive_configurable_driver & ) = delete;
 	recursive_configurable_driver& operator=( const recursive_configurable_driver & ) = delete;

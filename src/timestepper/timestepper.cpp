@@ -71,14 +71,10 @@ public:
 			m_accumulated_time += dt;
 			//
 		} else {
-			if( m_use_fixed_time_step ) {
-				dt = max_dt;
+			if( max_unit_u ) {
+				dt = std::max( m_min_dt, std::min( max_dt, m_CFL / max_unit_u ));
 			} else {
-				if( max_unit_u ) {
-					dt = std::max( m_min_dt, std::min( max_dt, m_CFL / max_unit_u ));
-				} else {
-					dt = m_min_dt;
-				}
+				dt = m_min_dt;
 			}
 			//
 			assert( m_accumulated_time < 1.0 / m_FPS );	
@@ -163,7 +159,6 @@ protected:
 	//
 	virtual void configure( configuration &config ) override {
 		//
-		config.get_bool("UseFixedTimeStep",m_use_fixed_time_step,"Should use fixed time step");
 		config.get_double("TimeStep",m_fixed_timestep,"Target time step");
 		config.get_double("FPS",m_FPS,"Frame per second");
 		config.get_double("CFL",m_CFL,"Target CFL number");
@@ -197,10 +192,10 @@ private:
 	double m_simulation_time_per_step;
 	double m_fixed_timestep {0.0};
 	double m_current_CFL;
-	bool m_should_export_video {false}, m_use_fixed_time_step {false};
+	bool m_should_export_video {false};
 	int m_frame;
 	unsigned m_maximal_frame;
-	unsigned m_maximal_substeps {5};
+	unsigned m_maximal_substeps {100};
 	unsigned m_step;
 	//
 };

@@ -121,14 +121,14 @@ public:
 	 */
 	virtual void mouse( int width, int height, double x, double y, int button, int action ) {}
 	/**
-	 \~english @brief Function that catches passive cursor event.
+	 \~english @brief Function that catches dragging cursor event.
 	 @param[in] width Window width.
 	 @param[in] height Window height.
 	 @param[in] x Cursor position on x pixel coordinate.
 	 @param[in] y Cursor position on y pixel coordinate.
 	 @param[in] u Cursor movement on x pixel coordinate.
 	 @param[in] v Cursor movement on y pixel coordinate.
-	 \~japanese @brief カーソルが動いた時に呼び出される関数。
+	 \~japanese @brief カーソルをドラッグした時に呼び出される関数。
 	 @param[in] width ウィンドウの幅。
 	 @param[in] height ウィンドウの高さ。
 	 @param[in] x カーソルの x 座標のピクセル座標。

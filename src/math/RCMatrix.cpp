@@ -210,11 +210,18 @@ private:
 	virtual void copy(const RCMatrix_interface<N,T> *m ) override {
 		//
 		initialize(m->rows(),m->columns());
-		m_parallel.for_each(rows(),[&]( size_t row ) {
-			m->const_for_each(row,[&]( N column, T value ) {
-				add_to_element(row,column,value);
+		const auto *mate_matrix = dynamic_cast<const RCMatrix<N,T> *>(m);
+		if( mate_matrix ) {
+			m_parallel.for_each(rows(),[&]( size_t row ) {
+				m_matrix[row] = mate_matrix->m_matrix[row];
 			});
-		});
+		} else {
+			m_parallel.for_each(rows(),[&]( size_t row ) {
+				m->const_for_each(row,[&]( N column, T value ) {
+					add_to_element(row,column,value);
+				});
+			});
+		}
 	}
 	virtual void clear( N row ) override {
 		//

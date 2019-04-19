@@ -53,32 +53,13 @@ public:
 			//
 			if( ! fixed[n] ) {
 				double levelset0 = levelset[n];
-				std::vector<vec2d> intersections;
 				for( unsigned k=0; k<connections[n].size(); ++k ) {
 					size_t m = connections[n][k];
 					double levelset1 = levelset[m];
 					if( levelset0 * levelset1 < 0.0 ) {
-						double a = levelset0/(levelset0-levelset1);
-						intersections.push_back((1.0-a)*positions[n]+a*positions[m]);
+						fixed[n] = true;
+						break;
 					}
-				}
-				if( intersections.size() ) {
-					std::vector<double> length;
-					if( intersections.size() > 1 ) {
-						for( unsigned k=0; k<intersections.size(); ++k ) {
-							length.push_back((positions[n]-intersections[k]).norm2());
-						}
-						std::vector<size_t> order_map(intersections.size());
-						std::iota(order_map.begin(), order_map.end(), 0);
-						std::sort(order_map.begin(), order_map.end(), [&](size_t a, size_t b){ return length[a] < length[b]; });
-						//
-						vec2d p = positions[n];
-						meshutility->distance(intersections[order_map[0]],intersections[order_map[1]],p);
-						levelset[n] = std::copysign((positions[n]-p).len(),levelset[n]);
-					} else {
-						levelset[n] = std::copysign((positions[n]-intersections[0]).len(),levelset[n]);
-					}
-					fixed[n] = true;
 				}
 			}
 		});
@@ -91,10 +72,7 @@ public:
 		// Gather unfixed nodes
 		std::list<size_t> unfixed;
 		for( size_t n=0; n<positions.size(); n++ ) {
-			if( ! connections[n].empty() && ! fixed[n] ) {
-				levelset[n] = std::copysign(distance,levelset[n]);
-				unfixed.push_back(n);
-			}
+			if( ! connections[n].empty() && ! fixed[n] ) unfixed.push_back(n);
 		}
 		//
 		// Now repeat the propagation...

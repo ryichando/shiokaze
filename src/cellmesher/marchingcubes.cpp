@@ -125,7 +125,6 @@ private:
 	//
 };
 //
-//
 extern "C" module * create_instance() {
 	return new marchingcubes;
 }
