@@ -180,7 +180,7 @@ private:
 		if( m_param.gain && m_target_volume ) {
 			double x = (m_current_volume-m_target_volume)/m_target_volume;
 			double y = m_y_prev + x*dt; m_y_prev = y;
-			double kp = m_param.gain * 2.3/(25.0*dt);
+			double kp = m_param.gain * 2.3/(25.0*0.01);
 			double ki = kp*kp/16.0;
 			rhs_correct = -(kp*x+ki*y)/(x+1.0);
 			rhs->for_each([&]( unsigned row, double &value ) {

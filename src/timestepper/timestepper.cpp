@@ -195,7 +195,7 @@ private:
 	bool m_should_export_video {false};
 	int m_frame;
 	unsigned m_maximal_frame;
-	unsigned m_maximal_substeps {100};
+	unsigned m_maximal_substeps {10};
 	unsigned m_step;
 	//
 };

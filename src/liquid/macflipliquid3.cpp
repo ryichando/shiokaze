@@ -23,9 +23,12 @@
 */
 //
 #include "macflipliquid3.h"
-#include <shiokaze/utility/utility.h>
 #include <shiokaze/array/shared_array3.h>
+#include <shiokaze/array/shared_bitarray3.h>
 #include <shiokaze/array/macarray_extrapolator3.h>
+#include <shiokaze/array/macarray_interpolator3.h>
+#include <shiokaze/array/array_upsampler3.h>
+#include <shiokaze/array/array_interpolator3.h>
 #include <shiokaze/array/array_utility3.h>
 #include <shiokaze/graphics/graphics_utility.h>
 #include <shiokaze/core/console.h>
@@ -36,7 +39,9 @@
 SHKZ_USING_NAMESPACE
 //
 macflipliquid3::macflipliquid3 () {
+	//
 	m_param.PICFLIP = 0.95;
+	m_highres_particlerasterizer.set_name("Highresolution Particle Rasterizer for FLIP","HighresRasterizer");
 }
 //
 void macflipliquid3::configure( configuration &config ) {
@@ -45,18 +50,30 @@ void macflipliquid3::configure( configuration &config ) {
 	assert( m_param.PICFLIP >= 0.0 && m_param.PICFLIP <= 1.0 );
 	//
 	macliquid3::configure(config);
+	//
+	m_double_shape = 2 * m_shape;
+	m_half_dx = 0.5 * m_dx;
+	//
+	config.set_default_double("HighresRasterizer.RadiusFactor",1.0);
+	config.set_default_double("HighresRasterizer.WeightFactor",2.0);
+	config.set_default_unsigned("HighresRasterizer.NeighborLookUpCells",2);
+	//
+	m_highres_particlerasterizer->set_environment("shape",&m_double_shape);
+	m_highres_particlerasterizer->set_environment("dx",&m_half_dx);
+	//
+	m_highres_macsurfacetracker->set_environment("shape",&m_double_shape);
+	m_highres_macsurfacetracker->set_environment("dx",&m_half_dx);
 }
 //
 void macflipliquid3::post_initialize () {
 	//
 	macliquid3::post_initialize();
-	extend_both();
 	//
 	scoped_timer timer(this);
 	timer.tick(); console::dump( ">>> Started FLIP initialization\n" );
 	//
-	m_flip->assign_solid(m_solid);
-	m_flip->seed(m_fluid,m_velocity);
+	extend_both();
+	m_flip->seed(m_fluid,[&](const vec3d &p){ return interpolate_solid(p); },m_velocity);
 	//
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
 }
@@ -76,13 +93,38 @@ void macflipliquid3::idle() {
 	shared_macarray3<double> momentum(m_shape);
 	shared_macarray3<double> mass(m_shape);
 	//
-	// Advect FLIP particles and get the levelset after the advection
-	m_flip->advect(m_velocity,m_timestepper->get_current_time(),dt);
-	m_flip->get_levelset(m_fluid);
+	// Update fluid levelset
+	m_flip->update([&](const vec3d &p){ return interpolate_solid(p); },m_fluid);
+	//
+	// Advect fluid levelset
 	m_macsurfacetracker->assign(m_solid,m_fluid);
+	m_macsurfacetracker->advect(m_velocity,dt);
+	m_macsurfacetracker->get(m_fluid);
+	//
+	// Advect FLIP particles
+	m_flip->advect(
+		[&](const vec3d &p){ return interpolate_solid(p); },
+		[&](const vec3d &p){ return interpolate_velocity(p); },
+		m_timestepper->get_current_time(),dt);
 	//
 	// Grid velocity advection
-	m_macadvection->advect_vector(m_velocity,m_velocity,m_fluid,dt,"velocity");
+	m_macadvection->advect_vector(m_velocity,m_velocity,m_fluid,dt);
+	//
+	// Mark bullet particles
+	m_flip->mark_bullet(
+		[&](const vec3d &p){ return interpolate_fluid(p); },
+		[&](const vec3d &p){ return interpolate_velocity(p); },
+		m_timestepper->get_current_time()
+	);
+	//
+	// Correct positions
+	m_flip->correct([&](const vec3d &p){ return interpolate_fluid(p); });
+	//
+	// Reseed particles
+	m_flip->seed(m_fluid,
+		[&](const vec3d &p){ return interpolate_solid(p); },
+		m_velocity
+	);
 	//
 	// Splat momentum and mass of FLIP particles onto grids
 	m_flip->splat(momentum(),mass());
@@ -120,6 +162,8 @@ void macflipliquid3::idle() {
 	//
 	// Project
 	m_macproject->project(dt,m_velocity,m_solid,m_fluid);
+	//
+	// Extend both the level set and velocity
 	extend_both();
 	//
 	// Update FLIP momentum
@@ -135,7 +179,80 @@ void macflipliquid3::idle() {
 }
 //
 void macflipliquid3::do_export_mesh( unsigned frame ) const {
-	m_flip->export_mesh_and_ballistic_particles(frame,m_export_path);
+	//
+	scoped_timer timer(this);
+	//
+	timer.tick(); console::dump( "Computing high-resolution levelset..." );
+	//
+	shared_array3<double> doubled_fluid(m_double_shape.cell(),1.0);
+	shared_array3<double> doubled_solid(m_double_shape.nodal(),1.0);
+	//
+	array_upsampler3::upsample_to_double_cell<double>(m_fluid,m_dx,doubled_fluid());
+	array_upsampler3::upsample_to_double_nodal<double>(m_solid,m_dx,doubled_solid());
+	//
+	shared_bitarray3 mask(m_double_shape);
+	shared_array3<double> sizing_array(m_shape);
+	//
+	std::vector<particlerasterizer3_interface::Particle3> points, ballistic_points;
+	std::vector<macflip3_interface::particle3> particles = m_flip->get_particles();
+	for( int n=0; n<particles.size(); ++n ) {
+		//
+		particlerasterizer3_interface::Particle3 point;
+		point.p = particles[n].p;
+		point.r = particles[n].r;
+		double levelset_value = interpolate_fluid(particles[n].p);
+		//
+		if( levelset_value < 0.5*m_dx ) {
+			points.push_back(point);
+			mask().set(mask->shape().clamp(point.p/m_half_dx));
+		} else {
+			if( particles[n].bullet ) ballistic_points.push_back(point);
+		}
+		//
+		vec3i pi = m_shape.find_cell(point.p/m_dx);
+		sizing_array->set(pi,std::max(particles[n].sizing_value,sizing_array()(pi)));
+	}
+	//
+	mask().dilate(4);
+	doubled_fluid->activate_as(mask());
+	//
+	shared_array3<double> particle_levelset(m_double_shape,0.125*m_dx);
+	m_highres_particlerasterizer->build_levelset(particle_levelset(),mask(),points);
+	//
+	doubled_fluid->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
+		double rate = array_interpolator3::interpolate(sizing_array(),0.5*vec3d(i,j,k));
+		double f = it(), p = particle_levelset()(i,j,k);
+		it.set( rate * std::min(f,p) + (1.0-rate) * f );
+	});
+	//
+	console::dump( "Done. Took %s\n", timer.stock("generate_highres_mesh").c_str());
+	//
+	macsurfacetracker3_driver &highres_macsurfacetracker = const_cast<macsurfacetracker3_driver &>(m_highres_macsurfacetracker);
+	highres_macsurfacetracker->assign(doubled_solid(),doubled_fluid());
+	//
+	auto vertex_color_func = [&](const vec3d &p) { return p; };
+	auto uv_coordinate_func = [&](const vec3d &p) { return vec2d(p[0],0.0); };
+	//
+	timer.tick(); console::dump( "Generating mesh..." );
+	highres_macsurfacetracker->export_fluid_mesh(m_export_path,frame,vertex_color_func,uv_coordinate_func);
+	console::dump( "Done. Took %s\n", timer.stock("export_highres_mesh").c_str());
+	//
+	std::string particle_path = console::format_str("%s/%d_particles.dat",m_export_path.c_str(),frame);
+	timer.tick(); console::dump( "Writing ballistic particles..." );
+	FILE *fp = fopen(particle_path.c_str(),"wb");
+	size_t size = ballistic_points.size();
+	fwrite(&size,1,sizeof(unsigned),fp);
+	for( size_t n=0; n<size; ++n ) {
+		float position[3] = { (float)ballistic_points[n].p.v[0],
+							  (float)ballistic_points[n].p.v[1],
+							  (float)ballistic_points[n].p.v[2] };
+		float radius = ballistic_points[n].r;
+		fwrite(position,3,sizeof(float),fp);
+		fwrite(&radius,1,sizeof(float),fp);
+	}
+	fclose(fp);
+	console::dump( "Done. Size=%d. Took %s\n", size, timer.stock("write_ballistic").c_str());
+	//
 	do_export_solid_mesh();
 }
 //
@@ -183,6 +300,18 @@ void macflipliquid3::render_mesh( unsigned frame ) const {
 	}
 	//
 	global_timer::resume();
+}
+//
+double macflipliquid3::interpolate_fluid( const vec3d &p ) const {
+	return array_interpolator3::interpolate(m_fluid,p/m_dx-vec3d(0.5,0.5,0.5));
+}
+//
+double macflipliquid3::interpolate_solid( const vec3d &p ) const {
+	return array_interpolator3::interpolate(m_solid,p/m_dx);
+}
+//
+vec3d macflipliquid3::interpolate_velocity( const vec3d &p ) const {
+	return macarray_interpolator3::interpolate(m_velocity,vec3d(),m_dx,p);
 }
 //
 void macflipliquid3::draw( graphics_engine &g, int width, int height ) const {

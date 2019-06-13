@@ -52,8 +52,10 @@ private:
 	virtual void advect( const macarray3<double> &u, double dt ) override {
 		//
 		scoped_timer timer(this);
-		shared_array3<double> fluid_save(m_fluid);
-		m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt,"levelset");
+		if( dt ) {
+			shared_array3<double> fluid_save(m_fluid);
+			m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt,"levelset");
+		}
 		//
 		// Re-initialize
 		timer.tick(); console::dump( "Re-distancing fluid levelsets..." );
@@ -90,25 +92,43 @@ private:
 		double value;
 		for( int i=0; i<m_shape[0]; ++i ) for( int j=0; j<m_shape[1]; ++j ) {
 			value = fluid_closed()(i,j,0);
-			if( value < 0.0 ) fluid_closed().set(i,j,0,eps);
+			if( value < 0.0 ) {
+				fluid_closed().set(i,j,0,eps);
+				fluid_closed().set(i,j,1,fluid_closed()(i,j,1));
+			}
 			value = fluid_closed()(i,j,m_shape[2]-1);
-			if( value < 0.0 ) fluid_closed().set(i,j,m_shape[2]-1,eps);
+			if( value < 0.0 ) {
+				fluid_closed().set(i,j,m_shape[2]-1,eps);
+				fluid_closed().set(i,j,m_shape[2]-2,fluid_closed()(i,j,m_shape[2]-2));
+			}
 		}
 		//
 		// Left and right
 		for( int j=0; j<m_shape[1]; ++j ) for( int k=0; k<m_shape[2]; ++k ) {
 			value = fluid_closed()(0,j,k);
-			if( value < 0.0 ) fluid_closed().set(0,j,k,eps);
+			if( value < 0.0 ) {
+				fluid_closed().set(0,j,k,eps);
+				fluid_closed().set(1,j,k,fluid_closed()(1,j,k));
+			}
 			value = fluid_closed()(m_shape[0]-1,j,k);
-			if( value < 0.0 ) fluid_closed().set(m_shape[0]-1,j,k,eps);
+			if( value < 0.0 ) {
+				fluid_closed().set(m_shape[0]-1,j,k,eps);
+				fluid_closed().set(m_shape[0]-2,j,k,fluid_closed()(m_shape[0]-2,j,k));
+			}
 		}
 		//
 		// Floor and ceiling
 		for( int k=0; k<m_shape[2]; ++k ) for( int i=0; i<m_shape[0]; ++i ) {
 			value = fluid_closed()(i,0,k);
-			if( value < 0.0 ) fluid_closed().set(i,0,k,eps);
+			if( value < 0.0 ) {
+				fluid_closed().set(i,0,k,eps);
+				fluid_closed().set(i,1,k,fluid_closed()(i,1,k));
+			}
 			value = fluid_closed()(i,m_shape[1]-1,k);
-			if( value < 0.0 ) fluid_closed().set(i,m_shape[1]-1,k,eps);
+			if( value < 0.0 ) {
+				fluid_closed().set(i,m_shape[1]-1,k,eps);
+				fluid_closed().set(i,m_shape[1]-1,k,fluid_closed()(i,m_shape[1]-2,k));
+			}
 		}
 		//
 		export_fluid_mesh(path_wo_suffix+"_enclosed",fluid_closed(), ! m_param.enclose_solid, vertex_color_func,uv_coordinate_func);

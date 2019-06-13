@@ -45,8 +45,10 @@ private:
 	}
 	virtual void advect( const macarray2<double> &u, double dt ) override {
 		//
-		shared_array2<double> fluid_save(m_fluid);
-		m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt);
+		if( dt ) {
+			shared_array2<double> fluid_save(m_fluid);
+			m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt);
+		}
 		m_redistancer->redistance(m_fluid,m_param.levelset_half_bandwidth_count);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 	}

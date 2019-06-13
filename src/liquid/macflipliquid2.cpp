@@ -24,8 +24,10 @@
 //
 #include "macflipliquid2.h"
 #include <shiokaze/array/shared_array2.h>
+#include <shiokaze/array/shared_bitarray2.h>
 #include <shiokaze/array/macarray_extrapolator2.h>
 #include <shiokaze/array/macarray_interpolator2.h>
+#include <shiokaze/array/array_upsampler2.h>
 #include <shiokaze/array/array_interpolator2.h>
 #include <shiokaze/utility/utility.h>
 #include <cmath>
@@ -42,15 +44,26 @@ void macflipliquid2::configure( configuration &config ) {
 	assert( m_param.PICFLIP >= 0.0 && m_param.PICFLIP <= 1.0 );
 	//
 	macliquid2::configure(config);
+	//
+	m_double_shape = 2 * m_shape;
+	m_half_dx = 0.5 * m_dx;
+	//
+	config.set_default_double("HighresRasterizer.RadiusFactor",1.0);
+	config.set_default_double("HighresRasterizer.WeightFactor",2.0);
+	config.set_default_unsigned("HighresRasterizer.NeighborLookUpCells",2);
+	//
+	m_highres_particlerasterizer->set_environment("shape",&m_double_shape);
+	m_highres_particlerasterizer->set_environment("dx",&m_half_dx);
+	//
+	m_highres_macsurfacetracker->set_environment("shape",&m_double_shape);
+	m_highres_macsurfacetracker->set_environment("dx",&m_half_dx);
 }
 //
 void macflipliquid2::post_initialize () {
 	//
 	macliquid2::post_initialize();
 	extend_both();
-	//
-	m_flip->assign_solid(m_solid);
-	m_flip->seed(m_fluid,m_velocity);
+	m_flip->seed(m_fluid,[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
 }
 //
 void macflipliquid2::idle() {
@@ -64,13 +77,38 @@ void macflipliquid2::idle() {
 	shared_macarray2<double> momentum(m_shape);
 	shared_macarray2<double> mass(m_shape);
 	//
-	// Advect FLIP particles and get the levelset after the advection
-	m_flip->advect(m_velocity,m_timestepper->get_current_time(),dt);
-	m_flip->get_levelset(m_fluid);
+	// Update fluid levelset
+	m_flip->update([&](const vec2d &p){ return interpolate_solid(p); },m_fluid);
+	//
+	// Advect fluid levelset
 	m_macsurfacetracker->assign(m_solid,m_fluid);
+	m_macsurfacetracker->advect(m_velocity,dt);
+	m_macsurfacetracker->get(m_fluid);
+	//
+	// Advect FLIP particles
+	m_flip->advect(
+		[&](const vec2d &p){ return interpolate_solid(p); },
+		[&](const vec2d &p){ return interpolate_velocity(p); },
+		m_timestepper->get_current_time(),dt);
 	//
 	// Grid velocity advection
 	m_macadvection->advect_vector(m_velocity,m_velocity,m_fluid,dt);
+	//
+	// Mark bullet particles
+	m_flip->mark_bullet(
+		[&](const vec2d &p){ return interpolate_fluid(p); },
+		[&](const vec2d &p){ return interpolate_velocity(p); },
+		m_timestepper->get_current_time()
+	);
+	//
+	// Correct positions
+	m_flip->correct([&](const vec2d &p){ return interpolate_fluid(p); });
+	//
+	// Reseed particles
+	m_flip->seed(m_fluid,
+		[&](const vec2d &p){ return interpolate_solid(p); },
+		m_velocity
+	);
 	//
 	// Splat momentum and mass of FLIP particles onto grids
 	m_flip->splat(momentum(),mass());
@@ -103,6 +141,8 @@ void macflipliquid2::idle() {
 	//
 	// Project
 	m_macproject->project(dt,m_velocity,m_solid,m_fluid);
+	//
+	// Extend both the level set and velocity
 	extend_both();
 	//
 	// Update FLIP velocity
@@ -112,13 +152,78 @@ void macflipliquid2::idle() {
 	m_macstats->dump_stats(m_solid,m_fluid,m_velocity,m_timestepper.get());
 }
 //
+double macflipliquid2::interpolate_fluid( const vec2d &p ) const {
+	return array_interpolator2::interpolate(m_fluid,p/m_dx-vec2d(0.5,0.5));
+}
+//
+double macflipliquid2::interpolate_solid( const vec2d &p ) const {
+	return array_interpolator2::interpolate(m_solid,p/m_dx);
+}
+//
+vec2d macflipliquid2::interpolate_velocity( const vec2d &p ) const {
+	return macarray_interpolator2::interpolate(m_velocity,vec2d(),m_dx,p);
+}
+//
+void macflipliquid2::draw_highresolution( graphics_engine &g, int width, int height ) const {
+	//
+	shared_array2<double> doubled_fluid(m_double_shape.cell(),1.0);
+	shared_array2<double> doubled_solid(m_double_shape.nodal(),1.0);
+	//
+	array_upsampler2::upsample_to_double_cell<double>(m_fluid,m_dx,doubled_fluid());
+	array_upsampler2::upsample_to_double_nodal<double>(m_solid,m_dx,doubled_solid());
+	//
+	shared_bitarray2 mask(m_double_shape);
+	shared_array2<double> sizing_array(m_shape);
+	//
+	std::vector<particlerasterizer2_interface::Particle2> points, ballistic_points;
+	std::vector<macflip2_interface::particle2> particles = m_flip->get_particles();
+	for( int n=0; n<particles.size(); ++n ) {
+		//
+		particlerasterizer2_interface::Particle2 point;
+		point.p = particles[n].p;
+		point.r = particles[n].r;
+		double levelset_value = interpolate_fluid(particles[n].p);
+		//
+		if( levelset_value < 0.5*m_dx ) {
+			points.push_back(point);
+			mask().set(mask->shape().clamp(point.p/m_half_dx));
+		} else {
+			if( particles[n].bullet ) ballistic_points.push_back(point);
+		}
+		//
+		vec2i pi = m_shape.find_cell(point.p/m_dx);
+		sizing_array->set(pi,std::max(particles[n].sizing_value,sizing_array()(pi)));
+	}
+	//
+	mask().dilate(4);
+	doubled_fluid->activate_as(mask());
+	//
+	shared_array2<double> particle_levelset(m_double_shape,0.125*m_dx);
+	m_highres_particlerasterizer->build_levelset(particle_levelset(),mask(),points);
+	//
+	doubled_fluid->parallel_actives([&](int i, int j, auto &it, int tn) {
+		double rate = array_interpolator2::interpolate(sizing_array(),0.5*vec2d(i,j));
+		double f = it(), p = particle_levelset()(i,j);
+		it.set( rate * std::min(f,p) + (1.0-rate) * f );
+	});
+	//
+	macsurfacetracker2_driver &highres_macsurfacetracker = const_cast<macsurfacetracker2_driver &>(m_highres_macsurfacetracker);
+	highres_macsurfacetracker->assign(doubled_solid(),doubled_fluid());
+	//
+	// Draw high resolution level set
+	highres_macsurfacetracker->draw(g);
+	//
+	// Draw FLIP
+	m_flip->draw(g,m_timestepper->get_current_time());
+}
+//
 void macflipliquid2::draw( graphics_engine &g, int width, int height ) const {
 	//
 	// Draw grid lines
 	m_gridvisualizer->draw_grid(g);
 	//
-	// Draw FLIP
-	m_flip->draw(g,m_timestepper->get_current_time());
+	// Draw simulation
+	draw_highresolution(g,width,height);
 	//
 	// Draw projection component
 	m_macproject->draw(g);

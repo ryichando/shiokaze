@@ -121,7 +121,6 @@ void macliquid2::drag( int width, int height, double x, double y, double u, doub
 void macliquid2::inject_external_force( macarray2<double> &m_velocity, double dt ) {
 	//
 	if( m_force_exist ) {
-		m_velocity.set_touch_only_actives(true);
 		m_velocity += m_external_force;
 		m_external_force.clear();
 		m_force_exist = false;

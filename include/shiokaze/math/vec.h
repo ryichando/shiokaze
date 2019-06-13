@@ -145,6 +145,15 @@ template <class T, unsigned D> struct vec {
 		return true;
 	}
 	/**
+	 \~english @brief Get if the vector is not equal to the input vector.
+	 @return \c true if the vector is not equal to the input vector. \c false otherwise.
+	 \~japanese @brief ベクトルが入力のベクトルと違うか取得する。
+	 @return もしベクトルが入力のベクトルと違うなら \c true を、そうでなければ \c false を返す。
+	 */
+	bool operator!=(const vec &v) const {
+		return ! (*this == v);
+	}
+	/**
 	 \~english @brief Add a vector.
 	 @param[in] v Vector to add.
 	 @return Added vector.

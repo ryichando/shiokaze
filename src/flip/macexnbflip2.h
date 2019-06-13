@@ -25,7 +25,6 @@
 #ifndef SHKZ_MACEXNBFLIP2_H
 #define SHKZ_MACEXNBFLIP2_H
 //
-#include <shiokaze/core/dylibloader.h>
 #include "macnbflip2.h"
 //
 SHKZ_BEGIN_NAMESPACE
@@ -36,10 +35,9 @@ protected:
 	LONG_NAME("MAC Extended Narrowband FLIP 2D")
 	//
 	virtual void configure( configuration &config ) override;
-	virtual void sizing_func( array2<double> &sizing_array, const bitarray2 &mask, const macarray2<double> &velocity, double dt ) override;
+	virtual void compute_sizing_func( const array2<double> &fluid, const bitarray2 &mask, const macarray2<double> &velocity, array2<double> &sizing_array ) const override;
 	//
 	struct Parameters {
-		double decay_rate {10.0};
 		unsigned diffuse_count {4};
 		double diffuse_rate {0.75};
 		double threshold_u {0.2};
@@ -51,12 +49,12 @@ protected:
 	//
 	Parameters m_param;
 	//
+private:
+	//
 	virtual void internal_sizing_func(array2<double> &sizing_array,
 							const bitarray2 &mask,
-							const array2<double> &solid,
 							const array2<double> &fluid,
-							const macarray2<double> &velocity,
-							double dt);
+							const macarray2<double> &velocity ) const;
 };
 //
 SHKZ_END_NAMESPACE

@@ -27,6 +27,7 @@
 //
 #include "macliquid2.h"
 #include <shiokaze/flip/macflip2_interface.h>
+#include <shiokaze/particlerasterizer/particlerasterizer2_interface.h>
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -49,7 +50,20 @@ protected:
 	};
 	Parameters m_param;
 	//
+	shape2 m_double_shape;
+	double m_half_dx;
+	//
 	macflip2_driver m_flip{this,"macexnbflip2"};
+	macsurfacetracker2_driver m_highres_macsurfacetracker{this,"maclevelsetsurfacetracker2"};
+	particlerasterizer2_driver m_highres_particlerasterizer{this,"flatrasterizer2"};
+	//
+	double interpolate_fluid( const vec2d &p ) const;
+	double interpolate_solid( const vec2d &p ) const;
+	vec2d interpolate_velocity( const vec2d &p ) const;
+	//
+private:
+	//
+	void draw_highresolution( graphics_engine &g, int width, int height ) const;
 };
 //
 SHKZ_END_NAMESPACE

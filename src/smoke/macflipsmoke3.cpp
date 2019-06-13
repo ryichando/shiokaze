@@ -27,6 +27,8 @@
 #include <shiokaze/core/console.h>
 #include <shiokaze/core/timer.h>
 #include <shiokaze/array/shared_array3.h>
+#include <shiokaze/array/macarray_interpolator3.h>
+#include <shiokaze/array/array_interpolator3.h>
 #include <cmath>
 //
 SHKZ_USING_NAMESPACE
@@ -54,8 +56,9 @@ void macflipsmoke3::post_initialize () {
 	scoped_timer timer(this);
 	timer.tick(); console::dump( ">>> Started FLIP initialization\n" );
 	//
-	m_flip->assign_solid(m_solid);
-	m_flip->seed(m_fluid,m_velocity);
+	shared_array3<double> fluid(m_shape);
+	fluid->set_as_levelset(m_dx);
+	m_flip->seed(fluid(),[&](const vec3d &p){ return interpolate_solid(p); },m_velocity);
 	//
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
 }
@@ -71,7 +74,21 @@ void macflipsmoke3::idle() {
 	timer.tick(); console::dump( ">>> %s step started (dt=%.2e,CFL=%.2f)...\n", dt, CFL, console::nth(step).c_str());
 	//
 	// Advect FLIP particles and get the levelset after the advection
-	m_flip->advect(m_velocity,m_timestepper->get_current_time(),dt);
+	m_flip->advect(
+		[&](const vec3d &p){ return interpolate_solid(p); },
+		[&](const vec3d &p){ return interpolate_velocity(p); },
+		m_timestepper->get_current_time(),dt);
+	//
+	// Correct positions
+	m_flip->correct([&](const vec3d &p){ return -1.0; });
+	//
+	// Reseed particles
+	shared_array3<double> fluid(m_shape);
+	fluid->set_as_levelset(m_dx);
+	m_flip->seed(m_fluid,
+		[&](const vec3d &p){ return interpolate_solid(p); },
+		m_velocity
+	);
 	//
 	// Advection
 	if( (macsmoke3::m_param).use_dust ) advect_dust_particles(m_velocity,dt);
@@ -120,6 +137,14 @@ void macflipsmoke3::idle() {
 	//
 	// Export density
 	export_density();
+}
+//
+double macflipsmoke3::interpolate_solid( const vec3d &p ) const {
+	return array_interpolator3::interpolate(m_solid,p/m_dx);
+}
+//
+vec3d macflipsmoke3::interpolate_velocity( const vec3d &p ) const {
+	return macarray_interpolator3::interpolate(m_velocity,vec3d(),m_dx,p);
 }
 //
 void macflipsmoke3::draw( graphics_engine &g, int width, int height ) const {

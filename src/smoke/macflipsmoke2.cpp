@@ -24,6 +24,8 @@
 //
 #include "macflipsmoke2.h"
 #include <shiokaze/array/shared_array2.h>
+#include <shiokaze/array/macarray_interpolator2.h>
+#include <shiokaze/array/array_interpolator2.h>
 #include <shiokaze/graphics/graphics_utility.h>
 #include <cmath>
 //
@@ -49,8 +51,9 @@ void macflipsmoke2::post_initialize () {
 	//
 	macsmoke2::post_initialize();
 	//
-	m_flip->assign_solid(m_solid);
-	m_flip->seed(m_fluid,m_velocity);
+	shared_array2<double> fluid(m_shape);
+	fluid->set_as_levelset(m_dx);
+	m_flip->seed(fluid(),[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
 }
 //
 void macflipsmoke2::idle() {
@@ -59,7 +62,21 @@ void macflipsmoke2::idle() {
 	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	//
 	// Advect FLIP particles and get the levelset after the advection
-	m_flip->advect(m_velocity,m_timestepper->get_current_time(),dt);
+	m_flip->advect(
+		[&](const vec2d &p){ return interpolate_solid(p); },
+		[&](const vec2d &p){ return interpolate_velocity(p); },
+		m_timestepper->get_current_time(),dt);
+	//
+	// Correct positions
+	m_flip->correct([&](const vec2d &p){ return -1.0; });
+	//
+	// Reseed particles
+	shared_array2<double> fluid(m_shape);
+	fluid->set_as_levelset(m_dx);
+	m_flip->seed(m_fluid,
+		[&](const vec2d &p){ return interpolate_solid(p); },
+		m_velocity
+	);
 	//
 	// Advect density and velocity
 	if( (macsmoke2::m_param).use_dust ) advect_dust_particles(m_velocity,dt);
@@ -103,6 +120,14 @@ void macflipsmoke2::idle() {
 	//
 	// Report stats
 	m_macstats->dump_stats(m_solid,m_fluid,m_velocity,m_timestepper.get());
+}
+//
+double macflipsmoke2::interpolate_solid( const vec2d &p ) const {
+	return array_interpolator2::interpolate(m_solid,p/m_dx);
+}
+//
+vec2d macflipsmoke2::interpolate_velocity( const vec2d &p ) const {
+	return macarray_interpolator2::interpolate(m_velocity,vec2d(),m_dx,p);
 }
 //
 void macflipsmoke2::draw( graphics_engine &g, int width, int height ) const {

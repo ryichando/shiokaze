@@ -43,30 +43,40 @@ SHKZ_BEGIN_NAMESPACE
 class macnbflip2 : public macflip2_interface {
 public:
 	//
-	macnbflip2();
 	LONG_NAME("MAC Narrowband FLIP 2D")
 	//
-	// Set solid
-	virtual void assign_solid( const array2<double> &solid ) override;
-	//
 	// Seed FLIP particles
-	virtual size_t seed( const array2<double> &fluid, const macarray2<double> &velocity ) override;
+	virtual size_t seed( const array2<double> &fluid,
+						 std::function<double(const vec2d &p)> solid,
+						 const macarray2<double> &velocity ) override;
 	//
 	// Map FLIP momentum from particles to grid
 	virtual void splat( macarray2<double> &momentum, macarray2<double> &mass ) const override;
 	//
 	// Advcect particles through the velocity field
-	virtual void advect( const macarray2<double> &velocity, double time, double dt ) override;
+	virtual void advect( std::function<double(const vec2d &p)> solid,
+						 std::function<vec2d(const vec2d &p)> velocity,
+						 double time, double dt ) override;
+	//
+	// Mark bullet particles
+	virtual void mark_bullet( std::function<double(const vec2d &p)> fluid, std::function<vec2d(const vec2d &p)> velocity, double time ) override;
+	//
+	// Correct particle position
+	virtual void correct( std::function<double(const vec2d &p)> fluid ) override;
+	//
+	// Update fluid level set
+	virtual void update( std::function<double(const vec2d &p)> solid, array2<double> &fluid ) override;
 	//
 	// Update FLIP velocity
-	virtual void update( const macarray2<double> &prev_velocity, const macarray2<double> &new_velocity,
+	virtual void update( const macarray2<double> &prev_velocity,
+						 const macarray2<double> &new_velocity,
 						 double dt, vec2d gravity, double PICFLIP ) override;
 	//
 	// Update FLIP velocity
 	virtual void update( std::function<void(const vec2d &p, vec2d &velocity, double &mass, bool bullet )> func ) override;
 	//
-	// Get levelset
-	virtual void get_levelset( array2<double> &fluid ) const override;
+	// Delete particles
+	virtual size_t remove(std::function<double(const vec2d &p)> test_function ) override;
 	//
 	// Draw FLIP partciels
 	virtual void draw( graphics_engine &g, double time=0.0 ) const override;
@@ -88,21 +98,16 @@ protected:
 		bool use_apic {true};
 		double flip_convexhull_max_dist {3.0};
 		double fit_particle_dist {3};
-		unsigned levelset_half_bandwidth_count {3};
 		unsigned narrowband {3};
-		unsigned correct_depth {3};
 		int RK_order {2};
 		double erosion {0.5};
 		unsigned min_particles_per_cell {6};
 		unsigned max_particles_per_cell {6};
 		unsigned minimal_live_count {5};
 		double stiff {1.0};
-		bool velocity_correction {true};
 		double bullet_maximal_time {0.5};
-		double sizing_eps {1e-2};
-		bool loose_interior {true};
 		bool draw_particles {true};
-		bool draw_levelset {true};
+		double decay_rate {10.0};
 	};
 	//
 	Parameters m_param;
@@ -117,13 +122,8 @@ protected:
 		double r;
 		char bullet;
 		double bullet_time;
-		double bullet_sizing_value;
 		double sizing_value;
 		unsigned live_count;
-		//
-		vec2d gen_p;
-		char particle_id;
-		char last_split_id;
 	};
 	//
 	shape2 m_shape;						// Grid resolution
@@ -134,13 +134,9 @@ protected:
 	gridvisualizer2_driver m_gridvisualizer{this,"gridvisualizer2"};
 	macutility2_driver m_macutility{this,"macutility2"};
 	pointgridhash2_driver m_pointgridhash{this,"pointgridhash2"};
-	macadvection2_driver m_macadvection{this,"macadvection2"};
 	particlerasterizer2_driver m_particlerasterizer{this,"convexhullrasterizer2"};
 	redistancer2_driver m_redistancer{this,"pderedistancer2"};
 	parallel_driver m_parallel{this};
-	//
-	bool m_fluid_filled;
-	bool m_solid_exit;
 	//
 	virtual void sort_particles();
 	virtual void update_velocity_derivative( Particle& particle, const macarray2<double> &velocity );
@@ -149,31 +145,17 @@ protected:
 	static double grid_kernel( const vec2d &r, double dx );
 	static vec2d grid_gradient_kernel( const vec2d &r, double dx );
 	//
-	array2<double>	m_fluid{this};					// Internal fluid levelset
-	array2<double>	m_solid{this};					// Internal solid levelset
-	array2<double>	m_sizing_array{this};			// Internal sizing array
-	bitarray2		m_narrowband_mask{this};			// Internal narrowband mask
-	//
 	// A set of fluid levelset functions that are overridable
-	virtual void seed_set_fluid( const array2<double> &fluid );
-	virtual void initialize_fluid();
-	virtual void initialize_solid();
-	virtual void advect_levelset( const macarray2<double> &velocity, double dt, double erosion );
-	virtual void collision_levelset( std::function<double(const vec2d& p)> levelset );
-	virtual double interpolate_fluid( const vec2d &p ) const;
-	virtual double interpolate_solid( const vec2d &p ) const;
-	virtual vec2d interpolate_fluid_gradient( const vec2d &p ) const;
-	virtual vec2d interpolate_solid_gradient( const vec2d &p ) const;
-	virtual void draw_flip_circle ( graphics_engine &g, const vec2d &p, double r, bool bullet, double sizing_value ) const;
+	virtual double interpolate_fluid( const array2<double> &fluid, const vec2d &p ) const;
+	virtual vec2d interpolate_fluid_gradient( std::function<double(const vec2d &p)> fluid, const vec2d &p ) const;
+	virtual vec2d interpolate_fluid_gradient( const array2<double> &fluid, const vec2d &p ) const;
+	virtual vec2d interpolate_solid_gradient( std::function<double(const vec2d &p)> solid, const vec2d &p ) const;
+	virtual void draw_flip_circle ( graphics_engine &g, const vec2d &p, double r, bool bullet ) const;
 	//
 	virtual void fit_particle( std::function<double(const vec2d &p)> fluid, Particle &particle, const vec2d &gradient ) const;
-	virtual void compute_narrowband();
-	virtual void collision();
-	virtual size_t correct( const macarray2<double> &velocity, const array2<double> *mask=nullptr );
-	virtual size_t reseed( const macarray2<double> &velocity, bool loose_interior=false );
-	virtual size_t mark_bullet( double time, const macarray2<double> &velocity );
+	virtual void collision( std::function<double(const vec2d &p)> solid );
+	virtual size_t mark_bullet( double time, std::function<double(const vec2d &p)> fluid, std::function<vec2d(const vec2d &p)> velocity );
 	virtual size_t remove_bullet( double time );
-	virtual void sizing_func( array2<double> &sizing_array, const bitarray2 &mask, const macarray2<double> &velocity, double dt );
 	//
 };
 //

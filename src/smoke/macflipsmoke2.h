@@ -44,6 +44,9 @@ protected:
 	virtual void configure( configuration &config ) override;
 	virtual void post_initialize() override;
 	//
+	double interpolate_solid( const vec2d &p ) const;
+	vec2d interpolate_velocity( const vec2d &p ) const;
+	//
 	macflip2_driver m_flip{this,"macnbflip2"};
 	//
 	struct Parameters {

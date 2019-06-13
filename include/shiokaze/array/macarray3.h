@@ -273,8 +273,25 @@ public:
 		cell_array.activate(active_cells);
 		cell_array.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			vec3d v;
-			for( unsigned dim : DIMS3 ) v[dim] = 0.5*((*this)[dim](i,j,k)+(*this)[dim](i+(dim==0),j+(dim==1),k+(dim==2)));
-			it.set(v);
+			char valid_count (0);
+			for( unsigned dim : DIMS3 ) {
+				char wsum (0);
+				double value (0.0);
+				if( (*this)[dim].active(i,j,k)) {
+					value += (*this)[dim](i,j,k);
+					wsum ++;
+				}
+				if( (*this)[dim].active(i+(dim==0),j+(dim==1),k+(dim==2))) {
+					value += (*this)[dim](i+(dim==0),j+(dim==1),k+(dim==2));
+					wsum ++;
+				}
+				if( wsum == 2 ) {
+					v[dim] = 0.5 * value;
+					valid_count ++;
+				}
+			}
+			if( valid_count == 3 ) it.set(v);
+			else it.set_off();
 		});
 	}
 	/**

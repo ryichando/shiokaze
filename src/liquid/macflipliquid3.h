@@ -52,7 +52,16 @@ protected:
 	};
 	Parameters m_param;
 	//
+	shape3 m_double_shape;
+	double m_half_dx;
+	//
 	macflip3_driver m_flip{this,"macexnbflip3"};
+	macsurfacetracker3_driver m_highres_macsurfacetracker{this,"maclevelsetsurfacetracker3"};
+	particlerasterizer3_driver m_highres_particlerasterizer{this,"flatrasterizer3"};
+	//
+	double interpolate_fluid( const vec3d &p ) const;
+	double interpolate_solid( const vec3d &p ) const;
+	vec3d interpolate_velocity( const vec3d &p ) const;
 };
 //
 SHKZ_END_NAMESPACE

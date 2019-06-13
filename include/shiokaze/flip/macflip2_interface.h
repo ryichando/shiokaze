@@ -34,28 +34,25 @@
 SHKZ_BEGIN_NAMESPACE
 //
 /** @file */
-/// \~english @brief Interface for FLIP. "macnbflip2" and "macexnbflip2" are provided as actual implementaions.
-/// \~japanese @brief FLIP のためのインターフェース。"macnbflip2" と "macexnbflip2" が実際の実装として提供される。
+/// \~english @brief Interface for FLIP. "macnbflip2" is provided as actual implementaions.
+/// \~japanese @brief FLIP のためのインターフェース。"macnbflip2" が実際の実装として提供される。
 class macflip2_interface : public recursive_configurable_module {
 public:
 	//
 	DEFINE_MODULE(macflip2_interface,"MAC FLIP 2D","FLIP","FLIP engine module")
 	/**
-	 \~english @brief Assign solid level set.
-	 @param[in] solid Level set grid of solid.
-	 \~japanese @brief 壁のレベルセットを与える。
-	 @param[in] solid 壁のレベルセットグリッド。
-	 */
-	virtual void assign_solid( const array2<double> &solid ) = 0;
-	/**
 	 \~english @brief Seed FLIP particles where the given input fluid level set region is inside.
 	 @param[in] fluid Level set grid of fluid.
-	 @param[in] velocity Grid of which initial velocity field is assigned.
+	 @param[in] solid Solid level set function.
+	 @param[in] velocity Initial velocity function.
 	 \~japanese @brief 与えられた入力の流体レベルセットグリッドの内部に FLIP 粒子を散布する。
 	 @param[in] fluid 流体のレベルセットグリッド。
-	 @param[in] velocity 初期速度場を与えるための速度場。
+	 @param[in] solid 壁のレベルセット関数。
+	 @param[in] velocity 初期速度場を与えるための速度関数。
 	 */
-	virtual size_t seed( const array2<double> &fluid, const macarray2<double> &velocity ) = 0;
+	virtual size_t seed( const array2<double> &fluid,
+						 std::function<double(const vec2d &p)> solid,
+						 const macarray2<double> &velocity ) = 0;
 	/**
 	 \~english @brief Splat FLIP momentum and mass onto the grids.
 	 @param[out] momentum Grid of momentum to be mapped.
@@ -67,30 +64,62 @@ public:
 	virtual void splat( macarray2<double> &momentum, macarray2<double> &mass ) const = 0;
 	/**
 	 \~english @brief Advect FLIP particles along the input velocity field.
-	 @param[in] velocity Velocity field from which to advect.
+	 @param[in] solid Solid level set function.
+	 @param[in] velocity Velocity function from which to advect.
 	 @param[in] time Time current simulation time. Alternatively speaking, accumulated dt.
 	 @param[in] dt Time step size.
 	 \~japanese @brief 入力の速度場に沿って FLIP 粒子を移流する。
-	 @param[in] velocity 移流に使われる速度場。
+	 @param[in] solid 壁のレベルセット関数。
+	 @param[in] velocity 移流に使われる速度関数。
 	 @param[in] time 現在のシミュレーション時間。あるいは、dt を蓄積したもの。
 	 @param[in] dt タイムステップサイズ。
 	 */
-	virtual void advect( const macarray2<double> &velocity, double time, double dt ) = 0;
+	virtual void advect( std::function<double(const vec2d &p)> solid,
+						 std::function<vec2d(const vec2d &p)> velocity,
+						 double time, double dt ) = 0;
+	/**
+	 \~english @brief Mark bullet particles.
+	 @param[in] fluid Fluid level set function.
+	 @param[in] velocity Velocity function.
+	 @param[in] time Time current simulation time. Alternatively speaking, accumulated dt.
+	 \~japanese @brief 弾丸粒子をマークする。
+	 @param[in] fluid 液体のレベルセット関数。
+	 @param[in] velocity 速度関数。
+	 @param[in] time 現在のシミュレーション時間。あるいは、dt を蓄積したもの。
+	 */
+	virtual void mark_bullet( std::function<double(const vec2d &p)> fluid, std::function<vec2d(const vec2d &p)> velocity, double time ) = 0;
+	/**
+	 \~english @brief Correct particle position.
+	 @param[in] fluid Fluid level set function.
+	 \~japanese @brief 粒子の位置を修正する。
+	 @param[in] fluid 液体のレベルセット関数。
+	 */
+	virtual void correct( std::function<double(const vec2d &p)> fluid ) = 0;
+	/**
+	 \~english @brief Update fluid level set.
+	 @param[in] fluid Liquid level set.
+	 @param[in] solid Solid level set function.
+	 \~japanese @brief 液体のレベルセットを更新する。
+	 @param[in] fluid 液体のレベルセット。
+	 @param[in] solid 壁のレベルセット関数。
+	 */
+	virtual void update( std::function<double(const vec2d &p)> solid, array2<double> &fluid ) = 0;
 	/**
 	 \~english @brief Update momentum of FLIP particles.
-	 @param[in] prev_velocity Velocity field before the pressure projection.
+	 @param[in] prev_velocity Velocity before the pressure projection.
 	 @param[in] new_velocity New velocity after the pressure projection.
 	 @param[in] dt Time step size.
 	 @param[in] gravity Gravity coefficient.
 	 @param[in] PICFLIP PIC and FLIP interpolation coefficient. 1.0 indicates FLIP and 0.0 indicates PIC. When APIC is used, this parameter will be simply ignored.
 	 \~japanese @brief FLIP 粒子の運動量を更新する。
-	 @param[in] prev_velocity 圧力投影前の速度場。
-	 @param[in] new_velocity 圧力投影後の速度場。
+	 @param[in] prev_velocity 圧力投影前の速度。
+	 @param[in] new_velocity 圧力投影後の速度。
 	 @param[in] dt タイムステップサイズ。
 	 @param[in] gravity 重力定数。
 	 @param[in] PICFLIP PIC と FLIP を補間する定数。1.0 なら FLIP を、0.0 なら PIC となる。もし APIC が使用される時、このパラメータは無視される。
 	 */
-	virtual void update( const macarray2<double> &prev_velocity, const macarray2<double> &new_velocity,
+	virtual void update( const macarray2<double> &prev_velocity,
+						 const macarray2<double> &new_velocity,
 						 double dt, vec2d gravity, double PICFLIP ) = 0;
 	/**
 	 \~english @brief Directly update momentum of FLIP particles.
@@ -100,12 +129,12 @@ public:
 	 */
 	virtual void update( std::function<void(const vec2d &p, vec2d &velocity, double &mass, bool bullet )> func ) = 0;
 	/**
-	 \~english @brief Get the level set of FLIP particles.
-	 @param[out] Level set of the current FLIP particles.
-	 \~japanese @brief FLIP 粒子のレベルセットを取得する。
-	 @param[out] 現在の FLIP 粒子のレベルセット。
+	 \~english @brief Delete particles where the function test passes.
+	 @param[in] test_function Test function.
+	 \~japanese @brief テスト関数をパスする粒子を削除する。
+	 @param[in] test_function テスト関数。
 	 */
-	virtual void get_levelset( array2<double> &fluid ) const = 0;
+	virtual size_t remove(std::function<double(const vec2d &p)> test_function ) = 0;
 	/**
 	 \~english @brief Draw FLIP particles.
 	 @param[in] g Graphics engine.
@@ -137,6 +166,11 @@ public:
 		 */
 		double r;
 		/**
+		 \~english @brief Value of sizing function.
+		 \~japanese @brief サイズ関数の値。
+		 */
+		double sizing_value;
+		/**
 		 \~english @brief Whether the particle is ballistic.
 		 \~japanese @brief 弾丸粒子か。
 		 */
@@ -154,6 +188,13 @@ public:
 	 @return FLIP 粒子の全リスト。
 	 */
 	virtual std::vector<particle2> get_particles() const = 0;
+	//
+protected:
+	//
+	// Compute sizing function
+	virtual void compute_sizing_func( const array2<double> &fluid, const bitarray2 &mask, const macarray2<double> &velocity, array2<double> &sizing_array ) const {
+		sizing_array.clear(1.0);
+	}
 	//
 private:
 	//

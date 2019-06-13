@@ -56,10 +56,10 @@ static void pointwise_gaussian_blur( const array3<T> &source, array3<T> &result,
 					int ni = i+qi;
 					int nj = j+qj;
 					int nk = k+qk;
-					if( ! source.shape().out_of_bounds(ni,nj,nk) ) {
+					if( ! source.shape().out_of_bounds(ni,nj,nk) && source.active(ni,nj,nk)) {
 						const double &wght = exp_w[qi+rs+L*(qj+rs)+(L*L)*(qk+rs)];
 						const T &value = source(ni,nj,nk);
-						val += value * wght;  wsum += wght;
+						val += value * wght; wsum += wght;
 					}
 				}
 			}
@@ -71,10 +71,8 @@ static void pointwise_gaussian_blur( const array3<T> &source, array3<T> &result,
 //
 void macexnbflip3::internal_sizing_func(array3<double> &sizing_array,
 							const bitarray3 &mask,
-							const array3<double> &solid,
 							const array3<double> &fluid,
-							const macarray3<double> &velocity,
-							double dt) {
+							const macarray3<double> &velocity ) const {
 	//
 	shared_array3<vec3d> diff(m_shape);
 	//
@@ -128,7 +126,6 @@ void macexnbflip3::configure( configuration &config ) {
 	//
 	macnbflip3::configure(config);
 	//
-	config.get_double("DecayRate",m_param.decay_rate,"Decay rate for tracer particles");
 	config.get_double("DiffuseRate",m_param.diffuse_rate,"Diffuse rate for sizing function");
 	config.get_unsigned("DiffuseCount",m_param.diffuse_count,"Diffuse count for sizing function");
 	config.get_double("Threshold_U",m_param.threshold_u,"Threshold velocity for sizing function evaluation");
@@ -149,7 +146,7 @@ void macexnbflip3::configure( configuration &config ) {
 	}
 }
 //
-void macexnbflip3::sizing_func( array3<double> &sizing_array, const bitarray3 &mask, const macarray3<double> &velocity, double dt ) {
+void macexnbflip3::compute_sizing_func( const array3<double> &fluid, const bitarray3 &mask, const macarray3<double> &velocity, array3<double> &sizing_array ) const {
 	//
 	auto diffuse = [&]( array3<double> &array, int width, double rate ) {
 		//
@@ -180,16 +177,9 @@ void macexnbflip3::sizing_func( array3<double> &sizing_array, const bitarray3 &m
 		}
 	};
 	//
-	// Decay particle sizing value
-	if( m_particles.size()) {
-		for( unsigned n=0; n<m_particles.size(); ++n ) {
-			m_particles[n].sizing_value -= m_param.decay_rate * dt;
-		}
-	}
-	//
 	// Evaluate sizing function
 	shared_array3<double> pop_array(m_shape);
-	internal_sizing_func(pop_array(),m_narrowband_mask,m_solid,m_fluid,velocity,dt);
+	internal_sizing_func(pop_array(),mask,fluid,velocity);
 	//
 	sizing_array.clear(0.0);
 	if( array_utility3::value_exist(pop_array())) {
@@ -198,26 +188,11 @@ void macexnbflip3::sizing_func( array3<double> &sizing_array, const bitarray3 &m
 		if( m_param.diffuse_count ) {
 			diffuse(pop_array(),m_param.diffuse_count,m_param.diffuse_rate);
 		}
-		// Pick max
-		if( m_particles.size()) {
-			m_parallel.for_each(m_particles.size(),[&]( size_t n, int tn ) {
-				Particle &p = m_particles[n];
-				p.sizing_value = std::max(p.sizing_value,array_interpolator3::interpolate<double>(pop_array(),p.p/m_dx-vec3d(0.5,0.5,0.5)));
-			});
-		}
 		// Assign initial value
 		sizing_array.activate_as(pop_array());
 		sizing_array.parallel_actives([&]( int i, int j, int k, auto &it, int tn ) {
 			it.set(std::max(0.0,std::min(1.0,pop_array()(i,j,k))));
 		});
-	}
-	//
-	// Assign sizing value
-	if( m_particles.size()) {
-		for( unsigned n=0; n<m_particles.size(); ++n ) {
-			vec3i pi = m_shape.clamp(m_particles[n].p/m_dx);
-			sizing_array.set(pi,std::max(sizing_array(pi),std::min(1.0,m_particles[n].sizing_value)));
-		}
 	}
 }
 //

@@ -64,8 +64,6 @@ public:
 			}
 		});
 		//
-		return;
-		//
 		// Reset level set values
 		parallel.for_each(fixed.size(),[&]( size_t n ) {
 			if( ! fixed[n] ) levelset[n] = std::copysign(distance,levelset[n]);

@@ -44,6 +44,9 @@ protected:
 	virtual void configure( configuration &config ) override;
 	virtual void post_initialize() override;
 	//
+	double interpolate_solid( const vec3d &p ) const;
+	vec3d interpolate_velocity( const vec3d &p ) const;
+	//
 	macflip3_driver m_flip{this,"macnbflip3"};
 	//
 	struct Parameters {

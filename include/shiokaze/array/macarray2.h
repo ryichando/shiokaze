@@ -271,8 +271,25 @@ public:
 		cell_array.activate(active_cells);
 		cell_array.parallel_actives([&](int i, int j, auto &it, int tn) {
 			vec2d v;
-			for( unsigned dim : DIMS2 ) v[dim] = 0.5*((*this)[dim](i,j)+(*this)[dim](i+(dim==0),j+(dim==1)));
-			it.set(v);
+			char valid_count (0);
+			for( unsigned dim : DIMS2 ) {
+				char wsum (0);
+				double value (0.0);
+				if( (*this)[dim].active(i,j)) {
+					value += (*this)[dim](i,j);
+					wsum ++;
+				}
+				if( (*this)[dim].active(i+(dim==0),j+(dim==1))) {
+					value += (*this)[dim](i+(dim==0),j+(dim==1));
+					wsum ++;
+				}
+				if( wsum == 2 ) {
+					v[dim] = 0.5 * value;
+					valid_count ++;
+				}
+			}
+			if( valid_count == 2 ) it.set(v);
+			else it.set_off();
 		});
 	}
 	/**
