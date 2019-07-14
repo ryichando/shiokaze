@@ -30,6 +30,7 @@
 #include <shiokaze/image/image_io_interface.h>
 #include <shiokaze/graphics/graphics_engine.h>
 #include <shiokaze/core/configuration.h>
+#include <shiokaze/system/sysstats_interface.h>
 #include <shiokaze/math/vec.h>
 #include <string>
 //

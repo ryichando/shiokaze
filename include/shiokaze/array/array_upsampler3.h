@@ -56,7 +56,7 @@ namespace array_upsampler3 {
 		//
 		doubled_array.parallel_actives([&]( int i, int j, int k, auto &it, int tn) {
 			vec3d p = 0.5*vec3i(i,j,k).cell()-vec3d(0.5,0.5,0.5);
-			it.set(array_interpolator3::interpolate<double>(array,p));
+			it.set(array_interpolator3::interpolate<T>(array,p));
 		});
 		//
 		if( array.is_levelset()) {
@@ -88,7 +88,7 @@ namespace array_upsampler3 {
 		//
 		doubled_array.parallel_actives([&]( int i, int j, int k, auto &it, int tn) {
 			vec3d p = 0.5*vec3i(i,j,k).nodal();
-			it.set(array_interpolator3::interpolate<double>(array,p));
+			it.set(array_interpolator3::interpolate<T>(array,p));
 		});
 		//
 		if( array.is_levelset()) {

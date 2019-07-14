@@ -42,7 +42,6 @@
 #include <shiokaze/utility/utility.h>
 #include <shiokaze/core/cmdparser.h>
 #include <shiokaze/math/vec.h>
-#include <shiokaze/system/sysstats_interface.h>
 #include <shiokaze/image/image_io_interface.h>
 #include <shiokaze/core/filesystem.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -57,9 +56,9 @@ static double camera_angle_xz (-0.65 * 3.1514);
 static double camera_angle_y (1.0);
 //
 static vec3d camera_target, camera_position;
-static void set_camera_pos() {
-	camera_target = vec3d(0.5,0.35,0.5);
-	camera_position = camera_target + vec3d(camera_r*cos(camera_angle_xz),camera_angle_y,camera_r*sin(camera_angle_xz));
+static void set_camera_pos( double view_scale ) {
+	camera_target = view_scale * vec3d(0.5,0.35,0.5);
+	camera_position = camera_target + view_scale * vec3d(camera_r*cos(camera_angle_xz),camera_angle_y,camera_r*sin(camera_angle_xz));
 }
 #ifdef USE_OPENGL
 //
@@ -71,9 +70,9 @@ static void key_callback(::GLFWwindow* window, int key, int scancode, int action
 	//
 	if( key == GLFW_KEY_SPACE  ) {
 		space_pressed = action;
-	} if( key == GLFW_KEY_UP  ) {
+	} else if( key == GLFW_KEY_UP  ) {
 		keyup_pressed = action;
-	} if( key == GLFW_KEY_DOWN  ) {
+	} else if( key == GLFW_KEY_DOWN  ) {
 		keydown_pressed = action;
 	} else {
 		ui *g = static_cast<ui *>(::glfwGetWindowUserPointer(window));
@@ -106,6 +105,7 @@ static void cursor_position_callback(::GLFWwindow* window, double xpos, double y
 	//
 	ui *g = static_cast<ui *>(::glfwGetWindowUserPointer(window));
 	drawable *instance = g->getInstance();
+	double scale = instance->get_view_scale();
 	//
 	g->mouse_p[0] = xpos * g->width / (double) g->w_width;
 	g->mouse_p[1] = ypos * g->height / (double) g->w_height;
@@ -126,7 +126,7 @@ static void cursor_position_callback(::GLFWwindow* window, double xpos, double y
 		vec2d tranformed_force(u,v);
 		transform_coord_force(g->width, g->height, tranformed_force.v );
 		//
-		instance->drag( g->width, g->height, tranformed_pos[0], tranformed_pos[1], tranformed_force[0], tranformed_force[1] );
+		instance->drag( g->width, g->height, scale * tranformed_pos[0], scale * tranformed_pos[1], tranformed_force[0], tranformed_force[1] );
 		//
 	}
 	//
@@ -192,7 +192,8 @@ static module* alloc_module ( configuration &config ) {
 	return instance;
 }
 //
-ui::ui ( drawable *instance ) {	
+ui::ui ( drawable *instance ) {
+	//
 	this->instance = instance;
 	until = 0;
 	strong_pause_step = 0;
@@ -305,7 +306,7 @@ void ui::run () {
 	ge.setHiDPIScalingFactor(dpi_scaling);
 	//
 	// Set camera origin
-	set_camera_pos();
+	set_camera_pos(instance->get_view_scale());
 	ge.set_camera(camera_target.v,camera_position.v);
 	//
 	// Enable multi sampling for nicer view
@@ -367,7 +368,9 @@ void ui::run () {
 		if( strong_pause_step && strong_pause_step == step ) {
 			running = false;
 		}
-		if( running ) instance->idle();
+		if( running ) {
+			instance->idle();
+		}
 		//
 		// Call view change if that is the case
 		bool refresh (false);
@@ -384,7 +387,7 @@ void ui::run () {
 		}
 		//
 		if( refresh ) {
-			set_camera_pos();
+			set_camera_pos(instance->get_view_scale());
 			ge.set_camera(camera_target.v,camera_position.v);
 			instance->view_change(ge,width,height);
 		}
@@ -539,11 +542,11 @@ int ui::run ( int argc, const char* argv[] ) {
 	config.print_splash();
 	//
 	auto colored_str = []( std::string str ) {
-		return "\e[95m"+str+"\e[39m";
+		return "<Light_Magenta>"+str+"<Default>";
 	};
 	console::dump( "   Arguments: %s\n", colored_str(parser.get_arg_string()).c_str());
 	//
-	console::dump( "   Date = \e[36m%s UTC\e[39m\n", boost::posix_time::to_simple_string(now).c_str());
+	console::dump( "   Date = <Cyan>%s UTC<Default>\n", boost::posix_time::to_simple_string(now).c_str());
 	//
 	std::string cpu_name;
 	int cpu_trim (0);
@@ -570,11 +573,16 @@ int ui::run ( int argc, const char* argv[] ) {
 	has_display = true;
 #endif
 	//
-	console::dump( "   CPU = \e[36m%s\e[39m\n", cpu_name.size() > cpu_trim ? cpu_name.substr(cpu_trim,cpu_name.size()).c_str() : "(Unknown)");
+	auto remove_fold_character = [&]( std::string &str ) { str.erase(std::remove(str.begin(),str.end(),'\n'),str.end()); };
+	std::string git_version = console::run("git describe --tags --always"); remove_fold_character(git_version);
+	std::string get_current_branch_name = console::run("git rev-parse --abbrev-ref HEAD"); remove_fold_character(get_current_branch_name);
+	//
+	console::dump( "   CPU = <Cyan>%s<Default>\n", cpu_name.size() > cpu_trim ? cpu_name.substr(cpu_trim,cpu_name.size()).c_str() : "(Unknown)");
 	console::dump( "   Display availability = %s\n", has_display ? "Yes" : "No" );
-	console::dump( "   %s version = \e[36m%d.%d.%d\e[39m\n",compiler_name, __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
-	console::dump( "   Build target = \e[36m%s\e[39m\n", SHKZ_BUILD_TARGET );
-	console::dump( "   Available cores = \e[36m%d\e[39m\n", std::thread::hardware_concurrency() );
+	console::dump( "   %s version = <Cyan>%d.%d.%d<Default>\n",compiler_name, __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ );
+	console::dump( "   Build target = <Cyan>%s<Default>\n", SHKZ_BUILD_TARGET );
+	console::dump( "   Available cores = <Cyan>%d<Default>\n", std::thread::hardware_concurrency() );
+	console::dump( "   Git version = %s-%s\n", get_current_branch_name.c_str(),git_version.c_str());
 	//
 	// Set whether we use OpenGL engine
 	bool useOpenGL;
@@ -658,11 +666,11 @@ int ui::run ( int argc, const char* argv[] ) {
 		configuration::auto_group group(config,root_credit);
 		instance->recursive_initialize();
 		while( true ) {
-			if( instance->is_running()) instance->idle();
-			//
-			stats->report_stats();
-			stats->plot_graph();
-			//
+			if( instance->is_running()) {
+				instance->idle();
+				stats->report_stats();
+				stats->plot_graph();
+			}
 			if( instance->should_quit()) break;
 		}
 	}

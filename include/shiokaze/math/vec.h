@@ -55,7 +55,7 @@ template <class T, unsigned D> struct vec {
 	 \~japanese @brief コピーコンストラクタ。
 	 @param[in] v コピーするベクトルの C 配列の値。
 	 */
-	vec( const T *v ) {
+	template<class Y>  vec( const Y *v ) {
 		for( unsigned dim=0; dim<D; ++dim ) this->v[dim] = v[dim];
 	}
 	/**
@@ -260,8 +260,8 @@ template <class T, unsigned D> struct vec {
 	 \~japanese @brief L2 ノルムを計算する。
 	 @return L2 ノルム。
 	 */
-	T norm2() const {
-		T result = T();
+	double norm2() const {
+		double result = T();
 		for( unsigned dim=0; dim<D; ++dim ) result += this->v[dim]*this->v[dim];
 		return result;
 	}
@@ -271,7 +271,7 @@ template <class T, unsigned D> struct vec {
 	 \~japanese @brief L1 ノルムを計算する。
 	 @return L1 ノルム。
 	 */
-	T len() const {
+	double len() const {
 		return sqrt(norm2());
 	}
 	/**

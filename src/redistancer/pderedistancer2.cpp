@@ -34,9 +34,10 @@ class pderedistancer2 : public redistancer2_interface {
 private:
 	//
 	LONG_NAME("PDE Redistancer 2D")
+	MODULE_NAME("pderedistancer2")
 	ARGUMENT_NAME("PDERedist")
 	//
-	virtual void redistance( array2<double> &phi_array, unsigned width ) override {
+	virtual void redistance( array2<float> &phi_array, unsigned width ) override {
 		//
 		double half_bandwidth = width * m_dx;
 		auto smoothed_sgn = []( double value, double dx ) {
@@ -66,15 +67,15 @@ private:
 			it.set(extrapolated_value);
 		});
 		//
-		shared_array2<double> phi_array0 (phi_array);
+		shared_array2<float> phi_array0 (phi_array);
 		//
-		shared_array2<double> smoothed_sgns (phi_array.type());
+		shared_array2<float> smoothed_sgns (phi_array.type());
 		smoothed_sgns->activate_as(phi_array);
 		smoothed_sgns->parallel_actives([&](int i, int j, auto &it, int tn) {
 			it.set(smoothed_sgn(phi_array0()(i,j),m_dx));
 		});
 		//
-		auto derivative = [&]( const array2<double> &phi_array, array2<double> &phi_array_derivative ) {
+		auto derivative = [&]( const array2<float> &phi_array, array2<float> &phi_array_derivative ) {
 			//
 			phi_array_derivative.clear();
 			phi_array_derivative.activate_as(phi_array);
@@ -136,7 +137,7 @@ private:
 			//
 			if( m_param.temporal_scheme == "Euler" ) {
 				//
-				shared_array2<double>	phi_array_derivative0(phi_array.type()),
+				shared_array2<float>	phi_array_derivative0(phi_array.type()),
 										phi_array_save(phi_array);
 				//
 				phi_array.set_touch_only_actives(true);
@@ -149,7 +150,7 @@ private:
 				//
 			} else if( m_param.temporal_scheme == "RK2" ) {
 				//
-				shared_array2<double>	phi_array_derivative0(phi_array.type()),
+				shared_array2<float>	phi_array_derivative0(phi_array.type()),
 										phi_array_derivative1(phi_array.type()),
 										phi_array_derivative_tmp(phi_array.type());
 				//

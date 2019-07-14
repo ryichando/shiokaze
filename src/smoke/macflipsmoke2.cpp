@@ -51,7 +51,7 @@ void macflipsmoke2::post_initialize () {
 	//
 	macsmoke2::post_initialize();
 	//
-	shared_array2<double> fluid(m_shape);
+	shared_array2<float> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
 	m_flip->seed(fluid(),[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
 }
@@ -71,7 +71,7 @@ void macflipsmoke2::idle() {
 	m_flip->correct([&](const vec2d &p){ return -1.0; });
 	//
 	// Reseed particles
-	shared_array2<double> fluid(m_shape);
+	shared_array2<float> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
 	m_flip->seed(m_fluid,
 		[&](const vec2d &p){ return interpolate_solid(p); },
@@ -90,8 +90,8 @@ void macflipsmoke2::idle() {
 	}
 	//
 	// Splat momentum and mass of FLIP particles onto grids
-	shared_macarray2<double> mass(m_shape);
-	shared_macarray2<double> momentum(m_shape);
+	shared_macarray2<float> mass(m_shape);
+	shared_macarray2<float> momentum(m_shape);
 	m_flip->splat(momentum(),mass());
 	//
 	// Overwrite grid velocity
@@ -101,7 +101,7 @@ void macflipsmoke2::idle() {
 	});
 	//
 	// Save the current velocity
-	shared_macarray2<double> save_velocity(m_velocity);
+	shared_macarray2<float> save_velocity(m_velocity);
 	//
 	// Add external force
 	inject_external_force(m_velocity);
@@ -150,9 +150,6 @@ void macflipsmoke2::draw( graphics_engine &g, int width, int height ) const {
 	//
 	// Draw velocity
 	m_macvisualizer->draw_velocity(g,m_velocity);
-	//
-	// Draw energy
-	graphics_utility::draw_number(g,"Energy",m_macutility->get_kinetic_energy(m_solid,m_fluid,m_velocity),width,height);
 }
 //
 extern "C" module * create_instance() {

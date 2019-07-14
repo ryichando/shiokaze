@@ -35,6 +35,7 @@ class stdthread : public parallel_core {
 public:
 	//
 	LONG_NAME("STD Thread")
+	MODULE_NAME("stdthread")
 	//
 	virtual void for_each(
 		std::function<void(size_t n, int thread_index)> func,

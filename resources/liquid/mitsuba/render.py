@@ -41,9 +41,8 @@ for frame in range(1,end+1):
 		interval = 10
 		#
 		# Path to mesh files
-		if xml_name == 'mesh':
-			mesh_file = '../mesh/'+str(frame)+'_mesh.ply'
-		elif xml_name == 'transparent':
+		mesh_file = '../mesh/'+str(frame)+'_mesh.ply'
+		if xml_name == 'transparent':
 			mesh_file = '../mesh/'+str(frame)+'_mesh_enclosed.ply'
 		#
 		while( not os.path.exists(mesh_file)):

@@ -35,6 +35,7 @@ public:
 	//
 	macflipsmoke2();
 	LONG_NAME("MAC FLIP Smoke 2D")
+	MODULE_NAME("macflipsmoke2")
 	//
 	virtual void idle() override;
 	virtual void draw( graphics_engine &g, int width, int height ) const override;

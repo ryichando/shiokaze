@@ -35,7 +35,7 @@ SHKZ_USING_NAMESPACE
 class gridvisualizer2 : public gridvisualizer2_interface {
 private:
 	//
-	virtual void draw_active( graphics_engine &g, const array2<double> &q ) const override {
+	virtual void draw_active( graphics_engine &g, const array2<float> &q ) const override {
 		if( m_param.draw_active ) {
 			g.color4(1.0,0.0,0.0,0.25);
 			q.const_serial_actives([&](int i, int j, const auto &it) {
@@ -48,7 +48,7 @@ private:
 			});
 		}
 	}
-	virtual void draw_inside( graphics_engine &g, const array2<double> &q ) const override {
+	virtual void draw_inside( graphics_engine &g, const array2<float> &q ) const override {
 		if( m_param.draw_inside ) {
 			g.color4(1.0,0.0,0.0,0.25);
 			q.const_serial_inside([&](int i, int j, const auto &it) {
@@ -65,18 +65,20 @@ private:
 		if( m_param.draw_grid ) {
 			g.color4(1.0,1.0,1.0,0.4);
 			g.begin(graphics_engine::MODE::LINES);
+			double width (m_dx * m_shape.w);
+			double height (m_dx * m_shape.h);
 			for( unsigned i=0; i<m_shape.w+1; i++ ) {
 				g.vertex2(i*m_dx,0.0);
-				g.vertex2(i*m_dx,1.0);
+				g.vertex2(i*m_dx,height);
 			}
 			for( unsigned j=0; j<m_shape.h+1; j++ ) {
 				g.vertex2(0.0,j*m_dx);
-				g.vertex2(1.0,j*m_dx);
+				g.vertex2(width,j*m_dx);
 			}
 			g.end();
 		}
 	}
-	virtual void draw_density( graphics_engine &g, const array2<double> &density ) const override {
+	virtual void draw_density( graphics_engine &g, const array2<float> &density ) const override {
 		if( m_param.draw_density ) {
 			density.const_serial_actives([&](int i, int j, const auto &it) {
 				g.color4(1.0,1.0,1.0,it());
@@ -89,7 +91,7 @@ private:
 			});
 		}
 	}
-	virtual void draw_velocity( graphics_engine &g, const array2<vec2d> &velocity ) const override {
+	virtual void draw_velocity( graphics_engine &g, const array2<vec2f> &velocity ) const override {
 		if( m_param.draw_velocity ) {
 			//
 			g.color4(1.0,1.0,1.0,0.5);
@@ -100,7 +102,7 @@ private:
 			});
 		}
 	}
-	virtual void draw_levelset( graphics_engine &g, const array2<double> &levelset ) const override {
+	virtual void draw_levelset( graphics_engine &g, const array2<float> &levelset ) const override {
 		//
 		// Cell Centered
 		vec2d origin;
@@ -152,23 +154,23 @@ private:
 			}
 		});
 	}
-	virtual void draw_solid( graphics_engine &g, const array2<double> &solid ) const override {
+	virtual void draw_solid( graphics_engine &g, const array2<float> &solid ) const override {
 		if( m_param.draw_solid ) {
 			g.color4(0.9,0.6,0.3,0.5);
 			draw_levelset(g,solid);
 		}
 	}
-	virtual void draw_fluid( graphics_engine &g, const array2<double> &solid, const array2<double> &fluid ) const override {
+	virtual void draw_fluid( graphics_engine &g, const array2<float> &solid, const array2<float> &fluid ) const override {
 		if( m_param.draw_fluid ) {
 			//
-			shared_array2<double> combined(fluid.type());
+			shared_array2<float> combined(fluid.type());
 			m_gridutility->combine_levelset(solid,fluid,*combined.get());
 			//
 			g.color4(0.5,0.6,1.0,0.5);
 			draw_levelset(g,*combined.get());
 		}
 	}
-	virtual void visualize_cell_scalar( graphics_engine &g, const array2<double> &q ) const override {
+	virtual void visualize_cell_scalar( graphics_engine &g, const array2<float> &q ) const override {
 		double maxv = -1e18;
 		double minv = 1e18;
 		double alpha = 0.5;
@@ -202,7 +204,7 @@ private:
 			});
 		}
 	}
-	virtual void visualize_nodal_scalar( graphics_engine &g, const array2<double> &q ) const override {
+	virtual void visualize_nodal_scalar( graphics_engine &g, const array2<float> &q ) const override {
 		double maxv = -1e18;
 		double minv = 1e18;
 		double alpha = 0.5;

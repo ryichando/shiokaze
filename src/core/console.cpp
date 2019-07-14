@@ -30,10 +30,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <mutex>
+#include <tuple>
 //
 SHKZ_BEGIN_NAMESPACE
 //
-#define MAX_BUFFER_SIZE		512
+#define MAX_BUFFER_SIZE		4096
 //
 static std::mutex g_console_mutex;
 static std::string g_root_path;
@@ -170,20 +171,58 @@ namespace console {
 		//
 		unsigned len = format.size();
 		va_list args;
+		va_start(args,format);
+		vsnprintf(g_buffer,MAX_BUFFER_SIZE,format.c_str(),args);
+		va_end(args);
+		//
 		if( len > 2 ) {
 			if( format[0]=='<' && format[1]=='<' && format[2]=='<' ) {
 				dec_nest();
 			}
 		}
+		//
+		// https://stackoverflow.com/questions/2616906/how-do-i-output-coloured-text-to-a-linux-terminal
+		std::tuple<std::string,std::string,std::string> escape_table[] = {
+			{ "Default", "\e[39m", "" },
+			{ "Black", "\e[30m", ""},
+			{ "Red", "\e[31m", ""},
+			{ "Green", "\e[32m", "" },
+			{ "Yellow", "\e[33m", "" },
+			{ "Blue", "\e[34m", ""},
+			{ "Magenta", "\e[35m", "" },
+			{ "Cyan", "\e[36m", "" },
+			{ "Light_Gray", "\e[37m", "" },
+			{ "Dark_Gray", "\e[90m", "" },
+			{ "Light_Red", "\e[91m", "" },
+			{ "Light_Green", "\e[92m", "" },
+			{ "Light_Yellow", "\e[93m", "" },
+			{ "Light_Blue", "\e[94m", "" },
+			{ "Light_Magenta", "\e[95m", "" },
+			{ "Light_Cyan", "\e[96m", "" },
+			{ "White", "\e[97m", "" },
+			{ "Checkmark", "\u2714", "-" },
+			{ "Cross", "\u2718", "x" },
+			{ "BlackCircle", "\u25cf", "*" }
+		};
+		//
 		if( ! g_root_path.empty() ) {
 			FILE *console = fopen((g_root_path+"/console.out").c_str(),"a");
 			if( console ) {
 				if( ended_with_return ) {
 					for( unsigned i=0; i<g_nestLevel; i++ ) fprintf(console,"   ");
 				}
-				va_start(args, format);
-				vfprintf(console, format.c_str(), args);
-				va_end(args);
+				auto remove_color_character = [&]( std::string &str ) {
+					for( auto it : escape_table ) {
+						std::string key = std::string("<") + std::get<0>(it) + ">";
+						size_t pos;
+						while( (pos=str.find(key)) != std::string::npos ) {
+							str.replace(pos,key.size(),std::get<2>(it));
+						}
+					}
+				};
+				std::string filered_message(g_buffer);
+				remove_color_character(filered_message);
+				fprintf(console,"%s",filered_message.c_str());
 				fclose(console);
 			} else {
 				printf("Could not open the root dir %s\n", g_root_path.c_str());
@@ -193,9 +232,18 @@ namespace console {
 		if( ended_with_return ) {
 			for( unsigned i=0; i<g_nestLevel; i++ ) printf("   ");
 		}
-		va_start(args,format);
-		vprintf(format.c_str(),args);
-		va_end(args);
+		auto format_color_character = [&]( std::string &str ) {
+			for( auto it : escape_table ) {
+				std::string key = std::string("<") + std::get<0>(it) + ">";
+				size_t pos;
+				while( (pos=str.find(key)) != std::string::npos ) {
+					str.replace(pos,key.size(),std::get<1>(it));
+				}
+			}
+		};
+		std::string filered_message(g_buffer);
+		format_color_character(filered_message);
+		printf("%s",filered_message.c_str());
 		ended_with_return = format[len-1] == '\n';
 		if( len > 2 ) {
 			if( format[0]=='>' && format[1]=='>' && format[2]=='>' ) {

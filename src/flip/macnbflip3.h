@@ -43,14 +43,15 @@ class macnbflip3 : public macflip3_interface {
 public:
 	//
 	LONG_NAME("MAC Narrowband FLIP 3D")
+	MODULE_NAME("macnbflip3")
 	//
 	// Seed FLIP particles
-	virtual size_t seed( const array3<double> &fluid,
+	virtual size_t seed( const array3<float> &fluid,
 						 std::function<double(const vec3d &p)> solid,
-						 const macarray3<double> &velocity ) override;
+						 const macarray3<float> &velocity ) override;
 	//
 	// Map FLIP momentum from particles to grid
-	virtual void splat( macarray3<double> &momentum, macarray3<double> &mass ) const override;
+	virtual void splat( macarray3<float> &momentum, macarray3<float> &mass ) const override;
 	//
 	// Advcect particles through the velocity field
 	virtual void advect( std::function<double(const vec3d &p)> solid,
@@ -64,18 +65,18 @@ public:
 	virtual void correct( std::function<double(const vec3d &p)> fluid ) override;
 	//
 	// Update fluid level set
-	virtual void update( std::function<double(const vec3d &p)> solid, array3<double> &fluid ) override;
+	virtual void update( std::function<double(const vec3d &p)> solid, array3<float> &fluid ) override;
 	//
 	// Update FLIP velocity
-	virtual void update( const macarray3<double> &prev_velocity,
-						 const macarray3<double> &new_velocity,
+	virtual void update( const macarray3<float> &prev_velocity,
+						 const macarray3<float> &new_velocity,
 						 double dt, vec3d gravity, double PICFLIP ) override;
 	//
 	// Update FLIP velocity
-	virtual void update( std::function<void(const vec3d &p, vec3d &velocity, double &mass, bool bullet )> func ) override;
+	virtual void update( std::function<void(const vec3f &p, vec3f &velocity, float &mass, bool bullet )> func ) override;
 	//
 	// Delete particles
-	virtual size_t remove(std::function<double(const vec3d &p)> test_function ) override;
+	virtual size_t remove(std::function<double(const vec3f &p, bool bullet)> test_function ) override;
 	//
 	// Draw FLIP partciels
 	virtual void draw( graphics_engine &g, double time=0.0 ) const override;
@@ -114,14 +115,14 @@ protected:
 	// FLIP particles
 	struct Particle {
 		//
-		vec3d p;
-		vec3d c[DIM3];
-		vec3d velocity;
-		double mass;
-		double r;
+		vec3f p;
+		vec3f c[DIM3];
+		vec3f velocity;
+		float mass;
+		float r;
 		char bullet;
-		double bullet_time;
-		double sizing_value;
+		float bullet_time;
+		float sizing_value;
 		unsigned live_count;
 	};
 	//
@@ -130,27 +131,21 @@ protected:
 	//
 	std::vector<Particle> m_particles;		// FLIP particle array
 	//
-	gridutility3_driver m_gridutility{this,"gridutility3"};
-	macutility3_driver m_macutility{this,"macutility3"};
 	pointgridhash3_driver m_pointgridhash{this,"pointgridhash3"};
-	macadvection3_driver m_macadvection{this,"macadvection3"};
 	particlerasterizer3_driver m_particlerasterizer{this,"convexhullrasterizer3"};
-	redistancer3_driver m_redistancer{this,"pderedistancer3"};
-	macsurfacetracker3_driver m_highres_macsurfacetracker{this,"maclevelsetsurfacetracker3"};
-
 	parallel_driver m_parallel{this};
 	//
 	virtual void sort_particles();
-	virtual void update_velocity_derivative( Particle& particle, const macarray3<double> &velocity );
-	virtual void additionally_apply_velocity_derivative( macarray3<double> &momentum ) const;
+	virtual void update_velocity_derivative( Particle& particle, const macarray3<float> &velocity );
+	virtual void additionally_apply_velocity_derivative( macarray3<float> &momentum ) const;
 	//
 	static double grid_kernel( const vec3d &r, double dx );
 	static vec3d grid_gradient_kernel( const vec3d &r, double dx );
 	//
 	// A set of fluid levelset functions that are overridable
-	virtual double interpolate_fluid( const array3<double> &fluid, const vec3d &p ) const;
+	virtual double interpolate_fluid( const array3<float> &fluid, const vec3d &p ) const;
 	virtual vec3d interpolate_fluid_gradient( std::function<double(const vec3d &p)> fluid, const vec3d &p ) const;
-	virtual vec3d interpolate_fluid_gradient( const array3<double> &fluid, const vec3d &p ) const;
+	virtual vec3d interpolate_fluid_gradient( const array3<float> &fluid, const vec3d &p ) const;
 	virtual vec3d interpolate_solid_gradient( std::function<double(const vec3d &p)> solid, const vec3d &p ) const;
 	//
 	virtual void fit_particle( std::function<double(const vec3d &p)> fluid, Particle &particle, const vec3d &gradient ) const;

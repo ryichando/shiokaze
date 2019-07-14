@@ -54,11 +54,12 @@ public:
 	static void transform( std::vector<vec3d> &vertices, vec3d origin=vec3d(), double scale=1.0, int axis=0, double rotation=0 ) {
 		//
 		// Normalize
-		unsigned nvertices (vertices.size());
-		vec3d min_v(1e18,1e18,1e18);
-		vec3d max_v = -1.0 * min_v;
+		size_t nvertices (vertices.size());
+		vec3d min_v;
+		vec3d max_v;
+		compute_AABB(vertices,min_v,max_v);
 		//
-		for( unsigned n=0; n<nvertices; n++ ) {
+		for( size_t n=0; n<nvertices; n++ ) {
 			for( int dim : DIMS3 ) {
 				min_v[dim] = std::min(vertices[n][dim],min_v[dim]);
 				max_v[dim] = std::max(vertices[n][dim],max_v[dim]);
@@ -66,7 +67,7 @@ public:
 		}
 		double norm_s = max_v[0]-min_v[0];
 		if( norm_s ) {
-			for( unsigned n=0; n<nvertices; n++ ) {
+			for( size_t n=0; n<nvertices; n++ ) {
 				vertices[n] = scale * (vertices[n]-min_v) / norm_s + origin - 0.5 * scale * vec3d(1.0,0.0,1.0);
 			}
 		}
@@ -75,14 +76,14 @@ public:
 		if( rotation ) {
 			vec3d min_v(1e18,1e18,1e18);
 			vec3d max_v = -1.0 * min_v;
-			for( unsigned n=0; n<nvertices; n++ ) {
+			for( size_t n=0; n<nvertices; n++ ) {
 				for( uint dim=0; dim<DIM3; dim++ ) {
 					min_v[dim] = std::min(vertices[n][dim],min_v[dim]);
 					max_v[dim] = std::max(vertices[n][dim],max_v[dim]);
 				}
 			}
 			vec3d center = 0.5 * (max_v+min_v);
-			for( unsigned n=0; n<nvertices; n++ ) {
+			for( size_t n=0; n<nvertices; n++ ) {
 				//
 				vec3d p = vertices[n];
 				p = p-center;
@@ -99,6 +100,63 @@ public:
 			}
 		}
 	}
+	/**
+	 \~english @brief Compute the center of gravity of a mesh object.
+	 @param[in] vertices Vertices.
+	 @param[in] faces Facs.
+	 @return Center of gravity.
+	 \~japanese @brief 3次元メッシュの重心を求める。
+	 @param[in] vertices 頂点列。
+	 @param[in] faces 面の列。
+	 @return 重心。
+	 */
+	template <class N> static vec3d get_center_of_gravity( std::vector<vec3d> &vertices, std::vector<std::vector<N> > &faces ) {
+		//
+		//http://stackoverflow.com/questions/2083771/a-method-to-calculate-the-centre-of-mass-from-a-stl-stereo-lithography-file
+		//
+		vec3d center_of_gravity;
+		double totalVolume(0.0), currentVolume(0.0);
+		for( const auto &triangle : faces ) {
+			//
+			assert(triangle.size() == 3);
+			vec3d v[3] = { vertices[triangle[0]], vertices[triangle[1]], vertices[triangle[2]] };
+			totalVolume += currentVolume = (
+									+ v[0][0]*v[1][1]*v[2][2]
+									- v[0][0]*v[2][1]*v[1][2]
+									- v[1][0]*v[0][1]*v[2][2]
+									+ v[1][0]*v[2][1]*v[0][2]
+									+ v[2][0]*v[0][1]*v[1][2]
+									- v[2][0]*v[1][1]*v[0][2]) / 6.0;
+			center_of_gravity[0] += ((v[0][0]+v[1][0]+v[2][0])/4.0) * currentVolume;
+			center_of_gravity[1] += ((v[0][1]+v[1][1]+v[2][1])/4.0) * currentVolume;
+			center_of_gravity[2] += ((v[0][2]+v[1][2]+v[2][2])/4.0) * currentVolume;
+		}
+		center_of_gravity = center_of_gravity / totalVolume;
+		return center_of_gravity;
+	}
+	/**
+	 \~english @brief Compute the AABB of a mesh object.
+	 @param[in] vertices Vertices.
+	 @param[out] corner0 Corner of min location.
+	 @param[out] corner1 Corner of max location.
+	 \~japanese @brief 3次元メッシュの重心を求める。
+	 @param[in] vertices 頂点列。
+	 @param[out] corner0 最小地点の位置。
+	 @param[out] corner1 最大地点の位置。
+	 */
+	static void compute_AABB( std::vector<vec3d> &vertices, vec3d &corner0, vec3d &corner1 ) {
+		//
+		corner0 = vec3d(1e18,1e18,1e18);
+		corner1 = -1.0 * corner0;
+		//
+		for( size_t n=0; n<vertices.size(); n++ ) {
+			for( int dim : DIMS3 ) {
+				corner0[dim] = std::min(vertices[n][dim],corner0[dim]);
+				corner1[dim] = std::max(vertices[n][dim],corner1[dim]);
+			}
+		}
+	}
+	//
 };
 //
 SHKZ_END_NAMESPACE

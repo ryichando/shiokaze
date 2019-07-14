@@ -37,7 +37,9 @@ using namespace array_interpolator3;
 class macstats3 : public macstats3_interface {
 private:
 	//
-	virtual void dump_stats( const array3<double> &solid, const array3<double> &fluid, const macarray3<double> &velocity, const timestepper_interface *tmstepper ) const override {
+	MODULE_NAME("macstats3")
+	//
+	virtual void dump_stats( const array3<float> &solid, const array3<float> &fluid, const macarray3<float> &velocity, const timestepper_interface *tmstepper ) const override {
 		//
 		global_timer::pause();
 		//
@@ -45,7 +47,7 @@ private:
 		unsigned num_active_fluid (0);
 		if( levelset_exist(solid)) {
 			fluid.const_serial_actives([&](int i, int j, int k, const auto &it) {
-				if( it() < 0.0 && interpolate<double>(solid,vec3i(i,j,k).cell()) > 0.0 ) num_active_fluid ++;
+				if( it() < 0.0 && interpolate<float>(solid,vec3i(i,j,k).cell()) > 0.0 ) num_active_fluid ++;
 			});
 		} else {
 			fluid.const_serial_actives([&](const auto &it) {

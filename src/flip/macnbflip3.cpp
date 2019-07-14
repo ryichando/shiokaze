@@ -115,8 +115,6 @@ size_t macnbflip3::mark_bullet( double time, std::function<double(const vec3d &p
 		//
 		size_t num_bullet(0);
 		for( size_t n=0; n<m_particles.size(); ++n ) if( m_particles[n].bullet ) ++ num_bullet;
-		//
-		console::write("number_bullet",num_bullet);
 		return num_bullet;
 	} else {
 		return 0;
@@ -148,6 +146,7 @@ size_t macnbflip3::remove_bullet( double time ) {
 		if( ! remove_flag[i] ) m_particles.push_back(old_particles[i]);
 		else ++ removed_total;
 	}
+	m_particles.shrink_to_fit();
 	//
 	// Update hash table
 	sort_particles();
@@ -155,11 +154,11 @@ size_t macnbflip3::remove_bullet( double time ) {
 }
 //
 typedef struct {
-	double mass;
-	double momentum;
+	float mass;
+	float momentum;
 } mass_momentum3;
 //
-void macnbflip3::splat( macarray3<double> &momentum, macarray3<double> &mass ) const {
+void macnbflip3::splat( macarray3<float> &momentum, macarray3<float> &mass ) const {
 	scoped_timer timer(this);
 	if( m_particles.size()) {
 		timer.tick(); console::dump( ">>> Splatting FLIP particles...\n");
@@ -184,7 +183,7 @@ void macnbflip3::splat( macarray3<double> &momentum, macarray3<double> &mass ) c
 		mass_and_momentum().dilate();
 		mass_and_momentum->parallel_actives([&]( int dim, int i, int j, int k, auto &it, int tn ) {
 			//
-			double mom (0.0), m (0.0);
+			float mom (0.0), m (0.0);
 			vec3d pos = m_dx*vec3i(i,j,k).face(dim);
 			std::vector<size_t> neighbors = m_pointgridhash->get_face_neighbors(vec3i(i,j,k),dim);
 			for( size_t k : neighbors ) {
@@ -280,21 +279,29 @@ void macnbflip3::mark_bullet( std::function<double(const vec3d &p)> fluid, std::
 	if( m_particles.size()) {
 		//
 		// Mark bullet
-		mark_bullet(time,fluid,velocity);
+		scoped_timer timer(this);
+		timer.tick(); console::dump( "Marking bullet particles...");
+		size_t num_bullet = mark_bullet(time,fluid,velocity);
+		console::write("number_bullet",num_bullet);
+		console::dump( "Done. Bullet count = %u, Took %s.\n", num_bullet, timer.stock("mark_bullet").c_str());
 		//
 		// Remove long-term ballistic particles
-		remove_bullet(time);
+		timer.tick(); console::dump( "Removing bullet particles...");
+		size_t removed_total = remove_bullet(time);
+		num_bullet = 0;
+		for( size_t n=0; n<m_particles.size(); ++n ) if( m_particles[n].bullet ) ++ num_bullet;
+		console::dump( "Done. Removed = %u. Bullet count = %u. Took %s.\n", removed_total,num_bullet, timer.stock("mark_bullet").c_str());
 	}
 }
 //
-void macnbflip3::update( std::function<double(const vec3d &p)> solid, array3<double> &fluid ) {
+void macnbflip3::update( std::function<double(const vec3d &p)> solid, array3<float> &fluid ) {
 	//
 	if( m_particles.size()) {
 		//
 		scoped_timer timer(this);
 		timer.tick(); console::dump( "Correcting levelset...");
 		//
-		shared_array3<double> save_fluid (fluid);
+		shared_array3<float> save_fluid (fluid);
 		fluid.parallel_actives([&]( int i, int j, int k, auto &it ) {
 			if( solid(m_dx*vec3d(i,j,k)) > m_dx ) {
 				it.increment(m_param.erosion*m_dx);
@@ -313,7 +320,7 @@ void macnbflip3::update( std::function<double(const vec3d &p)> solid, array3<dou
 		mask->dilate(2);
 		fluid.activate_as(mask());
 		//
-		shared_array3<double> particle_levelset(m_shape,1.0);
+		shared_array3<float> particle_levelset(m_shape,1.0);
 		m_particlerasterizer->build_levelset(particle_levelset(),mask(),points);
 		//
 		fluid.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
@@ -342,8 +349,8 @@ void macnbflip3::collision( std::function<double(const vec3d &p)> solid ) {
 		//
 		m_parallel.for_each( m_particles.size(), [&]( size_t pindex ) {
 			Particle &particle = m_particles[pindex];
-			vec3d &p = particle.p;
-			vec3d &u = particle.velocity;
+			vec3f &p = particle.p;
+			vec3f &u = particle.velocity;
 			const double &r = particle.r;
 			double phi = solid(p)-r;
 			if( phi < 0.0 ) {
@@ -355,9 +362,11 @@ void macnbflip3::collision( std::function<double(const vec3d &p)> solid ) {
 			for( unsigned dim : DIMS3 ) {
 				if( p[dim] < r ) {
 					p[dim] = r;
+					if( u[dim] < 0.0 ) u[dim] = 0.0;
 				}
 				if( p[dim] > m_dx*m_shape[dim]-r ) {
 					p[dim] = m_dx*m_shape[dim]-r;
+					if( u[dim] > 0.0 ) u[dim] = 0.0;
 				}
 			}
 		});
@@ -369,50 +378,52 @@ void macnbflip3::collision( std::function<double(const vec3d &p)> solid ) {
 void macnbflip3::correct( std::function<double(const vec3d &p)> fluid ) {
 	//
 	// Compute correction displacement
-	scoped_timer timer(this);
-	timer.tick(); console::dump( "Performing position correction...");
-	//
-	std::vector<vec3d> displacements(m_particles.size());
-	m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
-		const Particle &pi = m_particles[n];
-		vec3d displacement;
-		std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(m_shape.find_cell(pi.p/m_dx),pointgridhash3_interface::USE_NODAL);
-		for( const size_t &j : neighbors ) {
-			if( n != j ) {
-				const Particle &pj = m_particles[j];
-				double dist2 = (pi.p-pj.p).norm2();
-				double target = pi.r+pj.r;
-				if( dist2 < target*target ) {
-					double diff = target-sqrt(dist2);
-					const double &mi = pi.mass;
-					const double &mj = pj.mass;
-					displacement += m_param.stiff * diff * (pi.p-pj.p).normal() * mj / (mi+mj);
+	if( m_particles.size()) {
+		scoped_timer timer(this);
+		timer.tick(); console::dump( "Performing position correction...");
+		//
+		std::vector<vec3d> displacements(m_particles.size());
+		m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
+			const Particle &pi = m_particles[n];
+			vec3d displacement;
+			std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(m_shape.find_cell(pi.p/m_dx),pointgridhash3_interface::USE_NODAL);
+			for( const size_t &j : neighbors ) {
+				if( n != j ) {
+					const Particle &pj = m_particles[j];
+					double dist2 = (pi.p-pj.p).norm2();
+					double target = pi.r+pj.r;
+					if( dist2 < target*target ) {
+						double diff = target-sqrt(dist2);
+						const double &mi = pi.mass;
+						const double &mj = pj.mass;
+						displacement += m_param.stiff * diff * (pi.p-pj.p).normal() * mj / (mi+mj);
+					}
 				}
 			}
-		}
-		displacements[n] = displacement;
-	});
-	//
-	// Kill the normal components to prevent volume gain
-	m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
-		if( ! displacements[n].empty()) {
-			const Particle &p = m_particles[n];
-			vec3d new_pos = p.p+displacements[n];
-			vec3d normal = this->interpolate_fluid_gradient(fluid,new_pos);
-			double dot = displacements[n] * normal;
-			if( dot > 0.0 ) displacements[n] -= dot * normal;
-		}
-	});
-	//
-	// Apply displacement
-	m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
-		m_particles[n].p += displacements[n];
-	});
-	//
-	// Update hash table
-	sort_particles();
-	//
-	console::dump( "Done. Took %s\n", timer.stock("possition_correction").c_str());
+			displacements[n] = displacement;
+		});
+		//
+		// Kill the normal components to prevent volume gain
+		m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
+			if( ! displacements[n].empty()) {
+				const Particle &p = m_particles[n];
+				vec3d new_pos = p.p+displacements[n];
+				vec3d normal = this->interpolate_fluid_gradient(fluid,new_pos);
+				double dot = displacements[n] * normal;
+				if( dot > 0.0 ) displacements[n] -= dot * normal;
+			}
+		});
+		//
+		// Apply displacement
+		m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
+			m_particles[n].p += displacements[n];
+		});
+		//
+		// Update hash table
+		sort_particles();
+		//
+		console::dump( "Done. Took %s\n", timer.stock("possition_correction").c_str());
+	}
 }
 //
 void macnbflip3::fit_particle( std::function<double(const vec3d &p)> fluid, Particle &particle, const vec3d &gradient ) const {
@@ -424,12 +435,12 @@ void macnbflip3::fit_particle( std::function<double(const vec3d &p)> fluid, Part
 	}
 }
 //
-size_t macnbflip3::seed(const array3<double> &fluid,
+size_t macnbflip3::seed(const array3<float> &fluid,
 						std::function<double(const vec3d &p)> solid,
-						const macarray3<double> &velocity ) {
+						const macarray3<float> &velocity ) {
 	//
 	scoped_timer timer(this);
-	timer.tick(); console::dump(">>> Reseeding particles...");
+	timer.tick(); console::dump(">>> Reseeding particles...\n");
 	timer.tick(); console::dump( "Computing narrowband (%d cells wide)...", m_param.narrowband);
 	//
 	// Compute narrowband
@@ -460,14 +471,14 @@ size_t macnbflip3::seed(const array3<double> &fluid,
 	timer.tick(); console::dump( "Computing sizing function...");
 	//
 	// Compute sizing function
-	shared_array3<double> sizing_array(m_shape);
+	shared_array3<float> sizing_array(m_shape);
 	compute_sizing_func(fluid,narrowband_mask(),velocity,sizing_array());
 	//
 	// Update sizing value on particles
 	if( m_particles.size()) {
 		m_parallel.for_each(m_particles.size(),[&]( size_t n, int tn ) {
 			Particle &p = m_particles[n];
-			p.sizing_value = std::max(p.sizing_value,sizing_array()(m_shape.find_cell(p.p/m_dx)));
+			p.sizing_value = std::max((float)p.sizing_value,sizing_array()(m_shape.find_cell(p.p/m_dx)));
 		});
 	}
 	//
@@ -565,7 +576,7 @@ size_t macnbflip3::seed(const array3<double> &fluid,
 	//
 	// Reconstruct a new particle array
 	std::vector<Particle> old_particles (m_particles);
-	m_particles.resize(0);
+	m_particles.clear();
 	size_t reseeded (0);
 	for( size_t t=0; t<new_particles_t.size(); ++t ) {
 		m_particles.insert(m_particles.end(),new_particles_t[t].begin(),new_particles_t[t].end());
@@ -576,6 +587,7 @@ size_t macnbflip3::seed(const array3<double> &fluid,
 		if( ! remove_particles[i] ) m_particles.push_back(old_particles[i]);
 		else ++ removed;
 	}
+	m_particles.shrink_to_fit();
 	//
 	console::write("number_particles",m_particles.size());
 	console::write("number_removed",removed);
@@ -589,21 +601,37 @@ size_t macnbflip3::seed(const array3<double> &fluid,
 	return reseeded;
 }
 //
-size_t macnbflip3::remove(std::function<double(const vec3d &p)> test_function ) {
+size_t macnbflip3::remove(std::function<double(const vec3f &p, bool bullet)> test_function ) {
 	//
 	size_t removed_count (0);
-	for( auto it=m_particles.begin(); it != m_particles.end(); ) {
-		if( test_function((*it).p)) {
-			m_particles.erase(it);
-			++ removed_count;
+	if( m_particles.size()) {
+		//
+		scoped_timer timer(this);
+		timer.tick(); console::dump( "Removing FLIP particles...");
+		//
+		std::vector<Particle> old_particles (m_particles);
+		std::vector<char> remove_flag (m_particles.size(),0);
+		//
+		m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
+			remove_flag[n] = test_function(old_particles[n].p,old_particles[n].bullet);
+		});
+		//
+		m_particles.clear();
+		for( size_t i=0; i<old_particles.size(); ++i) {
+			if( remove_flag[i] ) ++ removed_count;
+			else m_particles.push_back(old_particles[i]);
 		}
-		else ++ it;
+		//
+		if( removed_count ) {
+			m_particles.shrink_to_fit();
+			sort_particles();
+		}
+		console::dump( "Done. Removed = %u. Took %s.\n", removed_count, timer.stock("remove").c_str());
 	}
-	if( removed_count ) sort_particles();
 	return removed_count;
 }
 //
-void macnbflip3::update( const macarray3<double> &prev_velocity, const macarray3<double> &new_velocity,
+void macnbflip3::update( const macarray3<float> &prev_velocity, const macarray3<float> &new_velocity,
 						 double dt, vec3d gravity, double PICFLIP ) {
 	//
 	if(m_particles.size()) {
@@ -649,7 +677,7 @@ void macnbflip3::update( const macarray3<double> &prev_velocity, const macarray3
 	}
 }
 //
-void macnbflip3::update( std::function<void(const vec3d &p, vec3d &velocity, double &mass, bool bullet )> func ) {
+void macnbflip3::update( std::function<void(const vec3f &p, vec3f &velocity, float &mass, bool bullet )> func ) {
 	m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
 		Particle &particle = m_particles[n];
 		func(particle.p,particle.velocity,particle.mass,particle.bullet);
@@ -666,13 +694,17 @@ std::vector<macflip3_interface::particle3> macnbflip3::get_particles() const {
 		particle.bullet = m_particles[n].bullet;
 		result.push_back(particle);
 	}
+	//
+	size_t num_bullet (0);
+	for( size_t n=0; n<m_particles.size(); ++n ) if( m_particles[n].bullet ) ++ num_bullet;
+	//
 	return result;
 }
 //
 void macnbflip3::sort_particles() {
 	//
 	if( m_particles.size()) {
-		std::vector<vec3d> points(m_particles.size());
+		std::vector<vec3f> points(m_particles.size());
 		m_parallel.for_each(m_particles.size(),[&]( size_t n) {
 			points[n] = m_particles[n].p;
 		});
@@ -682,11 +714,11 @@ void macnbflip3::sort_particles() {
 	}
 }
 //
-void macnbflip3::update_velocity_derivative( Particle& particle, const macarray3<double> &velocity ) {
+void macnbflip3::update_velocity_derivative( Particle& particle, const macarray3<float> &velocity ) {
 	//
 	// Written by Takahiro Sato
 	for (int dim : DIMS3) {
-		vec3d &c = particle.c[dim];
+		vec3f &c = particle.c[dim];
 		c = vec3d();
 		//
 		// particle position
@@ -734,7 +766,7 @@ void macnbflip3::update_velocity_derivative( Particle& particle, const macarray3
 	}
 }
 //
-void macnbflip3::additionally_apply_velocity_derivative( macarray3<double> &momentum ) const {
+void macnbflip3::additionally_apply_velocity_derivative( macarray3<float> &momentum ) const {
 	//
 	// Written by Takahiro Sato
 	momentum.parallel_actives([&]( int dim, int i, int j, int k, auto &it ) {
@@ -754,7 +786,7 @@ void macnbflip3::additionally_apply_velocity_derivative( macarray3<double> &mome
 	});
 }
 //
-double macnbflip3::interpolate_fluid( const array3<double> &fluid, const vec3d &p ) const {
+double macnbflip3::interpolate_fluid( const array3<float> &fluid, const vec3d &p ) const {
 	return array_interpolator3::interpolate(fluid,p/m_dx-vec3d(0.5,0.5,0.5));
 }
 //
@@ -764,9 +796,9 @@ vec3d macnbflip3::interpolate_fluid_gradient( std::function<double(const vec3d &
 	return result.normal();
 }
 //
-vec3d macnbflip3::interpolate_fluid_gradient( const array3<double> &fluid, const vec3d &p ) const {
+vec3d macnbflip3::interpolate_fluid_gradient( const array3<float> &fluid, const vec3d &p ) const {
 	//
-	double derivative[DIM3];
+	float derivative[DIM3];
 	array_derivative3::derivative(fluid,p/m_dx-vec3d(0.5,0.5,0.5),derivative);
 	return vec3d(derivative).normal();
 }

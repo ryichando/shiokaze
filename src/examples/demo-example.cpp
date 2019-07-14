@@ -58,7 +58,7 @@ private:
 	//
 	virtual void cursor( int width, int height, double x, double y ) override {
 		// Record the mouse location
-		mouse_pos = vec2d(x,y);
+		m_mouse_pos = vec2d(x,y);
 	};
 	//
 	virtual void mouse( int width, int height, double x, double y, int button, int action ) override {
@@ -75,13 +75,13 @@ private:
 		// Draw a point at the mouse location
 		g.point_size(2.0);
 		g.begin(graphics_engine::MODE::POINTS);
-		g.vertex3v(mouse_pos.v);
+		g.vertex3v(m_mouse_pos.v);
 		g.end();
 		g.point_size(1.0);
 		//
 	};
 	//
-	vec2d mouse_pos;
+	vec2d m_mouse_pos;
 };
 //
 extern "C" module * create_instance() {

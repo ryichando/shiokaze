@@ -36,6 +36,7 @@ public:
 	//
 	macflipliquid2();
 	LONG_NAME("MAC FLIP Liquid 2D")
+	MODULE_NAME("macflipliquid2")
 	//
 	virtual void idle() override;
 	virtual void draw( graphics_engine &g, int width, int height ) const override;

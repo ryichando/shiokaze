@@ -38,6 +38,20 @@ public:
 	//
 	LONG_NAME("Drawable")
 	/**
+	 \~english @brief Set domain scale. Default scale (1.0) would span view size from (0.0-1.0) meter domain.
+	 @param[in] scale Scale.
+	 \~japanese @brief 領域の広さのスケールを設定する。初期値のスケーリング (1.0) はビューの大きさを 0.0-1.0 メートル内に設定する。
+	 @param[in] scale スケール。
+	 */
+	void set_view_scale ( double scale ) { m_scale = scale; }
+	/**
+	 \~english @brief Get the domain scale.
+	 @return Scale.
+	 \~japanese @brief 領域の広さのスケールを得る。
+	 @return スケール。
+	 */
+	double get_view_scale () const { return m_scale; }
+	/**
 	 \~english @brief Recursively call configure.
 	 @param[in] config Configuration setting.
 	 \~japanese @brief 再帰的に configure を呼ぶ。
@@ -158,7 +172,7 @@ public:
 	 @param[in] width ウィンドウの横幅。
 	 @param[in] height ウィンドウの高さ。
 	 */
-	virtual void view_change( graphics_engine &g, int width, int height ) { g.configure_view(width,height,SPATIAL_DIM); }
+	virtual void view_change( graphics_engine &g, int width, int height ) { g.configure_view(width,height,SPATIAL_DIM,m_scale); }
 	/**
 	 \~english @brief Function that catches draw event.
 	 @param[in] g Graphics engine.
@@ -193,7 +207,9 @@ public:
 	virtual bool hide_logo() const { return false; }
 	//
 private:
+	//
 	environment_map m_environment;
+	double m_scale {1.0};
 };
 //
 SHKZ_END_NAMESPACE

@@ -32,6 +32,8 @@ static const std::vector<size_t> empty;
 class pointgridhash3 : public pointgridhash3_interface {
 private:
 	//
+	MODULE_NAME("pointgridhash3")
+	//
 	virtual void clear() override {
 		if( m_num_sorted ) {
 			//
@@ -41,7 +43,7 @@ private:
 			m_num_sorted = 0;
 		}
 	}
-	virtual void sort_points( const std::vector<vec3d> &points ) override {
+	virtual void sort_points( const std::vector<vec3f> &points ) override {
 		//
 		clear();
 		//
@@ -133,7 +135,7 @@ private:
 			exit(0);
 		}
 		//
-		return std::move(neighbors);
+		return neighbors;
 	}
 	virtual std::vector<size_t> get_nodal_neighbors( const vec3i &pi, hash_type type=USE_NODAL, int half_width=1 ) const override {
 		std::vector<size_t> neighbors;
@@ -166,7 +168,7 @@ private:
 			exit(0);
 		}
 		//
-		return std::move(neighbors);
+		return neighbors;
 	}
 	virtual std::vector<size_t> get_face_neighbors( const vec3i &pi, unsigned dim, hash_type type=USE_EDGE ) const override {
 		std::vector<size_t> neighbors;
@@ -206,7 +208,7 @@ private:
 			printf( "pointgridhash3::get_face_neighbors: Unsupported type!");
 			exit(0);
 		}
-		return std::move(neighbors);
+		return neighbors;
 	}
 	virtual void initialize( const shape3 &shape, double dx, int mode=CELL_MODE | NODAL_MODE | EDGE_MODE ) override {
 		//

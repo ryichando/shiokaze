@@ -30,6 +30,8 @@ SHKZ_USING_NAMESPACE
 class image_io : public image_io_interface {
 public:
 	//
+	MODULE_NAME("macnbflip3")
+	//
 	image_io() = default;
 	//
 	virtual void set_image( unsigned width, unsigned height, const std::vector<unsigned char> &data ) override {

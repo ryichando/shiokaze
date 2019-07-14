@@ -57,6 +57,7 @@ public:
 	}
 	virtual void resize( N size ) override {
 		m_array.resize(size);
+		m_array.shrink_to_fit();
 	}
 	virtual N size() const override {
 		return m_array.size();
@@ -202,6 +203,7 @@ private:
 	virtual void initialize( N rows, N columns ) override {
 		//
 		m_matrix.resize(rows);
+		m_matrix.shrink_to_fit();
 		m_columns = columns;
 		m_parallel.for_each(rows,[&]( size_t row ) {
 			clear(row);
@@ -227,6 +229,10 @@ private:
 		//
 		m_matrix[row].index.clear();
 		m_matrix[row].value.clear();
+		//
+		m_matrix[row].index.shrink_to_fit();
+		m_matrix[row].value.shrink_to_fit();
+		//
 	}
 	virtual T get( N row, N column ) const override {
 		//
@@ -395,6 +401,8 @@ private:
 //
 template <class N, class T> class RCMatrix_factory : public RCMatrix_factory_interface<N,T> {
 private:
+	//
+	MODULE_NAME("RCMatrix_factory")
 	//
 	virtual RCMatrix_vector_ptr<N,T> allocate_vector( N size ) const override {
 		return RCMatrix_vector_ptr<N,T>(new RCMatrix_vector<N,T>(size,m_parallel,*this));

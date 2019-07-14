@@ -45,7 +45,7 @@ public:
 	graphics_gl ();
 	//
 	virtual void setup_graphics ( double r=0.0, double g=0.0, double b=0.0, double a=1.0 ) override;
-	virtual void configure_view( unsigned width, unsigned height, unsigned dim ) override;
+	virtual void configure_view( unsigned width, unsigned height, unsigned dim, double scale ) override;
 	virtual void clear() override;
 	//
 	virtual void color4v( const double *v ) override;

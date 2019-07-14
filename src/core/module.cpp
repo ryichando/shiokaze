@@ -70,7 +70,7 @@ module::~module() {
 	record.count --;
 	if( ! record.count ) {
 		auto handle = record.handle;
-		console::dump("\u2718 Unload scheduled \e[91m\"%s\"\e[39m\n", simplify(m_path).c_str());
+		console::dump("<Cross> Unload scheduled <Light_Red>\"%s\"<Default>\n", simplify(m_path).c_str());
 		asset.handles_to_be_closed.push_back(handle);
 		asset.handles_open.erase(it);
 	}
@@ -153,10 +153,10 @@ module * module::alloc_module( std::string path ) {
 				record.count = 1;
 				asset.handles_open[path] = record;
 				//
-				console::dump("\u2714 Loaded \e[32m\"%s\"\e[39m", simplify(path).c_str());
+				console::dump("<Checkmark> Loaded <Green>\"%s\"<Default>", simplify(path).c_str());
 				void* license_func = ::dlsym(handle,"license");
 				if( license_func ) {
-					console::dump( " \e[95m(%s)\e[39m\n", reinterpret_cast<const char *(*)()>(license_func)());
+					console::dump( " <Light_Magenta>(%s)<Default>\n", reinterpret_cast<const char *(*)()>(license_func)());
 				} else {
 					console::dump("\n");
 				}

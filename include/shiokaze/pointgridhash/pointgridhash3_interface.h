@@ -55,7 +55,7 @@ public:
 	 \~japanese @brief ポイント群をハッシュグリッドに振り分ける。
 	 @param[in] ponits 振り分けるポイント群。
 	 */
-	virtual void sort_points( const std::vector<vec3d> &points ) = 0;
+	virtual void sort_points( const std::vector<vec3f> &points ) = 0;
 	/**
 	 \~english @brief Get points in a cell.
 	 @param[in] pi Cell index position.

@@ -45,7 +45,7 @@ public:
 	 @param[in] fluid Fluid level set.
 	 \~japanese @brief 流体と壁のレベルセットをセットする。
 	 */
-	virtual void assign( const array2<double> &solid, const array2<double> &fluid ) = 0;
+	virtual void assign( const array2<float> &solid, const array2<float> &fluid ) = 0;
 	/**
 	 \~english @brief Advect level set.
 	 @param[in] u Velocity with which to advect.
@@ -54,14 +54,14 @@ public:
 	 @param[in] u 移流に使用する速度場。
 	 @param[in] dt タイムステップサイズ。
 	 */
-	virtual void advect( const macarray2<double> &u, double dt ) = 0;
+	virtual void advect( const macarray2<float> &u, double dt ) = 0;
 	/**
 	 \~english @brief Get the level set.
 	 @param[out] fluid Output level set.
 	 \~japanese @brief レベルセットを取得する。
 	 @param[out] fluid 出力のレベルセット。
 	 */
-	virtual void get( array2<double> &fluid ) = 0;
+	virtual void get( array2<float> &fluid ) = 0;
 	/**
 	 \~english @brief Draw level set surface.
 	 @param[in] g Graphics engine.

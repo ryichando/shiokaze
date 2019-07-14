@@ -48,6 +48,8 @@ public:
 	//
 	LONG_NAME("MAC Liquid 3D")
 	ARGUMENT_NAME("Liquid")
+	MODULE_NAME("macliquid3")
+	//
 	macliquid3();
 	//
 	virtual void setup_window( std::string &name, int &width, int &height ) const override;
@@ -62,10 +64,10 @@ protected:
 	virtual void configure( configuration &config ) override;
 	virtual void post_initialize() override;
 	//
-	macarray3<double> m_velocity{this};
-	macarray3<double> m_external_force{this};
-	array3<double> m_fluid{this};
-	array3<double> m_solid{this};
+	macarray3<float> m_velocity{this};
+	macarray3<float> m_external_force{this};
+	array3<float> m_fluid{this};
+	array3<float> m_solid{this};
 	//
 	shape3 m_shape;
 	double m_dx;
@@ -109,7 +111,7 @@ protected:
 	//
 	Parameters m_param;
 	//
-	virtual void inject_external_force( macarray3<double> &velocity, double dt );
+	virtual void inject_external_force( macarray3<float> &velocity, double dt );
 	virtual void set_volume_correction( macproject3_interface *macproject );
 	virtual void extend_both();
 	virtual void export_mesh() const;

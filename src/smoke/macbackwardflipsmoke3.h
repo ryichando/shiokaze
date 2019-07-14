@@ -34,6 +34,8 @@ class macbackwardflipsmoke3 : public macsmoke3 {
 public:
 	//
 	LONG_NAME("MAC Backward FLIP Smoke 3D")
+	MODULE_NAME("macbackwardflipsmoke3")
+	//
 	macbackwardflipsmoke3();
 	//
 	virtual void idle() override;

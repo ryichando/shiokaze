@@ -36,9 +36,9 @@ class unstructured_fastmarch2 {
 public:
 	//
 	static void fastmarch(
-					const std::vector<vec2d> &positions,
+					const std::vector<vec2f> &positions,
 					const std::vector<std::vector<size_t> > &_connections,
-					std::vector<double> &levelset,
+					std::vector<float> &levelset,
 					std::vector<char> &fixed,
 					double distance,
 					const parallel_driver &parallel,
@@ -109,7 +109,7 @@ public:
 					size_t k = connections[n][0];
 					if( fixed[k] ) {
 						ds = std::min(ds,(positions[n]-positions[k]).len());
-						dist = std::min(dist,std::abs(levelset[k]));
+						dist = std::min(dist,(double)std::abs(levelset[k]));
 					}
 				}
 			}
@@ -193,7 +193,7 @@ public:
 			for( size_t _n=0; _n<narrowbands.size(); ++_n ) {
 				size_t n = narrowbands[_n];
 				if( ! connections[n].empty() ) {
-					levelset[n] = std::min(distance,levelset[n]);
+					levelset[n] = std::min(distance,(double)levelset[n]);
 					fixed[n] = true;
 				}
 			}

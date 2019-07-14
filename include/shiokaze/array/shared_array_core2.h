@@ -32,7 +32,7 @@ SHKZ_BEGIN_NAMESPACE
 //
 /** @file */
 /// \~english @brief Abstract storage class that enables sharing pre-allocated arrays.
-/// \~japanese @brief 事前に確保されたビットグリッドの共有を可能にする抽象クラス。
+/// \~japanese @brief 事前に確保されたグリッドの共有を可能にする抽象クラス。
 class shared_array_core2 {
 public:
 	/**
@@ -63,7 +63,12 @@ public:
 	 \~english @brief Clear grid storage.
 	 \~japanese @brief グリッドの倉庫を空になる。
 	 */
-	static void clear();
+	static size_t clear();
+	/**
+	 \~english @brief Get the number of current shared arrays.
+	 \~japanese @brief 現在の共有グリッドの数を得る。
+	 */
+	static size_t get_total_grid_count();
 };
 //
 SHKZ_END_NAMESPACE

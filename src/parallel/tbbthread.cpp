@@ -36,6 +36,7 @@ class tbbthread : public parallel_core {
 public:
 	//
 	LONG_NAME("TBB Thread")
+	MODULE_NAME("tbbthread")
 	//
 	virtual void for_each(
 		std::function<void(size_t n, int thread_index)> func,

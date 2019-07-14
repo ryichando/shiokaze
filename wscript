@@ -95,6 +95,7 @@ def build(bld):
 	bld.use_opengl = use_opengl
 	#
 	bld.root_path = bld.path.abspath()
+	bld.local_path = bld.root_path + '/local'
 	bld.env.LIBPATH  = ['/usr/local/lib']
 	#
 	if sys.platform == 'darwin':

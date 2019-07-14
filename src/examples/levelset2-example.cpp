@@ -37,54 +37,59 @@ private:
 	//
 	virtual void configure( configuration &config ) override {
 		//
-		config.get_unsigned("ResolutionX",shape[0],"Resolution towards X axis");
-		config.get_unsigned("ResolutionY",shape[1],"Resolution towards Y axis");
+		config.get_unsigned("ResolutionX",m_shape[0],"Resolution towards X axis");
+		config.get_unsigned("ResolutionY",m_shape[1],"Resolution towards Y axis");
 		//
-		double scale (1.0);
-		config.get_double("ResolutionScale",scale,"Resolution doubling scale");
-		shape *= scale;
-		dx = shape.dx();
+		double view_scale (1.0);
+		config.get_double("ViewScale",view_scale,"View scale");
 		//
-		set_environment("shape",&shape);
-		set_environment("dx",&dx);
+		double resolution_scale (1.0);
+		config.get_double("ResolutionScale",resolution_scale,"Resolution doubling scale");
+		//
+		m_shape *= resolution_scale;
+		m_dx = view_scale * m_shape.dx();
+		set_view_scale(view_scale);
+		//
+		set_environment("shape",&m_shape);
+		set_environment("dx",&m_dx);
 	}
 	//
 	void fill( double time ) {
 		//
-		array.parallel_all([&](int i, int j, auto &it) {
+		m_array.parallel_all([&](int i, int j, auto &it) {
 			double r (0.225);
 			double w (0.25);
-			vec2d center0(0.5+w*cos(time),0.5+0.75*r);
-			vec2d center1(0.5-w*cos(time),0.5-0.75*r);
-			vec2d p = dx*vec2i(i,j).cell();
+			vec2d center0(0.5+w*cos(m_time),0.5+0.75*r);
+			vec2d center1(0.5-w*cos(m_time),0.5-0.75*r);
+			vec2d p = m_dx*vec2i(i,j).cell();
 			double d (1.0);
 			d = std::min(d,(p-center0).len()-r);
 			d = std::min(d,(p-center1).len()-r);
-			if( std::abs(d) < 2.0*dx) it.set(d);
+			if( std::abs(d) < 2.0*m_dx) it.set(d);
 			else it.set_off();
 		});
 		//
-		array.flood_fill();
+		m_array.flood_fill();
 	}
 	//
 	virtual void post_initialize() override {
 		//
-		array.initialize(shape);
-		array.set_as_levelset(2.0*dx);
-		time = 0.0;
-		fill(time);
+		m_array.initialize(m_shape);
+		m_array.set_as_levelset(2.0*m_dx);
+		m_time = 0.0;
+		fill(m_time);
 	}
 	//
 	virtual void idle() override {
 		//
-		time += 0.01;
-		fill(time);
+		m_time += 0.01;
+		fill(m_time);
 	}
 	//
 	virtual bool keyboard ( char key ) override {
 		//
 		if( key == 'M' ) {
-			mode = ! mode;
+			m_mode = ! m_mode;
 			return true;
 		}
 		return drawable::keyboard(key);
@@ -92,26 +97,26 @@ private:
 	//
 	virtual void draw( graphics_engine &g, int width, int height ) const override {
 		//
-		gridvisualizer->draw_grid(g);
+		m_gridvisualizer->draw_grid(g);
 		g.color4(0.5,0.6,1.0,0.5);
-		gridvisualizer->draw_levelset(g,array);
-		if( mode ) gridvisualizer->draw_active(g,array);
-		else gridvisualizer->draw_inside(g,array);
+		m_gridvisualizer->draw_levelset(g,m_array);
+		if( m_mode ) m_gridvisualizer->draw_active(g,m_array);
+		else m_gridvisualizer->draw_inside(g,m_array);
 		//
 		g.color4(1.0,1.0,1.0,1.0);
 		g.draw_string(vec2d(0.01,0.01).v, "Press \"M\" to toggle mode");
 	}
 	//
 	virtual void setup_window( std::string &name, int &width, int &height ) const override {
-		double ratio = shape[1] / (double) shape[0];
+		double ratio = m_shape[1] / (double) m_shape[0];
 		height = ratio * width;
 	}
 	//
-	bool mode {false};
-	array2<double> array {this};
-	shape2 shape {64,64};
-	double dx, time {0.0};
-	gridvisualizer2_driver gridvisualizer{this,"gridvisualizer2"};
+	bool m_mode {false};
+	array2<float> m_array {this};
+	shape2 m_shape {64,64};
+	double m_dx, m_time {0.0};
+	gridvisualizer2_driver m_gridvisualizer{this,"gridvisualizer2"};
 };
 //
 extern "C" module * create_instance() {

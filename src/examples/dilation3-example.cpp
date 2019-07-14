@@ -38,21 +38,26 @@ private:
 	//
 	virtual void configure( configuration &config ) override {
 		//
-		config.get_unsigned("ResolutionX",shape[0],"Resolution towards X axis");
-		config.get_unsigned("ResolutionY",shape[1],"Resolution towards Y axis");
-		config.get_unsigned("ResolutionZ",shape[2],"Resolution towards Z axis");
+		config.get_unsigned("ResolutionX",m_shape[0],"Resolution towards X axis");
+		config.get_unsigned("ResolutionY",m_shape[1],"Resolution towards Y axis");
+		config.get_unsigned("ResolutionZ",m_shape[2],"Resolution towards Z axis");
 		//
-		double scale (1.0);
-		config.get_double("ResolutionScale",scale,"Resolution doubling scale");
-		shape *= scale;
-		dx = shape.dx();
+		double view_scale (1.0);
+		config.get_double("ViewScale",view_scale,"View scale");
 		//
-		set_environment("shape",&shape);
-		set_environment("dx",&dx);
+		double resolution_scale (1.0);
+		config.get_double("ResolutionScale",resolution_scale,"Resolution doubling scale");
+		//
+		m_shape *= resolution_scale;
+		m_dx = view_scale * m_shape.dx();
+		set_view_scale(view_scale);
+		//
+		set_environment("shape",&m_shape);
+		set_environment("dx",&m_dx);
 	}
 	//
 	virtual void post_initialize() override {
-		array.initialize(shape);
+		m_array.initialize(m_shape);
 	}
 	//
 	virtual bool keyboard ( char key ) override {
@@ -61,7 +66,7 @@ private:
 		if ( key == 'R' ) {
 			reinitialize();
 		} else if( key == 'C' ) {
-			console::dump( "Count = %d\n", array.count());
+			console::dump( "Count = %d\n", m_array.count());
 		} else if( key == 'P') {
 			auto &config = configurable::get_global_configuration();
 			config.print_variables();
@@ -70,14 +75,14 @@ private:
 	}
 	//
 	void fill( double x, double y ) {
-		int i = shape[0] * x;
-		int j = shape[0] * y;
-		int k = shape[0] * 0.5;
-		array.set(shape.clamp(i,j,k),1.0);
+		int i = m_shape[0] * x;
+		int j = m_shape[0] * y;
+		int k = m_shape[0] * 0.5;
+		m_array.set(m_shape.clamp(i,j,k),1.0);
 	}
 	//
 	virtual void drag( int width, int height, double x, double y, double u, double v ) override {
-		array.dilate( [&](int i, int j, int k, array3<double>::iterator& it) {
+		m_array.dilate( [&](int i, int j, int k, auto& it) {
 			it.set(1.0);
 		});
 	}
@@ -89,21 +94,21 @@ private:
 	virtual void draw( graphics_engine &g, int width, int height ) const override {
 		//
 		g.color4(1.0,1.0,1.0,0.5);
-		graphics_utility::draw_wired_box(g);
+		graphics_utility::draw_wired_box(g,get_view_scale());
 		//
 		// Draw things
-		gridvisualizer->draw_grid(g);
-		gridvisualizer->draw_density(g,array);
+		m_gridvisualizer->draw_grid(g);
+		m_gridvisualizer->draw_density(g,m_array);
 		//
 		// Draw a message
 		g.color4(1.0,1.0,1.0,1.0);
 		g.draw_string(vec2d(0.01,0.01).v, "Press \"R\" to reset");
 	}
 	//
-	array3<double> array{this};
-	shape3 shape {42,42,42};
-	double dx;
-	gridvisualizer3_driver gridvisualizer{this,"gridvisualizer3"};
+	array3<float> m_array{this};
+	shape3 m_shape {42,42,42};
+	double m_dx;
+	gridvisualizer3_driver m_gridvisualizer{this,"gridvisualizer3"};
 };
 //
 extern "C" module * create_instance() {

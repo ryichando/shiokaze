@@ -40,7 +40,9 @@ SHKZ_USING_NAMESPACE
 class gridutility2 : public gridutility2_interface {
 private:
 	//
-	virtual void convert_to_cell( const array2<double> &nodal_array, array2<double> &result ) const override {
+	MODULE_NAME("gridutility2")
+	//
+	virtual void convert_to_cell( const array2<float> &nodal_array, array2<float> &result ) const override {
 		//
 		result.clear();
 		for( unsigned ii=0; ii<2; ii++ ) for( unsigned jj=0; jj<2; jj++ ) {
@@ -57,11 +59,11 @@ private:
 			it.set(value);
 		});
 	}
-	virtual void combine_levelset( const array2<double> &solid, const array2<double> &fluid, array2<double> &combined, double solid_offset=0.0 ) const override {
+	virtual void combine_levelset( const array2<float> &solid, const array2<float> &fluid, array2<float> &combined, double solid_offset=0.0 ) const override {
 		//
 		if( array_utility2::levelset_exist(solid) ) {
 			//
-			shared_array2<double> copy_solid(fluid.type());
+			shared_array2<float> copy_solid(fluid.type());
 			if( fluid.shape() == solid.shape()) {
 				copy_solid->copy(solid);
 			} else {
@@ -72,7 +74,7 @@ private:
 			combined.activate_as(fluid);
 			combined.activate_as(copy_solid());
 			combined.parallel_actives([&](int i, int j, auto& it, int tn) {
-				it.set(std::max(fluid(i,j),-solid_offset-copy_solid()(i,j)));
+				it.set(std::max(fluid(i,j),-(float)solid_offset-copy_solid()(i,j)));
 			});
 			combined.set_type(fluid.type());
 			combined.flood_fill();
@@ -81,33 +83,33 @@ private:
 			combined.copy(fluid);
 		}
 	}
-	virtual void extrapolate_levelset( const array2<double> &solid, array2<double> &fluid, double threshold=0.0 ) const override {
+	virtual void extrapolate_levelset( const array2<float> &solid, array2<float> &fluid, double threshold=0.0 ) const override {
 		//
 		if( array_utility2::levelset_exist(solid) ) {
 			//
-			shared_array2<double> old_fluid = shared_array2<double>(fluid);
+			shared_array2<float> old_fluid(fluid);
 			bool is_fluid_nodal = fluid.shape() == m_shape.nodal();
 			//
 			const double limit_y = sin(M_PI/4.0);
 			fluid.parallel_actives([&](int i, int j, auto &it, int tn) {
 				vec2d p = is_fluid_nodal ? vec2d(i,j) : vec2i(i,j).cell();
-				double solid_levelset = is_fluid_nodal ? solid(i,j) : array_interpolator2::interpolate<double>(solid,p);
+				double solid_levelset = is_fluid_nodal ? solid(i,j) : array_interpolator2::interpolate<float>(solid,p);
 				//
 				if( solid_levelset < threshold ) {
 					if( m_param.solid_wall_extrapolation ) {
-						double derivative[DIM2];
+						float derivative[DIM2];
 						array_derivative2::derivative(solid,p,derivative);
 						vec2d normal = vec2d(derivative).normal();
 						if( normal.norm2() ) {
 							vec2d index_p_n = vec2d(i,j)+(-solid_levelset/m_dx)*normal;
-							double value = array_interpolator2::interpolate<double>(old_fluid(),index_p_n);
+							float value = array_interpolator2::interpolate<float>(old_fluid(),index_p_n);
 							if( m_param.horizontal_solid_extrapolation && normal[1] < limit_y ) {
 								vec2d normal_horizontal = normal;
 								normal_horizontal[1] = 0.0;
 								normal_horizontal.normalize();
 								if( normal_horizontal.norm2() ) {
 									vec2d index_p_h = vec2d(i,j)+(-solid_levelset/m_dx)*normal_horizontal;
-									value = std::min(value,array_interpolator2::interpolate<double>(old_fluid(),index_p_h));
+									value = std::min(value,array_interpolator2::interpolate<float>(old_fluid(),index_p_h));
 								}
 							}
 							it.set(value);
@@ -115,7 +117,7 @@ private:
 							it.set(fluid.get_background_value());
 						}
 					} else {
-						double value = std::max(it(),solid_levelset);
+						float value = std::max(it(),(float)solid_levelset);
 						it.set(solid_levelset);
 					}
 				}
@@ -136,13 +138,13 @@ private:
 				}
 			});
 			//
-			shared_array2<double> combined(fluid.type());
+			shared_array2<float> combined(fluid.type());
 			combine_levelset(solid,fluid,combined(),m_param.extrapolation_toward_solid*m_dx);
 			fluid.copy(combined());
 			fluid.flood_fill();
 		}
 	}
-	virtual void compute_gradient( const array2<double> &levelset, array2<vec2d> &gradient ) const override {
+	virtual void compute_gradient( const array2<float> &levelset, array2<vec2f> &gradient ) const override {
 		//
 		gradient.activate_as(levelset);
 		gradient.dilate();
@@ -150,16 +152,16 @@ private:
 			vec2d grad;
 			for( unsigned dim : DIMS2 ) {
 				grad[dim] = 
-					array_interpolator2::interpolate<double>(levelset,vec2i(i,j).cell()+0.5*vec2d(dim==0,dim==1)) -
-					array_interpolator2::interpolate<double>(levelset,vec2i(i,j).cell()-0.5*vec2d(dim==0,dim==1));
+					array_interpolator2::interpolate<float>(levelset,vec2i(i,j).cell()+0.5*vec2d(dim==0,dim==1)) -
+					array_interpolator2::interpolate<float>(levelset,vec2i(i,j).cell()-0.5*vec2d(dim==0,dim==1));
 			}
 			it.set(grad/m_dx);
 		});
 	}
-	virtual void trim_narrowband( array2<double> &levelset ) const override {
+	virtual void trim_narrowband( array2<float> &levelset ) const override {
 		//
 		shared_bitarray2 flag(levelset.shape());
-		flag->activate_as<double>(levelset);
+		flag->activate_as<float>(levelset);
 		flag->parallel_actives([&](int i, int j, auto &it, int tn) {
 			//
 			vec2i ij (i,j);
@@ -189,9 +191,9 @@ private:
 			if( ! flag()(i,j)) it.set_off();
 		});
 	}
-	virtual double get_area( const array2<double> &solid, const array2<double> &fluid ) const override {
+	virtual double get_area( const array2<float> &solid, const array2<float> &fluid ) const override {
 		//
-		shared_array2<double> combined = shared_array2<double>(fluid.type());
+		shared_array2<float> combined(fluid.type());
 		combine_levelset(solid,fluid,combined());
 		//
 		std::vector<double> volume_buckets(combined->get_thread_num(),0.0);

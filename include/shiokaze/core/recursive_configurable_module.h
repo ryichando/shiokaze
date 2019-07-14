@@ -97,6 +97,35 @@ public:
 		parent->add_child(this);
 	}
 	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	void send_message( unsigned message, void *ptr ) {
+		m_object->send_message(message,ptr);
+	}
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	void send_message( unsigned message, void *ptr ) const {
+		m_object->send_message(message,ptr);
+	}
+	/**
+	 \~english @brief Get the module name
+	 @return module name
+	 \~japanese @brief モジュールの名前を得る
+	 @return モジュールの名前
+	 */
+	std::string get_module_name() const { return m_object->get_module_name(); }
+	/**
 	 \~english @brief Set name.
 	 @param[in] long_name Module name.
 	 @param[in] argname Argument name for this instance.

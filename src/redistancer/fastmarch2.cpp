@@ -36,13 +36,14 @@ class fastmarch2 : public redistancer2_interface {
 private:
 	//
 	LONG_NAME("FastMarch 2D")
+	MODULE_NAME("fastmarch2")
 	ARGUMENT_NAME("FastMarch")
 	//
-	virtual void redistance( array2<double> &phi_array, unsigned width ) override {
+	virtual void redistance( array2<float> &phi_array, unsigned width ) override {
 		//
-		std::vector<vec2d> positions;
+		std::vector<vec2f> positions;
 		std::vector<std::vector<size_t> > connections;
-		std::vector<double> levelset;
+		std::vector<float> levelset;
 		//
 		// Generate contours
 		shared_array2<std::vector<vec2d> > contours(phi_array.shape()-shape2(1,1));
@@ -73,7 +74,7 @@ private:
 		});
 		//
 		// Compute the closest distance
-		shared_array2<double> fixed_dists(phi_array.shape());
+		shared_array2<float> fixed_dists(phi_array.shape());
 		fixed_dists->activate_as(phi_array);
 		fixed_dists->parallel_actives([&](int i, int j, auto &it, int tn) {
 			//

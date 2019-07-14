@@ -30,18 +30,18 @@ public:
 	 */
 	struct rgb {
 		/**
-		 \~english @brief Red color.
-	 	\~japanese @brief 赤色。
+		 \~english @brief Red color (0.0-1.0).
+	 	\~japanese @brief 赤色 (0.0-1.0)。
 		 */
 		double r;
 		/**
-		 \~english @brief Green color.
-	 	\~japanese @brief 緑色。
+		 \~english @brief Green color (0.0-1.0).
+	 	\~japanese @brief 緑色 (0.0-1.0)。
 		 */
 		double g;
 		/**
-		 \~english @brief Blue color.
-	 	\~japanese @brief 青色。
+		 \~english @brief Blue color (0.0-1.0).
+	 	\~japanese @brief 青色 (0.0-1.0)。
 		 */
 		double b;
 	};
@@ -51,18 +51,18 @@ public:
 	 */
 	struct hsv {
 		/**
-		 \~english @brief Angle in degrees.
-	 	\~japanese @brief 角度。
+		 \~english @brief Angle in degrees (0.0-360.0).
+	 	\~japanese @brief 角度 (0.0-360.0)。
 		 */
 		double h;
 		/**
-		 \~english @brief Saturation.
-	 	\~japanese @brief 彩度。
+		 \~english @brief Saturation (0.0-1.0).
+	 	\~japanese @brief 彩度 (0.0-1.0)。
 		 */
 		double s;
 		/**
-		 \~english @brief Brightness.
-	 	\~japanese @brief 明度。
+		 \~english @brief Brightness (0.0-1.0).
+	 	\~japanese @brief 明度 (0.0-1.0)。
 		 */
 		double v;
 	};

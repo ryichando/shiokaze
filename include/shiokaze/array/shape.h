@@ -279,6 +279,15 @@ struct shape2 {
 		return dx;
 	}
 	/**
+	 \~english @brief Get the maximal number in all the dimensions.
+	 \~japanese @brief 全ての次元の中の最大値を得る。
+	 */
+	unsigned max() const {
+		unsigned result (0);
+		for( int dim : DIMS2 ) result = std::max(result,(*this)[dim]);
+		return result;
+	}
+	/**
 	 \~english @brief Get the new constrained position within the index space of this shape.
 	 @param[in] pi Input position.
 	 @return Constrained new position.
@@ -371,6 +380,41 @@ struct shape2 {
 	 */
 	bool empty() const {
 		return w == 0 && h == 0;
+	}
+	/**
+	 \~english @brief Encode an index position to an integer.
+	 @return Encoded integer.
+	 @param i Index coordinate on X axis.
+	 @param j Index coordinate on Y axis.
+	 \~japanese @brief インデックス位置を整数値に変換する。
+	 @param i X軸のインデックス座標値。
+	 @param j Y軸のインデックス座標値。
+	 @return 変換された整数値。
+	 */
+	size_t encode( int i, int j ) const {
+		return w*j+i;
+	}
+	/**
+	 \~english @brief Encode an index position to an integer.
+	 @return Encoded integer.
+	 @param pi Index coordinate.
+	 \~japanese @brief インデックス位置を整数値に変換する。
+	 @param pi インデックス座標値。
+	 @return 変換された整数値。
+	 */
+	size_t encode( const vec2i &pi ) const {
+		return encode(pi[0],pi[1]);
+	}
+	/**
+	 \~english @brief Decode from an integer to an index coordinate.
+	 @return Decoded coordinate position.
+	 @param value Encoded value.
+	 \~japanese @brief 整数値をデコードして、インデックス位置に変換する。
+	 @param pi エンコードされた値。
+	 @return 変換された座標値。
+	 */
+	vec2i decode( size_t value ) const {
+		return vec2i( value % w, value / w );
 	}
 	/**
 	 \~english @brief Perform a two dimensional serial loop operation.
@@ -684,6 +728,15 @@ struct shape3 {
 		return dx;
 	}
 	/**
+	 \~english @brief Get the maximal number in all the dimensions.
+	 \~japanese @brief 全ての次元の中の最大値を得る。
+	 */
+	unsigned max() const {
+		unsigned result (0);
+		for( int dim : DIMS3 ) result = std::max(result,(*this)[dim]);
+		return result;
+	}
+	/**
 	 \~english @brief Get the new constrained position within the index space of this shape.
 	 @param[in] pi Input position.
 	 @return Constrained new position.
@@ -782,6 +835,47 @@ struct shape3 {
 	 */
 	bool empty() const {
 		return w == 0 && h == 0 && d == 0;
+	}
+	/**
+	 \~english @brief Encode an index position to an integer.
+	 @return Encoded integer.
+	 @param i Index coordinate on X axis.
+	 @param j Index coordinate on Y axis.
+	 @param k Index coordinate on Z axis.
+	 \~japanese @brief インデックス位置を整数値に変換する。
+	 @param i X軸のインデックス座標値。
+	 @param j Y軸のインデックス座標値。
+	 @return 変換された整数値。
+	 */
+	size_t encode( int i, int j, int k ) const {
+		return (w*h)*k+w*j+i;
+	}
+	/**
+	 \~english @brief Encode an index position to an integer.
+	 @return Encoded integer.
+	 @param pi Index coordinate.
+	 \~japanese @brief インデックス位置を整数値に変換する。
+	 @param pi インデックス座標値。
+	 @return 変換された整数値。
+	 */
+	size_t encode( const vec3i &pi ) const {
+		return encode(pi[0],pi[1],pi[2]);
+	}
+	/**
+	 \~english @brief Decode from an integer to an index coordinate.
+	 @return Decoded coordinate position.
+	 @param value Encoded value.
+	 \~japanese @brief 整数値をデコードして、インデックス位置に変換する。
+	 @param pi エンコードされた値。
+	 @return 変換された座標値。
+	 */
+	vec3i decode( size_t value ) const {
+		size_t plane_count = w*h;
+		int k = value / plane_count;
+		size_t m = value % plane_count;
+		int i = m % w;
+		int j = m / w;
+		return vec3i(i,j,k);
 	}
 	/**
 	 \~english @brief Perform a three dimensional serial loop operation.

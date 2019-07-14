@@ -40,6 +40,7 @@ class macpressuresolver3 : public macproject3_interface {
 private:
 	//
 	LONG_NAME("MAC Pressure Solver 3D")
+	MODULE_NAME("macpressuresolver3")
 	//
 	virtual void set_target_volume( double current_volume, double target_volume ) override {
 		m_current_volume = current_volume;
@@ -47,17 +48,17 @@ private:
 	}
 	//
 	virtual void project( double dt,
-				 macarray3<double> &velocity,
-				 const array3<double> &solid,
-				 const array3<double> &fluid) override {
+				 macarray3<float> &velocity,
+				 const array3<float> &solid,
+				 const array3<float> &fluid) override {
 		//
 		scoped_timer timer(this);
 		//
 		timer.tick(); console::dump( ">>> Pressure Projection started...\n" );
 		//
-		shared_array3<double> pressure(m_shape);
-		shared_macarray3<double> areas(velocity.shape());
-		shared_macarray3<double> rhos(velocity.shape());
+		shared_array3<float> pressure(m_shape);
+		shared_macarray3<float> areas(velocity.shape());
+		shared_macarray3<float> rhos(velocity.shape());
 		//
 		// Pre-compute solid cut "areas" and fluid density "rhos" for each cell face
 		timer.tick(); console::dump( "Precomputing solid and fluid fractions...");
@@ -86,7 +87,7 @@ private:
 			double kappa = m_param.surftens_k;
 			//
 			// Compute curvature and store them into an array
-			shared_array3<double> curvature(fluid.shape());
+			shared_array3<float> curvature(fluid.shape());
 			curvature->parallel_op([&]( int i, int j, int k, auto &it, int tn ) {
 				double value = (
 					+fluid(m_shape.clamp(i-1,j,k))+fluid(m_shape.clamp(i+1,j,k))

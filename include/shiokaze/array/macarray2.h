@@ -88,6 +88,31 @@ public:
 	macarray2 ( const macarray2& v ) : m_array_0(this), m_array_1(this) {
 		copy(v);
 	}
+	//
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	void send_message( unsigned message, void *ptr ) {
+		m_array_0.send_message(message,ptr);
+		m_array_1.send_message(message,ptr);
+	}
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	void send_message( unsigned message, void *ptr ) const {
+		m_array_0.send_message(message,ptr);
+		m_array_1.send_message(message,ptr);
+	}
 	/**
 	 \~english @brief Deep copy operation for macarray2.
 	 @param[in] array Reference to an instance of macarray to copy from.

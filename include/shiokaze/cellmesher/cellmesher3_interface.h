@@ -49,7 +49,7 @@ public:
 	 @param[out] vertices 生成されたメッシュの頂点列。
 	 @param[out] faces 生成されたメッシュの三角形あるいは四角形配列。
 	 */
-	virtual void generate_mesh( const array3<double> &levelset, std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) const = 0;
+	virtual void generate_mesh( const array3<float> &levelset, std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) const = 0;
 	//
 private:
 	//

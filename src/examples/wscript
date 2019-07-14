@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-#   modules/dilation/wscript
+#	examples/wscript
 #
-#   This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-#   Created by Ryoichi Ando <rand@nii.ac.jp> on March 7, 2018.
+#	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
+#	Created by Ryoichi Ando <rand@nii.ac.jp> on March 7, 2018.
 #
 #	Permission is hereby granted, free of charge, to any person obtaining a copy of
 #	this software and associated documentation files (the "Software"), to deal in
@@ -56,6 +56,30 @@ def build(bld):
 #
 	bld.shlib(source = 'meshexporter-demo3.cpp',
 			target = bld.get_target_name(bld,'meshexporter3-demo'),
-			use = bld.get_target_name(bld,'core'),
-			lib=['z'])
+			use = bld.get_target_name(bld,'core'))
 #
+	bld.shlib(source = 'rigidbody2-example.cpp',
+			target = bld.get_target_name(bld,'rigidbody2-example'),
+			cxxflags = ['-DSPATIAL_DIM=2'],
+			use = bld.get_target_name(bld,['core']))
+#
+	bld.shlib(source = 'rigidbody3-example.cpp',
+			target = bld.get_target_name(bld,'rigidbody3-example'),
+			cxxflags = ['-DSPATIAL_DIM=3'],
+			use = bld.get_target_name(bld,['core']))
+#
+	bld.shlib(source = 'treearray2-example.cpp',
+			target = bld.get_target_name(bld,'treearray2-example'),
+			use = bld.get_target_name(bld,['core']))
+#
+	bld.shlib(source = 'treearray3-example.cpp',
+			target = bld.get_target_name(bld,'treearray3-example'),
+			use = bld.get_target_name(bld,['core']))
+#
+	bld.shlib(source = 'arraybenchmark2-example.cpp',
+			target = bld.get_target_name(bld,'arraybenchmark2-example'),
+			use = bld.get_target_name(bld,['core']))
+#
+	bld.shlib(source = 'arraybenchmark3-example.cpp',
+			target = bld.get_target_name(bld,'arraybenchmark3-example'),
+			use = bld.get_target_name(bld,['core']))

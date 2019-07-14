@@ -185,15 +185,15 @@ void macbackwardflip2::reset_forward_tracers () {
 	});
 }
 //
-void macbackwardflip2::integrate_forward_tracers ( const macarray2<double> &velocity0, const macarray2<double> &velocity1, const macarray2<double> &g, double dt ) {
+void macbackwardflip2::integrate_forward_tracers ( const macarray2<float> &velocity0, const macarray2<float> &velocity1, const macarray2<float> &g, double dt ) {
 	//
-	auto getVector = [&]( const vec2d &p, const macarray2<double> &u ) {
+	auto getVector = [&]( const vec2d &p, const macarray2<float> &u ) {
 		vec2d new_u;
 		for( unsigned dim : DIMS2 ) new_u[dim] = array_interpolator2::interpolate(u[dim],p/m_dx-0.5*vec2d(dim!=0,dim!=1));
 		return new_u;
 	};
 	//
-	shared_array2<vec2d> m_forward_tracers_save(m_forward_tracers);
+	shared_array2<vec2f> m_forward_tracers_save(m_forward_tracers);
 	m_forward_tracers.parallel_all([&](int i, int j, auto &it) {
 		vec2d p = it();
 		const vec2d u0 = getVector(p,velocity0);
@@ -215,18 +215,18 @@ void macbackwardflip2::integrate_forward_tracers ( const macarray2<double> &velo
 	});
 }
 //
-static vec2d get_velocity ( const vec2d &p, double dx, const macarray2<double> &velocity ) {
+static vec2d get_velocity ( const vec2d &p, double dx, const macarray2<float> &velocity ) {
 	vec2d new_u;
 	for( int dim : DIMS2 ) new_u[dim] = array_interpolator2::interpolate(velocity[dim],p/dx-0.5*vec2d(dim!=0,dim!=1));
 	return new_u;
 }
 //
-void macbackwardflip2::backtrace(std::vector<vec2d> &p, std::vector<vec2d> &u, const std::vector<double> &mass, std::vector<std::vector<double> > &adaptivity_rate, std::vector<double> *d ) {
+void macbackwardflip2::backtrace(std::vector<vec2f> &p, std::vector<vec2f> &u, const std::vector<float> &mass, std::vector<std::vector<float> > &adaptivity_rate, std::vector<float> *d ) {
 	//
 	assert(p.size()==u.size());
 	if( m_exist_density ) std::fill(d->begin(),d->end(),0.0);
 	//
-	auto backtrace = [&]( const vec2d &p, vec2d &u, double dt, double dx, const macarray2<double> &velocity0, const macarray2<double> &velocity1 ) {
+	auto backtrace = [&]( const vec2d &p, vec2d &u, double dt, double dx, const macarray2<float> &velocity0, const macarray2<float> &velocity1 ) {
 		vec2d u0 = get_velocity(p,dx,velocity0);
 		vec2d u1 = get_velocity(p-dt*u0,dx,velocity1);
 		u = 0.5 * (u0+u1);
@@ -250,7 +250,7 @@ void macbackwardflip2::backtrace(std::vector<vec2d> &p, std::vector<vec2d> &u, c
 			unsigned all_count (0), single_count (0);
 			std::vector<unsigned> adaptive_count(m_param.max_temporal_adaptivity_level,0);
 			//
-			macarray2<double> *prev_u = &m_velocity;
+			macarray2<float> *prev_u = &m_velocity;
 			const layer2 *last_layer (nullptr);
 			vec2d u_passive = get_velocity(m_tracer.p[n],m_dx,m_velocity);
 			for( unsigned k=0; k<maximal_backtrace_count; ) {
@@ -381,7 +381,7 @@ void macbackwardflip2::backtrace(std::vector<vec2d> &p, std::vector<vec2d> &u, c
 	});
 }
 //
-bool macbackwardflip2::backtrace( const array2<double> &solid, const array2<double> &fluid ) {
+bool macbackwardflip2::backtrace( const array2<float> &solid, const array2<float> &fluid ) {
 	//
 	if( m_buffers.empty()) {
 		return false;
@@ -416,7 +416,7 @@ bool macbackwardflip2::backtrace( const array2<double> &solid, const array2<doub
 			if( has_fluid && array_interpolator2::interpolate(fluid,m_tracer.p[n]/m_dx-vec2d(0.5,0.5)) > 0.0 ) m_tracer.mass[n] = 0.0;
 		});
 		//
-		auto compute_face_velocity = [&]( macarray2<double> &u_array ) {
+		auto compute_face_velocity = [&]( macarray2<float> &u_array ) {
 			for( int dim : DIMS2 ) for( int i=0; i<m_shape[0]+(dim==0); ++i ) for( int j=0; j<m_shape[1]+(dim==1); ++j ) {
 				double usum (0.0);
 				double wsum (0.0);
@@ -507,7 +507,7 @@ bool macbackwardflip2::backtrace( const array2<double> &solid, const array2<doub
 	}
 }
 //
-bool macbackwardflip2::fetch( macarray2<double> &u_reconstructed ) const {
+bool macbackwardflip2::fetch( macarray2<float> &u_reconstructed ) const {
 	//
 	if( m_buffers.size() && m_exist_gradient ) {
 		u_reconstructed.copy(m_u_reconstructed);
@@ -517,7 +517,7 @@ bool macbackwardflip2::fetch( macarray2<double> &u_reconstructed ) const {
 	}
 }
 //
-bool macbackwardflip2::fetch( array2<double> &density_reconstructed ) const {
+bool macbackwardflip2::fetch( array2<float> &density_reconstructed ) const {
 	//
 	if( m_buffers.size() && m_exist_density ) {
 		density_reconstructed.copy(m_density_reconstructed);
@@ -528,13 +528,13 @@ bool macbackwardflip2::fetch( array2<double> &density_reconstructed ) const {
 }
 //
 void macbackwardflip2::register_buffer(
-									const macarray2<double> &u1,
-									const macarray2<double> &u0,
-									const macarray2<double> *u_reconstructed,
-									const macarray2<double> *g,
-									const array2<double> *d1,
-						 			const array2<double> *d0,
-									const array2<double> *d_added,
+									const macarray2<float> &u1,
+									const macarray2<float> &u0,
+									const macarray2<float> *u_reconstructed,
+									const macarray2<float> *g,
+									const array2<float> *d1,
+						 			const array2<float> *d0,
+									const array2<float> *d_added,
 									double dt ) {
 	layer2 layer;
 	layer.allocate();

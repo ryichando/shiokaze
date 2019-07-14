@@ -33,6 +33,7 @@ class meshutility3 : public meshutility3_interface {
 private:
 	//
 	AUTHOR_NAME("Christopher Batty")
+	MODULE_NAME("meshutility3")
 	//
 	virtual std::vector<std::array<vec3d,3> > polygonise_levelset( const double levelset[2][2][2] ) const override {
 		//

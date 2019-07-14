@@ -34,6 +34,7 @@ private:
 	//
 	LONG_NAME("SDF Distance Field Converter")
 	AUTHOR_NAME("Christopher Batty and Robert Bridson")
+	MODULE_NAME("SDFGen")
 	ARGUMENT_NAME("SDFGen")
 	//
 	virtual void set_mesh( const std::vector<vec3d> &vertices, const std::vector<std::vector<size_t> > &faces) override {

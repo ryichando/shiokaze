@@ -1,5 +1,5 @@
 /*
-**	convexhullrasterizer2.h
+**	convexhullrasterizer2.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
 **	Created by Ryoichi Ando <rand@nii.ac.jp> on June 27, 2017. 
@@ -33,7 +33,7 @@ public:
 	LONG_NAME("Convex Hull Rasterizer 2D")
 	ARGUMENT_NAME("ConvexHullRasterizer")
 	//
-	virtual void build_levelset( array2<double> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const override {
+	virtual void build_levelset( array2<float> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const override {
 		//
 		auto sqr = [](double x) { return x*x; };
 		auto getParticleConvextHullLevelsetSphere = [&]( const vec2d p, const Particle2 &p0 ) {
@@ -113,7 +113,7 @@ public:
 			return min_phi;
 		};
 		//
-		std::vector<vec2d> points(particles.size());
+		std::vector<vec2f> points(particles.size());
 		for( size_t n=0; n<points.size(); ++n ) {
 			points[n] = particles[n].p;
 		}

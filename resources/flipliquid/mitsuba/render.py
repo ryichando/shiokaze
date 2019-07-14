@@ -68,10 +68,9 @@ for frame in range(1,end+1):
 		interval = 10
 		#
 		# Path to mesh files
-		if name == 'mesh':
-			mesh_file = '../mesh/'+str(frame)+'_mesh.ply'
-		elif name == 'transparent':
-			mesh_file = '../mesh/'+str(frame)+'_mesh_enclosed.ply'
+		mesh_file = '../mesh/'+str(frame)+'_mesh.ply'
+		if name == 'transparent':
+			mesh_file = '../mesh/'+str(frame)+'_mesh_enclosed.serialized'
 
 		particle_file = '../mesh/'+str(frame)+'_particles.dat'
 		#

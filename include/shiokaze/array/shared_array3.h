@@ -27,48 +27,15 @@
 //
 #include <typeinfo>
 #include <functional>
+#include <cassert>
 //
+#include "shared_array_core3.h"
 #include "array3.h"
 #include "macarray3.h"
 //
 SHKZ_BEGIN_NAMESPACE
 //
 /** @file */
-/// \~english @brief Abstract storage class that enables sharing pre-allocated arrays.
-/// \~japanese @brief 事前に確保されたグリッドの共有を可能にする抽象クラス。
-class shared_array_core3 {
-public:
-	/**
-	 \~english @brief Borrow a shared array.
-	 @param[in] shape Shape of the grid.
-	 @param[in] class_hash Hash indicator for the type of grid.
-	 @param[in] core_name Core module name for the grid.
-	 @param[in] alloc_func Grid allocation func.
-	 @param[in] dealloc_func Grid deallocation func.
-	 @return Pointer to a shared grid.
-	 \~japanese @brief 共有されたグリッドを借用する。
-	 @param[in] shape グリッドの形。
-	 @param[in] class_hash Hash グリッドの種類を示すハッシュ値。
-	 @param[in] core_name グリッドのコアモジュール名。
-	 @param[in] alloc_func グリッドのメモリアロケーター関数。
-	 @param[in] dealloc_func グリッドのメモリ解放関数。
-	 @return 借用されたグリッドのポインタ。
-	 */
-	static void * borrow_shared( const shape3 &shape, size_t class_hash, std::string core_name, std::function<void *(const shape3 &shape, std::string core_name)> alloc_func, std::function<void( void *ptr )> dealloc_func );
-	/**
-	 \~english @brief Return a borrowed array.
-	 @param[in] array Pointer to a borrowed array.
-	 \~japanese @brief 借用されたグリッドを変換する。
-	 @param[in] array 借用されたグリッドへのポインター。
-	 */
-	static void return_shared( void *array );
-	/**
-	 \~english @brief Clear grid storage.
-	 \~japanese @brief グリッドの倉庫を空になる。
-	 */
-	static void clear();
-};
-//
 /// \~english @brief Storage class that enables sharing pre-allocated arrays.
 /// \~japanese @brief 事前に確保されたグリッドの共有を可能にするクラス。
 template<class T> class shared_array3 {
@@ -183,8 +150,8 @@ public:
 			[]( void *ptr ) {
 				delete reinterpret_cast<macarray3<T> *>(ptr);
 			}));
-		m_array->clear(initial_value);
 		assert( m_array->shape() == shape );
+		m_array->clear(initial_value);
 	}
 	/**
 	 \~english @brief Borrow a shared array.

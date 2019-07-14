@@ -28,6 +28,7 @@
 #include <shiokaze/polygon/polygon3_utility.h>
 #include <shiokaze/meshlevelset/meshlevelset_interface.h>
 #include <shiokaze/core/filesystem.h>
+#include <shiokaze/core/console.h>
 #include <map>
 #include <string>
 #include <cmath>
@@ -81,6 +82,8 @@ extern "C" void initialize( const shape3 &shape, double dx ) {
 		levelsets[n]->recursive_initialize({{"dx",&dx}});
 	}
 	//
+	console::dump( "Loading polygons...");
+
 	polygon->load_mesh(filesystem::find_resource_path("objects","bunny_watertight_low.ply"));
 	polygon->get_mesh(vertices,faces);
 	polygon3_utility::transform(vertices,vec3d(0.2,level+idx*stride,0.125+shift_z),0.2,1,180.0);
@@ -128,6 +131,8 @@ extern "C" void initialize( const shape3 &shape, double dx ) {
 	for( int n=0; n<MAX_SLOT; ++n ) {
 		levelsets[n]->generate_levelset();
 	}
+	//
+	console::dump("Done.\n");
 }
 //
 extern "C" std::map<std::string,std::string> get_default_parameters() {

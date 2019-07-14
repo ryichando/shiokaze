@@ -63,7 +63,7 @@ public:
 	 @param[in] height ピクセル単位の縦幅。
 	 @param[in] dim 描画する空間の次元数。
 	 */
-	virtual void configure_view( unsigned width, unsigned height, unsigned dim ) = 0;
+	virtual void configure_view( unsigned width, unsigned height, unsigned dim, double scale=1.0 ) = 0;
 	/**
 	 \~english @brief Clear out the canvas.
 	 \~japanese @brief キャンバスをクリアする。
@@ -89,7 +89,7 @@ public:
 	 \~english @brief Equivalebt to glColor. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml
 	 \~japanese @brief glColor と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml を参照。
 	 */
-	void color3v( const double *v ) {
+	template <class T> void color3v( const T *v ) {
 		double v_plus_alpha[] = { v[0], v[1], v[2], 1.0 };
 		color4v(v_plus_alpha);
 	}
@@ -98,6 +98,14 @@ public:
 	 \~japanese @brief glColor と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml を参照。
 	 */
 	virtual void color4v( const double *v ) = 0;
+	/**
+	 \~english @brief Equivalebt to glColor. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml
+	 \~japanese @brief glColor と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml を参照。
+	 */
+	void color4v( const float *v ) {
+		double p[] = { v[0], v[1], v[2], v[3] };
+		color4v(p);
+	}
 	/**
 	 \~english @brief Equivalebt to glVertex. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml
 	 \~japanese @brief glVertex と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml を参照。
@@ -140,7 +148,7 @@ public:
 	 \~english @brief Equivalebt to glVertex. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml
 	 \~japanese @brief glVertex と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml を参照。
 	 */
-	void vertex2v( const double *v ) {
+	template <class T> void vertex2v( const T *v ) {
 		double v_3d_added[] = { v[0], v[1], 0.0 };
 		vertex3v(v_3d_added);
 	}
@@ -149,6 +157,14 @@ public:
 	 \~japanese @brief glVertex と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml を参照。
 	 */
 	virtual void vertex3v( const double *v ) = 0;
+	/**
+	 \~english @brief Equivalebt to glVertex. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml
+	 \~japanese @brief glVertex と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml を参照。
+	 */
+	void vertex3v( const float *v ) {
+		double p[] = { v[0], v[1], v[2] };
+		vertex3v(p);
+	}
 	/**
 	 \~english @brief Draw a string at the current position.
 	 @param[in] p Position.

@@ -72,7 +72,7 @@ static inline uint64_t popcnt(const void* data, uint64_t size) {
 	return cnt;
 }
 //
-size_t bitcount::count( unsigned char *bit_mask, size_t bit_mask_size, const parallel_driver *parallel ) {
+size_t bitcount::count( const unsigned char *bit_mask, size_t bit_mask_size, const parallel_driver *parallel ) {
 	//
 	if( parallel ) {
 		using T = uint64_t;

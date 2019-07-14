@@ -42,7 +42,6 @@ SHKZ_USING_NAMESPACE
 macliquid3::macliquid3() {
 	//
 	m_shape = shape3(64,32,64);
-	m_dx = m_shape.dx();
 }
 //
 void macliquid3::load( configuration &config ) {
@@ -77,11 +76,16 @@ void macliquid3::configure( configuration &config ) {
 	config.get_unsigned("ResolutionX",m_shape[0],"Resolution towards X axis");
 	config.get_unsigned("ResolutionY",m_shape[1],"Resolution towards Y axis");
 	config.get_unsigned("ResolutionZ",m_shape[2],"Resolution towards Z axis");
-	double scale (1.0);
-	config.get_double("ResolutionScale",scale,"Resolution doubling scale");
 	//
-	m_shape *= scale;
-	m_dx = m_shape.dx();
+	double view_scale (1.0);
+	config.get_double("ViewScale",view_scale,"View scale");
+	//
+	double resolution_scale (1.0);
+	config.get_double("ResolutionScale",resolution_scale,"Resolution doubling scale");
+	//
+	m_shape *= resolution_scale;
+	m_dx = view_scale * m_shape.dx();
+	set_view_scale(view_scale);
 	//
 	m_doubled_shape = 2 * m_shape;
 	m_half_dx = 0.5 * m_dx;
@@ -116,7 +120,7 @@ void macliquid3::post_initialize() {
 	timer.tick(); console::dump( "Computing the initial volume..." );
 	m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
 	//
-	shared_macarray3<double> velocity_actives(m_velocity.type());
+	shared_macarray3<float> velocity_actives(m_velocity.type());
 	for( int dim : DIMS3 ) {
 		velocity_actives()[dim].activate_inside_as(m_fluid);
 		velocity_actives()[dim].activate_inside_as(m_fluid,vec3i(dim==0,dim==1,dim==2));
@@ -140,7 +144,7 @@ void macliquid3::setup_window( std::string &name, int &width, int &height ) cons
 	height = width;
 }
 //
-void macliquid3::inject_external_force( macarray3<double> &velocity, double dt ) {
+void macliquid3::inject_external_force( macarray3<float> &velocity, double dt ) {
 	//
 	if( m_force_exist ) {
 		velocity += m_external_force;
@@ -189,7 +193,7 @@ void macliquid3::extend_both() {
 	//
 	timer.tick(); console::dump( "Extending velocity field...");
 	unsigned width = 2+m_timestepper->get_current_CFL();
-	macarray_extrapolator3::extrapolate<double>(m_velocity,width);
+	macarray_extrapolator3::extrapolate<float>(m_velocity,width);
 	m_macutility->constrain_velocity(m_solid,m_velocity);
 	m_fluid.dilate(width);
 	console::dump( "Done. Count=%d. Took %s\n", width, timer.stock("extend_velocity").c_str());
@@ -217,7 +221,7 @@ void macliquid3::idle() {
 	m_macsurfacetracker->get(m_fluid);
 	//
 	// Velocity advection
-	shared_macarray3<double> velocity_save(m_velocity);
+	shared_macarray3<float> velocity_save(m_velocity);
 	m_macadvection->advect_vector(m_velocity,velocity_save(),m_fluid,dt,"velocity");
 	//
 	// Add external force
@@ -331,9 +335,9 @@ void macliquid3::do_export_solid_mesh() const {
 		if( array_utility3::levelset_exist(m_solid)) {
 			//
 			timer.tick(); console::dump( "Generating solid mesh..." );
-			shared_array3<double> solid_to_visualize(m_doubled_shape.nodal());
+			shared_array3<float> solid_to_visualize(m_doubled_shape.nodal());
 			if( ! m_gridutility->assign_visualizable_solid(m_dylib,m_half_dx,solid_to_visualize())) {
-				array_upsampler3::upsample_to_double_nodal<double>(m_solid,m_dx,solid_to_visualize());
+				array_upsampler3::upsample_to_double_nodal<float>(m_solid,m_dx,solid_to_visualize());
 			}
 			//
 			std::vector<vec3d> vertices;
@@ -371,7 +375,7 @@ void macliquid3::do_export_solid_mesh() const {
 void macliquid3::draw( graphics_engine &g, int width, int height ) const {
 	//
 	g.color4(1.0,1.0,1.0,0.5);
-	graphics_utility::draw_wired_box(g);
+	graphics_utility::draw_wired_box(g,get_view_scale());
 	//
 	// Draw projection component
 	m_macproject->draw(g);
@@ -380,7 +384,7 @@ void macliquid3::draw( graphics_engine &g, int width, int height ) const {
 	m_macvisualizer->draw_velocity(g,m_velocity);
 	//
 	// Visualize solid
-	shared_array3<double> solid_to_visualize(m_solid.shape());
+	shared_array3<float> solid_to_visualize(m_solid.shape());
 	if( ! m_gridutility->assign_visualizable_solid(m_dylib,m_dx,solid_to_visualize())) solid_to_visualize->copy(m_solid);
 	if( array_utility3::levelset_exist(solid_to_visualize())) m_gridvisualizer->draw_solid(g,solid_to_visualize());
 	//

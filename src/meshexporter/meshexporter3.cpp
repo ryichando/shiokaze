@@ -186,7 +186,12 @@ public:
 		const char *name = "mesh";
 		append(name, strlen(name)+1, buffer);
 		uint64_t v_number = vertices.size();
-		uint64_t f_number = faces[0].size() == 3 ? faces.size() : 2*faces.size();
+		uint64_t f_number = 0;
+		for( unsigned n=0; n<faces.size(); n++ ) {
+			const std::vector<size_t> &face = faces[n];
+			if( face.size() == 3 ) f_number += 1;
+			else if( face.size() == 4 ) f_number += 2;
+		}
 		append(&v_number,sizeof(uint64_t),buffer);
 		append(&f_number,sizeof(uint64_t),buffer);
 		for( unsigned n=0; n<vertices.size(); n++ ) {

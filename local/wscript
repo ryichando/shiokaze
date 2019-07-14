@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+#
+#   local/wscript
+#
+#   This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
+#   Created by Ryoichi Ando <rand@nii.ac.jp> on Jan 30, 2017. All rights reserved.
+#
+#	Permission is hereby granted, free of charge, to any person obtaining a copy of
+#	this software and associated documentation files (the "Software"), to deal in
+#	the Software without restriction, including without limitation the rights to use,
+#	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+#	Software, and to permit persons to whom the Software is furnished to do so,
+#	subject to the following conditions:
+#
+#	The above copyright notice and this permission notice shall be included in all copies
+#	or substantial portions of the Software.
+#
+#	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+#	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+#	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+#	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+#	CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+#	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# HACD
+def build_hacd(bld):
+	bld.shlib(source=bld.path.ant_glob('src/hacd/**/*.cpp'),
+			  includes='include/hacd',
+			  target=bld.get_target_name(bld,'hacd'))
+# Box2D
+def build_box2d(bld):
+	bld.shlib(source=bld.path.ant_glob('include/Box2D/**/*.cpp'),
+			  includes='include/Box2D',
+			  target=bld.get_target_name(bld,'box2d'))
+#
+# bullet3
+def build_bullet3(bld):
+	bld.shlib(source=bld.path.ant_glob([
+			'include/bullet3/**/*.c',
+			'include/bullet3/**/*.cpp'
+		]),
+		includes='include/bullet3',
+		target=bld.get_target_name(bld,'bullet3'))
+#
+# bullet3
+def build_reactphysics3d(bld):
+	bld.shlib(source=bld.path.ant_glob([
+			'include/reactphysics3d/**/*.cpp'
+		]),
+		includes='include/reactphysics3d',
+		target=bld.get_target_name(bld,'reactphysics3d'))
+#
+def build(bld):
+	build_hacd(bld)
+	build_box2d(bld)
+	build_bullet3(bld)
+	build_reactphysics3d(bld)

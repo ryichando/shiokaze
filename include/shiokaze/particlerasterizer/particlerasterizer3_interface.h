@@ -47,12 +47,12 @@ public:
 		 \~english @brief Particle position.
 		 \~japanese @brief 粒子の位置。
 		 */
-		vec3d p;
+		vec3f p;
 		/**
 		 \~english @brief Particle radius.
 		 \~japanese @brief 粒子の半径。
 		 */
-		double r;
+		float r;
 	};
 	/**
 	 \~english @brief Building a level set from the set of particles.
@@ -64,7 +64,7 @@ public:
 	 @param[in] mask レベルセットの値を計算するステンシルマスク。ステンシルマスクが有効な部分だけ計算される。
 	 @param[in] particles 粒子群。
 	 */
-	virtual void build_levelset( array3<double> &fluid, const bitarray3 &mask, const std::vector<Particle3> &particles ) const = 0;
+	virtual void build_levelset( array3<float> &fluid, const bitarray3 &mask, const std::vector<Particle3> &particles ) const = 0;
 	//
 private:
 	virtual void initialize( const shape3 &shape, double dx ) = 0;

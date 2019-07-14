@@ -33,10 +33,12 @@ SHKZ_USING_NAMESPACE
 class macvisualizer2 : public macvisualizer2_interface {
 private:
 	//
-	virtual void draw_velocity( graphics_engine &g, const macarray2<double> &velocity ) const override {
+	MODULE_NAME("macvisualizer2")
+	//
+	virtual void draw_velocity( graphics_engine &g, const macarray2<float> &velocity ) const override {
 		if( m_param.draw_velocity ) {
 			//
-			shared_array2<vec2d> cell_velocity(velocity.shape());
+			shared_array2<vec2f> cell_velocity(velocity.shape());
 			velocity.convert_to_full(*cell_velocity.get());
 			//
 			g.color4(1.0,1.0,1.0,0.5);
@@ -48,12 +50,12 @@ private:
 		}
 	}
 	//
-	virtual void visualize_scalar( graphics_engine &g, const macarray2<double> &array ) const override {
+	virtual void visualize_scalar( graphics_engine &g, const macarray2<float> &array ) const override {
 		//
-		double maxv = std::numeric_limits<double>::min();
-		double minv = std::numeric_limits<double>::max();
+		float maxv = std::numeric_limits<float>::min();
+		float minv = std::numeric_limits<float>::max();
 		array.const_serial_actives([&](int dim, int i, int j, const auto &it) {
-			double value = it();
+			float value = it();
 			maxv = std::max(maxv,value);
 			minv = std::min(minv,value);
 		});
@@ -65,7 +67,7 @@ private:
 			array.const_serial_all([&]( int dim, int i, int j, const auto &it ) {
 				//
 				auto set_color = [&](unsigned i, unsigned j) {
-					double v = array[dim](i,j);
+					float v = array[dim](i,j);
 					double normp = v ? 2.0*(v-minv)/det-1.0 : 0.0;
 					g.color4(normp>0,0.3,normp<=0,std::abs(normp));
 				};

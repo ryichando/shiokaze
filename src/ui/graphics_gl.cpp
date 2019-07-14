@@ -63,17 +63,17 @@ void graphics_gl::set_camera( const double target[3], const double position[3] )
 	for( int i=0; i<3; ++i ) m_position[i] = position[i];
 }
 //
-void graphics_gl::configure_view( unsigned width, unsigned height, unsigned dim ) {
+void graphics_gl::configure_view( unsigned width, unsigned height, unsigned dim, double scale ) {
 	//
 	m_dimension = dim;
 	glViewport(0,0,width,height);
 	if( dim == 2 ) {
 		glLoadIdentity();
-		glOrtho(0.0,1.0,0.0,height / (double)width,-1.0,1.0);
+		glOrtho(0.0,scale,0.0,scale * height / (double)width,-1.0,1.0);
 	} else if ( dim == 3 ) {
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		gluPerspective( 35, width / (double) height, 1, 1000 );
+		gluPerspective( 35, width / (double) height, std::min(0.001,1.0/scale), 5.0*scale );
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		glScaled(-1.0, 1.0, 1.0);

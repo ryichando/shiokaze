@@ -27,6 +27,8 @@
 #include <shiokaze/core/console.h>
 #include <shiokaze/core/timer.h>
 #include <shiokaze/core/filesystem.h>
+#include <shiokaze/array/shared_array_core2.h>
+#include <shiokaze/array/shared_array_core3.h>
 #include <string>
 //
 SHKZ_USING_NAMESPACE
@@ -34,8 +36,18 @@ SHKZ_USING_NAMESPACE
 class sysstats : public sysstats_interface {
 public:
 	//
+	MODULE_NAME("sysstats")
+	//
 	virtual void report_stats() const override {
 		console::dump("Arguments: %s\n", arg_str.c_str());
+		size_t num_grids2 = shared_array_core2::get_total_grid_count();
+		if( num_grids2 ) {
+			console::dump("Current total shared 2D grids = %u\n", num_grids2 );
+		}
+		size_t num_grids3 = shared_array_core3::get_total_grid_count();
+		if( num_grids3 ) {
+			console::dump("Current total shared 3D grids = %u\n", num_grids3 );
+		}
 	}
 	//
 	virtual void plot_graph() const override {

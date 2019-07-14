@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+#
+#	rigidbody/wscript
+#
+#	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
+#	Created by Ryoichi Ando <rand@nii.ac.jp> on April 10, 2017. 
+#
+#	Permission is hereby granted, free of charge, to any person obtaining a copy of
+#	this software and associated documentation files (the "Software"), to deal in
+#	the Software without restriction, including without limitation the rights to use,
+#	copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+#	Software, and to permit persons to whom the Software is furnished to do so,
+#	subject to the following conditions:
+#
+#	The above copyright notice and this permission notice shall be included in all copies
+#	or substantial portions of the Software.
+#
+#	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+#	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+#	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+#	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+#	CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+#	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+def build(bld):
+	#
+	bld.shlib(source = 'box2d_rigidworld2.cpp',
+			target = bld.get_target_name(bld,'box2d_rigidworld2'),
+			use = bld.get_target_name(bld,['core','box2d']))
+	#
+	bld.shlib(source = 'bullet3_rigidworld3.cpp',
+			target = bld.get_target_name(bld,'bullet3_rigidworld3'),
+			includes= bld.local_path+'/include/bullet3',
+			use = bld.get_target_name(bld,['core','bullet3']))
+	#
+	bld.shlib(source = 'reactphysics3d_rigidworld3.cpp',
+			target = bld.get_target_name(bld,'reactphysics3d_rigidworld3'),
+			includes= bld.local_path+'/include/reactphysics3d',
+			use = bld.get_target_name(bld,['core','reactphysics3d']))
+	#
+	bld.shlib(source = 'hacd.cpp',
+			target = bld.get_target_name(bld,'hacd-dispatcher'),
+			cxxflags = ['-DSPATIAL_DIM=3'],
+			use = bld.get_target_name(bld,['core','hacd']))

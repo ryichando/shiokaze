@@ -26,29 +26,29 @@ def build(bld):
 #
 	bld.shlib(source = 'lineararray2.cpp',
 			target = bld.get_target_name(bld,'lineararray2'),
-			use = bld.get_target_name(bld,['core','bitcount','dilate2']))
+			use = bld.get_target_name(bld,['core','bitcount']))
 #
 	bld.shlib(source = 'lineararray3.cpp',
 			target = bld.get_target_name(bld,'lineararray3'),
-			use = bld.get_target_name(bld,['core','bitcount','dilate3']))
+			use = bld.get_target_name(bld,['core','bitcount']))
 #
 	bld.shlib(source = 'tiledarray2.cpp',
 			target = bld.get_target_name(bld,'tiledarray2'),
-			use = bld.get_target_name(bld,['core','bitcount','dilate2']))
+			use = bld.get_target_name(bld,['core','bitcount']))
 #
 	bld.shlib(source = 'tiledarray3.cpp',
 			target = bld.get_target_name(bld,'tiledarray3'),
-			use = bld.get_target_name(bld,['core','bitcount','dilate3']))
+			use = bld.get_target_name(bld,['core','bitcount']))
 #
-	bld.stlib(source = 'dilate2.cpp',
-			use = bld.get_target_name(bld,'core'),
-			cxxflags = ['-fPIC'],
-			target = bld.get_target_name(bld,'dilate2'))
+	bld.shlib(source = 'treearray2.cpp',
+			target = bld.get_target_name(bld,'treearray2'),
+			cxxflags=['-Wno-multichar'],
+			use = bld.get_target_name(bld,['core','bitcount','uint128_t']))
 #
-	bld.stlib(source = 'dilate3.cpp',
-			use = bld.get_target_name(bld,'core'),
-			cxxflags = ['-fPIC'],
-			target = bld.get_target_name(bld,'dilate3'))
+	bld.shlib(source = 'treearray3.cpp',
+			target = bld.get_target_name(bld,'treearray3'),
+			cxxflags=['-Wno-multichar'],
+			use = bld.get_target_name(bld,['core','bitcount','uint128_t']))
 #
 	bld.recurse('bitcount')
-#
+

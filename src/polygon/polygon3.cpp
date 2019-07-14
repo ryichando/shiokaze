@@ -24,7 +24,6 @@
 //
 #include <shiokaze/polygon/polygon3_interface.h>
 #include <shiokaze/core/console.h>
-#include <shiokaze/core/timer.h>
 #include "rply/rply.h"
 //
 SHKZ_USING_NAMESPACE
@@ -83,11 +82,9 @@ static int face_cb(p_ply_argument argument) {
 class polygon3 : public polygon3_interface {
 public:
 	//
+	MODULE_NAME("polygon3")
+	//
 	virtual bool load_mesh( std::string path ) override {
-		//
-		scoped_timer timer(this);
-		//
-		timer.tick(); console::dump( "Loading polygon: %s...", path.c_str());
 		//
 		mesh3 mesh;
 		size_t nvertices, ntriangles;
@@ -135,7 +132,6 @@ public:
 			m_faces[n][2] = mesh.faces_2[n];
 		}
 		//
-		console::dump("Done. Took %s.\n", timer.stock("Loading").c_str());
 		return true;
 	}
 	virtual void get_mesh( std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) override {

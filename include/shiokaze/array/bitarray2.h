@@ -30,6 +30,10 @@
 #include <cassert>
 #include <cstdio>
 #include <algorithm>
+#include <memory>
+#include <utility>
+#include <mutex>
+#include <thread>
 #include "shape.h"
 #include "array_core2.h"
 //
@@ -104,12 +108,34 @@ private:
 	}
 	//
 	virtual void post_initialize() override {
-		if( shape().count() ) {
+		if( shape().count() && ! m_is_initialized ) {
 			initialize(m_shape);
 		}
 	}
 	//
 public:
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	void send_message( unsigned message, void *ptr ) {
+		m_core->send_message(message,ptr);
+	}
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	void send_message( unsigned message, void *ptr ) const {
+		m_core->send_message(message,ptr);
+	}
 	/**
 	 \~english @brief Copy constructor for bitarray2.
 	 @param[in] array Reference to an instance of array to copy from.
@@ -144,7 +170,12 @@ public:
 			set_type(array.type());
 			assert(m_core);
 			if( array.m_core ) {
-				m_core->copy(*array.m_core.get(),[&](void *target, const void *src){},&m_parallel);
+				m_core->copy(*array.get_core(),[&](void *target, const void *src){},m_parallel);
+			}
+			if( m_main_cache ) {
+				m_core->destroy_cache(m_main_cache);
+				m_main_cache = m_core->generate_cache();
+				m_main_thread_id = std::this_thread::get_id();
 			}
 		}
 	}
@@ -168,6 +199,12 @@ public:
 		clear();
 		m_core->initialize(shape.w,shape.h,0);
 		m_shape = shape;
+		m_is_initialized = true;
+		m_support_cache = m_core->support_cache();
+		if( m_support_cache ) {
+			m_main_cache = m_core->generate_cache();
+			m_main_thread_id = std::this_thread::get_id();
+		}
 	}
 	/**
 	 \~english @brief Function to count the number of active cells.
@@ -277,6 +314,10 @@ public:
 		parallel_actives([&](iterator& it) {
 			it.set_off();
 		});
+		if( m_main_cache ) {
+			m_core->destroy_cache(m_main_cache);
+			m_main_cache = nullptr;
+		}
 	}
 	/**
 	 \~english @brief Set bit on grid.
@@ -289,7 +330,7 @@ public:
 	void set( int i, int j ) {
 		m_core->set(i,j,[&](void *value_ptr, bool &active){
 			active = true;
-		});
+		},get_cache());
 	}
 	/**
 	 \~english @brief Set bit on grid.
@@ -314,7 +355,7 @@ public:
 	 */
 	bool operator()( int i, int j ) const {
 		bool filled;
-		return (*m_core)(i,j,filled) != nullptr;
+		return (*m_core)(i,j,filled,get_cache()) != nullptr;
 	}
 	/**
 	 \~english @brief Get if a position on grid is active.
@@ -338,7 +379,7 @@ public:
 	void set_off( int i, int j ) {
 		m_core->set(i,j,[&](void *value_ptr, bool &active){
 			active = false;
-		});
+		},get_cache());
 	}
 	/**
 	 \~english @brief Set a position on grid inactive.
@@ -963,6 +1004,24 @@ public:
 	std::string get_core_name() const {
 		return m_core_name;
 	}
+	/**
+	 \~english @brief Get pointer to the core module.
+	 @return Pointer to the core module.
+	 \~japanese @brief コアモジュールのポインターを取得する。
+	 @return コアモジュールへのポインタ。
+	 */
+	const array_core2 * get_core() const {
+		return m_core.get();
+	}
+	/**
+	 \~english @brief Get pointer to the core module.
+	 @return Pointer to the core module.
+	 \~japanese @brief コアモジュールのポインターを取得する。
+	 @return コアモジュールへのポインタ。
+	 */
+	array_core2 * get_core() {
+		return m_core.get();
+	}
 	/// \~english @brief Collection of properties of this grid.
 	/// \~japanese @brief このグリッドのプロパティー集。
 	struct type2 {
@@ -1008,8 +1067,38 @@ private:
 	//
 	shape2 m_shape;
 	parallel_driver m_parallel{this};
+	bool m_is_initialized {false};
 	array2_ptr m_core;
 	std::string m_core_name;
+	void *m_main_cache {nullptr};
+	std::thread::id m_main_thread_id;
+	bool m_support_cache {false};
+	//
+	struct cache_struct {
+		cache_struct ( array_core2 *core ) : core(core) {
+			ptr = core->generate_cache();
+		}
+		~cache_struct() {
+			core->destroy_cache(ptr);
+		}
+		void *ptr;
+		const array_core2 *core;
+	};
+	//
+	void * get_cache() const {
+		//
+		if( ! m_support_cache ) return nullptr;
+		//
+		thread_local std::thread::id thread_id = std::this_thread::get_id();
+		if( thread_id == m_main_thread_id ) return m_main_cache;
+		//
+		thread_local std::vector<std::pair<void *,std::shared_ptr<cache_struct> > > cache_list;
+		for( const auto &c : cache_list ) {
+			if( c.first == (void *)this ) return c.second->ptr;
+		}
+		cache_list.push_back({(void *)this,std::make_shared<cache_struct>(m_core.get())});
+		return cache_list.back().second->ptr;
+	};
 };
 //
 SHKZ_END_NAMESPACE

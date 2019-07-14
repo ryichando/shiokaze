@@ -53,7 +53,7 @@ public:
 	 @param[in] mode 描画モード。
 	 @param[in] num_v 頂点数。
 	 */
-	static void draw_circle ( graphics_engine &g, const double *p, double r, ge::MODE mode, unsigned num_v=20 ) {
+	template<class T> static void draw_circle ( graphics_engine &g, const T *p, double r, ge::MODE mode, unsigned num_v=20 ) {
 		g.begin(mode);
 		for( unsigned t=0; t<num_v; t++ ) {
 			double theta = 2.0 * M_PI * t / (double)num_v;
@@ -71,7 +71,7 @@ public:
 	 @param[in] p0 始点。
 	 @param[in] p1 終点。
 	 */
-	static void draw_arrow( graphics_engine &g, const double *p0, const double *p1 ) {
+	template<class T> static void draw_arrow( graphics_engine &g, const T *p0, const T *p1 ) {
 		double y_vec_x = p1[0]-p0[0];
 		double y_vec_y = p1[1]-p0[1];
 		double y_vec_len = hypot(y_vec_x,y_vec_y);
@@ -110,9 +110,9 @@ public:
 	 \~japanese @brief 単位サイズのワイヤーボックスを描く。
 	 @param[in] g グラフィックスエンジン。
 	 */
-	static void draw_wired_box( graphics_engine &g ) {
+	static void draw_wired_box( graphics_engine &g, double scale=1.0 ) {
 		const double p0[] = { 0.0, 0.0, 0.0 };
-		const double p1[] = { 1.0, 1.0, 1.0 };
+		const double p1[] = { scale, scale, scale };
 		draw_wired_box(g,p0,p1);
 	}
 	/**
@@ -125,7 +125,7 @@ public:
 	 @param[in] p0 始点。
 	 @param[in] p1 終点。
 	 */
-	static void draw_wired_box( graphics_engine &g, const double *p0, const double *p1 ) {
+	template<class T> static void draw_wired_box( graphics_engine &g, const T *p0, const T *p1 ) {
 		//
 		g.begin(ge::MODE::LINE_LOOP);
 		g.vertex3(p0[0],p0[1],p0[2]);
@@ -151,24 +151,6 @@ public:
 		g.vertex3(p1[0],p0[1],p0[2]);
 		g.vertex3(p1[0],p0[1],p1[2]);
 		g.end();
-	}
-	/**
-	 \~english @brief Draw a number with label.
-	 @param[in] g Graphics engine.
-	 @param[in] label Label string.
-	 @param[in] number Number.
-	 @param[in] width Window width.
-	 @param[in] height Window height.
-	 \~japanese @brief ワイヤーボックスを描く。
-	 @param[in] g グラフィックスエンジン。
-	 @param[in] label ラベルの文字列。
-	 @param[in] number 数。
-	 @param[in] width ウィンドウの幅。
-	 @param[in] height ウィンドウの高さ。
-	 */
-	static void draw_number ( graphics_engine &g, const char *label, double number, int width, int height ) {
-		g.color4(1.0,1.0,1.0,1.0);
-		g.draw_string(vec2d(0.01,0.01).v, console::format_str("%s = %.3f",label,number));
 	}
 };
 //

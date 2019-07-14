@@ -35,6 +35,7 @@ private:
 	LONG_NAME("Preconditioned Conjugate Gradient Solver")
 	AUTHOR_NAME("Robert Bridson")
 	ARGUMENT_NAME("PCG")
+	MODULE_NAME("pcg_solver")
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_double("Residual",m_param.residual,"Tolerable residual");

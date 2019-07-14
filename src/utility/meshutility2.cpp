@@ -29,6 +29,8 @@ SHKZ_USING_NAMESPACE
 class meshutility2 : public meshutility2_interface {
 private:
 	//
+	MODULE_NAME("meshutility2")
+	//
 	virtual void march_points( double v[2][2], const vec2d vertices[2][2], vec2d p[8], int &pnum, bool fill ) const override {
 		//
 		pnum = 0;

@@ -27,27 +27,6 @@
 #define SHKZ_COMMON_H
 //
 #include <initializer_list>
-#include "config.h"
-/**
- \~english @brief Dimension list for two dimensions.
- \~japanese @brief 二次元のための次元リスト。
- */
-#define DIMS2	{0,1}
-/**
- \~english @brief Dimension list for three dimensions.
- \~japanese @brief 三次元のための次元リスト。
- */
-#define DIMS3	{0,1,2}
-/**
- \~english @brief Definition of dimension for two dimensions.
- \~japanese @brief 二次元のための次元の定義。
- */
-#define DIM2	2
-/**
- \~english @brief Definition of dimension for three dimensions.
- \~japanese @brief 三次元のための次元の定義。
- */
-#define DIM3	3
 /**
  \~english @brief Name space definition for shiokaze.
  \~japanese @brief shiokaze の名前空間の定義。
@@ -68,5 +47,29 @@
  \~japanese @brief shiokaze の名前空間の使用の定義。
  */
 #define SHKZ_USING_NAMESPACE	using namespace SHKZ_NAMESPACE;
+//
+SHKZ_BEGIN_NAMESPACE
+/**
+ \~english @brief Dimension list for two dimensions.
+ \~japanese @brief 二次元のための次元リスト。
+ */
+const static int DIMS2[2] = {0,1};
+/**
+ \~english @brief Dimension list for three dimensions.
+ \~japanese @brief 三次元のための次元リスト。
+ */
+const static int DIMS3[3] = {0,1,2};
+/**
+ \~english @brief Definition of dimension for two dimensions.
+ \~japanese @brief 二次元のための次元の定義。
+ */
+const static int DIM2 (2);
+/**
+ \~english @brief Definition of dimension for three dimensions.
+ \~japanese @brief 三次元のための次元の定義。
+ */
+const static int DIM3 (3);
+//
+SHKZ_END_NAMESPACE
 //
 #endif

@@ -51,10 +51,10 @@ bool dylibloader::open_library( std::string path ) {
 		exit(0);
 	} else {
 		m_path = path;
-		console::dump("\u2714 Loaded \e[32m\"%s\"\e[39m", simplify(path).c_str());
+		console::dump("<Checkmark> Loaded <Green>\"%s\"<Default>", simplify(path).c_str());
 		void* license_func = ::dlsym(m_handle,"license");
 		if( license_func ) {
-			console::dump( " \e[95m(%s)\e[39m\n", reinterpret_cast<const char *(*)()>(license_func)());
+			console::dump( " <Light_Magenta>(%s)<Default>\n", reinterpret_cast<const char *(*)()>(license_func)());
 		} else {
 			console::dump("\n");
 		}
@@ -73,7 +73,7 @@ void dylibloader::close_library() {
 			exit(0);
 		} else {
 			m_handle = nullptr;
-			console::dump("\u2718 Unloaded \e[91m\"%s\"\e[39m\n", simplify(m_path).c_str());
+			console::dump("<Cross> Unloaded <Light_Red>\"%s\"<Default>\n", simplify(m_path).c_str());
 		}
 	}
 	m_path = "";

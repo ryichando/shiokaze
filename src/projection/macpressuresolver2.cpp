@@ -38,6 +38,7 @@ class macpressuresolver2 : public macproject2_interface {
 private:
 	//
 	LONG_NAME("MAC Pressure Solver 2D")
+	MODULE_NAME("macpressuresolver2")
 	//
 	virtual void set_target_volume( double current_volume, double target_volume ) override {
 		m_current_volume = current_volume;
@@ -45,12 +46,12 @@ private:
 	}
 	//
 	virtual void project(double dt,
-						macarray2<double> &velocity,
-						const array2<double> &solid,
-						const array2<double> &fluid) override {
+						macarray2<float> &velocity,
+						const array2<float> &solid,
+						const array2<float> &fluid) override {
 		//
-		shared_macarray2<double> areas(velocity.shape());
-		shared_macarray2<double> rhos(velocity.shape());
+		shared_macarray2<float> areas(velocity.shape());
+		shared_macarray2<float> rhos(velocity.shape());
 		//
 		// Compute fractions
 		m_macutility->compute_area_fraction(solid,areas());
@@ -73,7 +74,7 @@ private:
 		if( m_param.surftens_k ) {
 			//
 			// Compute curvature and store them into an array
-			shared_array2<double> curvature(fluid.shape());
+			shared_array2<float> curvature(fluid.shape());
 			curvature->activate_as(fluid);
 	 		curvature->parallel_actives([&](int i, int j, auto &it, int tn ) {
 				double value = (
@@ -260,7 +261,7 @@ private:
 	//
 	shape2 m_shape;
 	double m_dx {0.0};
-	array2<double> m_pressure{this};
+	array2<float> m_pressure{this};
 	//
 	macutility2_driver m_macutility{this,"macutility2"};
 	gridvisualizer2_driver m_gridvisualizer{this,"gridvisualizer2"};

@@ -88,10 +88,10 @@ void macflipliquid3::idle() {
 	unsigned step = m_timestepper->get_step_count();
 	timer.tick(); console::dump( ">>> %s step started (dt=%.2e,CFL=%.2f)...\n", dt, CFL, console::nth(step).c_str());
 	//
-	shared_macarray3<double> face_density(m_shape);
-	shared_macarray3<double> save_velocity(m_shape);
-	shared_macarray3<double> momentum(m_shape);
-	shared_macarray3<double> mass(m_shape);
+	shared_macarray3<float> face_density(m_shape);
+	shared_macarray3<float> save_velocity(m_shape);
+	shared_macarray3<float> momentum(m_shape);
+	shared_macarray3<float> mass(m_shape);
 	//
 	// Update fluid levelset
 	m_flip->update([&](const vec3d &p){ return interpolate_solid(p); },m_fluid);
@@ -137,7 +137,7 @@ void macflipliquid3::idle() {
 	// Compute the combined grid velocity
 	timer.tick(); console::dump( "Computing combined grid velocity..." );
 	//
-	shared_macarray3<double> overwritten_velocity(m_shape);
+	shared_macarray3<float> overwritten_velocity(m_shape);
 	overwritten_velocity->activate_as(mass());
 	overwritten_velocity->parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn ) {
 		double m = mass()[dim](i,j,k);
@@ -184,14 +184,14 @@ void macflipliquid3::do_export_mesh( unsigned frame ) const {
 	//
 	timer.tick(); console::dump( "Computing high-resolution levelset..." );
 	//
-	shared_array3<double> doubled_fluid(m_double_shape.cell(),1.0);
-	shared_array3<double> doubled_solid(m_double_shape.nodal(),1.0);
+	shared_array3<float> doubled_fluid(m_double_shape.cell(),1.0);
+	shared_array3<float> doubled_solid(m_double_shape.nodal(),1.0);
 	//
-	array_upsampler3::upsample_to_double_cell<double>(m_fluid,m_dx,doubled_fluid());
-	array_upsampler3::upsample_to_double_nodal<double>(m_solid,m_dx,doubled_solid());
+	array_upsampler3::upsample_to_double_cell<float>(m_fluid,m_dx,doubled_fluid());
+	array_upsampler3::upsample_to_double_nodal<float>(m_solid,m_dx,doubled_solid());
 	//
 	shared_bitarray3 mask(m_double_shape);
-	shared_array3<double> sizing_array(m_shape);
+	shared_array3<float> sizing_array(m_shape);
 	//
 	std::vector<particlerasterizer3_interface::Particle3> points, ballistic_points;
 	std::vector<macflip3_interface::particle3> particles = m_flip->get_particles();
@@ -210,13 +210,13 @@ void macflipliquid3::do_export_mesh( unsigned frame ) const {
 		}
 		//
 		vec3i pi = m_shape.find_cell(point.p/m_dx);
-		sizing_array->set(pi,std::max(particles[n].sizing_value,sizing_array()(pi)));
+		sizing_array->set(pi,std::max((float)particles[n].sizing_value,sizing_array()(pi)));
 	}
 	//
 	mask().dilate(4);
 	doubled_fluid->activate_as(mask());
 	//
-	shared_array3<double> particle_levelset(m_double_shape,0.125*m_dx);
+	shared_array3<float> particle_levelset(m_double_shape,0.125*m_dx);
 	m_highres_particlerasterizer->build_levelset(particle_levelset(),mask(),points);
 	//
 	doubled_fluid->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
@@ -317,7 +317,7 @@ vec3d macflipliquid3::interpolate_velocity( const vec3d &p ) const {
 void macflipliquid3::draw( graphics_engine &g, int width, int height ) const {
 	//
 	g.color4(1.0,1.0,1.0,0.5);
-	graphics_utility::draw_wired_box(g);
+	graphics_utility::draw_wired_box(g,get_view_scale());
 	//
 	// Draw velocity
 	m_macvisualizer->draw_velocity(g,m_velocity);
@@ -329,7 +329,7 @@ void macflipliquid3::draw( graphics_engine &g, int width, int height ) const {
 	m_flip->draw(g,m_timestepper->get_current_time());
 	//
 	// Visualize solid
-	shared_array3<double> solid_to_visualize(m_solid.shape());
+	shared_array3<float> solid_to_visualize(m_solid.shape());
 	if( ! m_gridutility->assign_visualizable_solid(m_dylib,m_dx,solid_to_visualize())) solid_to_visualize->copy(m_solid);
 	if( array_utility3::levelset_exist(solid_to_visualize())) m_gridvisualizer->draw_solid(g,solid_to_visualize());
 	//

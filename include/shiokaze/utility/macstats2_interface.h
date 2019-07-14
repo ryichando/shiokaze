@@ -50,7 +50,7 @@ public:
 	 @param[in] velocity 速度場。
 	 @param[in] tmstepper timestepper_interface のインスタンスへのポインター。
 	 */
-	virtual void dump_stats( const array2<double> &solid, const array2<double> &fluid, const macarray2<double> &velocity, const timestepper_interface *tmstepper ) const = 0;
+	virtual void dump_stats( const array2<float> &solid, const array2<float> &fluid, const macarray2<float> &velocity, const timestepper_interface *tmstepper ) const = 0;
 private:
 	virtual void initialize( const shape2 &shape, double dx ) = 0;
 	virtual void initialize( const configurable::environment_map &environment ) override {

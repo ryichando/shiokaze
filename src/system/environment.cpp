@@ -60,11 +60,13 @@ static ::std::string run( const char *format, ...) {
 class environment : public environment_interface {
 public:
 	//
-	virtual std::string today_UTC() const {
+	MODULE_NAME("environment")
+	//
+	virtual std::string today_UTC() const override {
 		ptime now = second_clock::universal_time();
 		return boost::posix_time::to_simple_string(now);
 	}
-	virtual std::string cpu_name() const {
+	virtual std::string cpu_name() const override {
 		std::string cpu_name;
 		int cpu_trim (0);
 	#ifdef __APPLE__
@@ -77,17 +79,17 @@ public:
 		cpu_name = cpu_name.substr(0,cpu_name.size()-1);
 		return cpu_name.size() > cpu_trim ? cpu_name.substr(cpu_trim,cpu_name.size()) : "(Unknown)";
 	}
-	virtual std::string get_gcc_version() const {
+	virtual std::string get_gcc_version() const override {
 		std::string version_str;
 		version_str += std::to_string(__GNUC__) + ".";
 		version_str += std::to_string(__GNUC_MINOR__) + ".";
 		version_str += std::to_string(__GNUC_PATCHLEVEL__);
 		return version_str;
 	}
-	virtual std::string get_git_revnumber() const {
+	virtual std::string get_git_revnumber() const override {
 		return console::run("git describe --tags");
 	}
-	virtual unsigned get_num_threads() const {
+	virtual unsigned get_num_threads() const override {
 		return std::thread::hardware_concurrency();
 	}
 	//

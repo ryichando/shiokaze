@@ -30,6 +30,7 @@
 SHKZ_USING_NAMESPACE
 //
 struct array_table2 {
+	array_table2() = default;
 	shape2 shape;
 	size_t class_hash;
 	std::string core_name;
@@ -47,14 +48,24 @@ struct array_table2 {
 //
 struct shared_array_data2 {
 	shared_array_data2() = default;
-	shared_array_data2( std::function<void(void *)> dealloc_func ) : dealloc_func(dealloc_func) {}
+	shared_array_data2( std::function<void(void *)> dealloc_func, array_table2 key ) : dealloc_func(dealloc_func), key(key) {}
+	array_table2 key;
 	std::vector<void *> arrays;
 	std::function<void(void *)> dealloc_func;
+	int being_borrowed {0};
 };
 //
 static std::mutex shared_array2_mutex;
 static std::map<array_table2,shared_array_data2> array_map;
 static std::map<void *,shared_array_data2 *> pointer_map;
+//
+size_t shared_array_core2::get_total_grid_count () {
+	size_t count (0);
+	for( auto &it : array_map ) {
+		count += it.second.arrays.size();
+	}
+	return count;
+}
 //
 void * shared_array_core2::borrow_shared( const shape2 &shape, size_t class_hash, std::string core_name, std::function<void *(const shape2 &shape, std::string core_name)> alloc_func, std::function<void( void *ptr )> dealloc_func ) {
 	//
@@ -63,7 +74,7 @@ void * shared_array_core2::borrow_shared( const shape2 &shape, size_t class_hash
 	const auto it = array_map.find(key);
 	shared_array_data2 *container (nullptr);
 	if( it == array_map.end()) {
-		array_map[key] = shared_array_data2(dealloc_func);
+		array_map[key] = shared_array_data2(dealloc_func,key);
 		container = &array_map[key];
 	} else {
 		container = &it->second;
@@ -78,6 +89,7 @@ void * shared_array_core2::borrow_shared( const shape2 &shape, size_t class_hash
 		result = alloc_func(shape,core_name);
 		pointer_map[result] = container;
 	}
+	container->being_borrowed ++;
 	return result;
 }
 //
@@ -88,18 +100,27 @@ void shared_array_core2::return_shared( void *array ) {
 		throw;
 	} else {
 		it->second->arrays.push_back(array);
+		it->second->being_borrowed --;
 		pointer_map.erase(it);
 	}
 }
 //
-void shared_array_core2::clear() {
-	for( auto &it : array_map ) {
-		for( auto &e : it.second.arrays ) {
-			it.second.dealloc_func(e);
+size_t shared_array_core2::clear() {
+	std::lock_guard<std::mutex> guard(shared_array2_mutex);
+	size_t count (0);
+	for( auto it=array_map.begin(); it!=array_map.end(); ) {
+		size_t size = it->second.arrays.size();
+		for( auto &e : it->second.arrays ) {
+			it->second.dealloc_func(e);
 		}
-		it.second.arrays.clear();
-		it.second.dealloc_func = nullptr;
+		it->second.arrays.clear();
+		if( ! it->second.being_borrowed ) {
+			it = array_map.erase(it);
+			count += size;
+		} else {
+			++ it;
+		}
 	}
-	array_map.clear();
+	return count;
 }
 //

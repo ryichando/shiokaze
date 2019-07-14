@@ -38,21 +38,22 @@ class maclevelsetsurfacetracker2 : public macsurfacetracker2_interface {
 private:
 	//
 	LONG_NAME("MAC Levelset Surface Tracker 2D")
+	MODULE_NAME("maclevelsetsurfacetracker2")
 	//
-	virtual void assign( const array2<double> &solid, const array2<double> &fluid ) override {
+	virtual void assign( const array2<float> &solid, const array2<float> &fluid ) override {
 		m_solid.copy(solid);
 		m_fluid.copy(fluid);
 	}
-	virtual void advect( const macarray2<double> &u, double dt ) override {
+	virtual void advect( const macarray2<float> &u, double dt ) override {
 		//
 		if( dt ) {
-			shared_array2<double> fluid_save(m_fluid);
+			shared_array2<float> fluid_save(m_fluid);
 			m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt);
 		}
 		m_redistancer->redistance(m_fluid,m_param.levelset_half_bandwidth_count);
 		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
 	}
-	virtual void get( array2<double> &fluid ) override { fluid.copy(m_fluid); }
+	virtual void get( array2<float> &fluid ) override { fluid.copy(m_fluid); }
 	virtual void draw( graphics_engine &g ) const override {
 		g.color4(0.5,0.6,1.0,0.5);
 		m_gridvisualizer->draw_levelset(g,m_fluid);
@@ -76,7 +77,7 @@ private:
 		m_solid.initialize(shape.nodal());
 	}
 	//
-	array2<double> m_solid{this}, m_fluid{this};
+	array2<float> m_solid{this}, m_fluid{this};
 	macadvection2_driver m_macadvection{this,"macadvection2"};
 	redistancer2_driver m_redistancer{this,"pderedistancer2"};
 	gridutility2_driver m_gridutility{this,"gridutility2"};

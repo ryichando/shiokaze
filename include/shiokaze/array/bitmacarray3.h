@@ -40,11 +40,11 @@ public:
 	 \~english @brief Constructor for bitmacarray3.
 	 @param[in] parent Pointer to a parent recursive_configurable instance. Can be nullptr.
 	 @param[in] shape Shape of the grid
-	 @param[in] core_name Core module name. Default value is "lineararray_core2". Can be also "tiledarray_core2".
+	 @param[in] core_name Core module name. Default value is "lineararray_core3". Can be also "tiledarray_core3".
 	 \~japanese @brief bitmacarray3 のコンストラクタ。
 	 @param[in] parent 親 recursive_configurable のインスタンスへのポインタ。nullptr も可。
 	 @param[in] shape グリッドの形
-	 @param[in] core_name コア子ジュールの名前。デフォルトは "lineararray_core2"。"tiledarray_core2" も可能。
+	 @param[in] core_name コア子ジュールの名前。デフォルトは "lineararray_core3"。"tiledarray_core3" も可能。
 	 */
 	bitmacarray3 ( recursive_configurable *parent, const shape3 &shape, std::string core_name="") : m_shape(shape), m_array_0(this,shape.face(0),core_name), m_array_1(this,shape.face(1),core_name), m_array_2(this,shape.face(2),core_name) {
 		if( parent ) parent->add_child(this);
@@ -53,26 +53,26 @@ public:
 	/**
 	 \~english @brief Constructor for bitmacarray3.
 	 @param[in] parent Pointer to a parent recursive_configurable instance. Can be nullptr.
-	 @param[in] core_name Core module name. Default value is "lineararray_core2". Can be also "tiledarray_core2".
+	 @param[in] core_name Core module name. Default value is "lineararray_core3". Can be also "tiledarray_core3".
 	 \~japanese @brief bitmacarray3 のコンストラクタ。
 	 @param[in] parent 親 recursive_configurable のインスタンスへのポインタ。nullptr も可。
-	 @param[in] core_name コア子ジュールの名前。デフォルトは "lineararray_core2"。"tiledarray_core2" も可能。
+	 @param[in] core_name コア子ジュールの名前。デフォルトは "lineararray_core3"。"tiledarray_core3" も可能。
 	 */
 	bitmacarray3( recursive_configurable *parent, std::string core_name="" ) : bitmacarray3(parent,shape3(0,0,0),core_name) {}
 	/**
 	 \~english @brief Constructor for bitmacarray3.
-	 @param[in] core_name Core module name. Default value is "lineararray_core2". Can be also "tiledarray_core2".
+	 @param[in] core_name Core module name. Default value is "lineararray_core3". Can be also "tiledarray_core3".
 	 \~japanese @brief bitmacarray3 のコンストラクタ。
-	 @param[in] core_name コア子ジュールの名前。デフォルトは "lineararray_core2"。"tiledarray_core2" も可能。
+	 @param[in] core_name コア子ジュールの名前。デフォルトは "lineararray_core3"。"tiledarray_core3" も可能。
 	 */
 	bitmacarray3 ( std::string core_name="") : bitmacarray3(nullptr,shape3(0,0,0),core_name) {}
 	/**
 	 \~english @brief Constructor for bitmacarray3.
 	 @param[in] shape Shape of the grid
-	 @param[in] core_name Core module name. Default value is "lineararray_core2". Can be also "tiledarray_core2".
+	 @param[in] core_name Core module name. Default value is "lineararray_core3". Can be also "tiledarray_core3".
 	 \~japanese @brief bitmacarray3 のコンストラクタ。
 	 @param[in] shape グリッドの形
-	 @param[in] core_name コア子ジュールの名前。デフォルトは "lineararray_core2"。"tiledarray_core2" も可能。
+	 @param[in] core_name コア子ジュールの名前。デフォルトは "lineararray_core3"。"tiledarray_core3" も可能。
 	 */
 	bitmacarray3( const shape3 &shape, std::string core_name="") : bitmacarray3(nullptr,shape,core_name) {}
 	/**
@@ -83,6 +83,32 @@ public:
 	 */
 	bitmacarray3 ( const bitmacarray3& v ) : m_array_0(this), m_array_1(this), m_array_2(this){
 		copy(v);
+	}
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	void send_message( unsigned message, void *ptr ) {
+		m_array_0.send_message(message,ptr);
+		m_array_1.send_message(message,ptr);
+		m_array_2.send_message(message,ptr);
+	}
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	void send_message( unsigned message, void *ptr ) const {
+		m_array_0.send_message(message,ptr);
+		m_array_1.send_message(message,ptr);
+		m_array_2.send_message(message,ptr);
 	}
 	/**
 	 \~english @brief Deep copy operation for bitmacarray3.

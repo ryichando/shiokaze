@@ -56,8 +56,10 @@ public:
 	/**
 	 \~english @brief Get level set at an arbitrary position.
 	 @param[in] p Poisition.
+	 @return level set value at the position.
 	 \~japanese @brief 任意の位置でのレベルセットを生成する。
 	 @param[in] p 位置。
+	 @return 引数の位置でのレベルセットの値。
 	 */
 	virtual double get_levelset( const vec3d &p ) const = 0;
 	//

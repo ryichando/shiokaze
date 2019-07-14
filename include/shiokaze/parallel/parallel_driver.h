@@ -168,9 +168,8 @@ public:
 	 */
 	void for_each( const shape2 &shape, std::function<void(int i, int j, int thread_index)> func ) const {
 		for_each(shape.count(),[&]( size_t n, int thread_index ) {
-			int i = n % shape.w;
-			int j = n / shape.w;
-			func(i,j,thread_index);
+			vec2i pi = shape.decode(n);
+			func(pi[0],pi[1],thread_index);
 		});
 	}
 	/**
@@ -195,13 +194,9 @@ public:
 	 @param[in] func 実際のループを処理する関数。
 	 */
 	void for_each( const shape3 &shape, std::function<void(int i, int j, int k, int thread_index)> func ) const {
-		size_t plane_count = shape.w * shape.h;
 		for_each(shape.count(),[&]( size_t n, int thread_index ) {
-			int k = n / plane_count;
-			size_t m = n % plane_count;
-			int i = m % shape.w;
-			int j = m / shape.w;
-			func(i,j,k,thread_index);
+			vec3i pi = shape.decode(n);
+			func(pi[0],pi[1],pi[2],thread_index);
 		});
 	}
 	/**

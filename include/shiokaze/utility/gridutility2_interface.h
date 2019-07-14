@@ -45,7 +45,7 @@ public:
 	 @param[in] nodal_array ノードベースのグリッド。
 	 @param[out] result 結果のセルベースのグリッド。
 	 */
-	virtual void convert_to_cell( const array2<double> &nodal_array, array2<double> &result ) const = 0;
+	virtual void convert_to_cell( const array2<float> &nodal_array, array2<float> &result ) const = 0;
 	/**
 	 \~english @brief Enclose a fluid level set by solid.
 	 @param[in] solid Solid level set.
@@ -58,7 +58,7 @@ public:
 	 @param[out] combined 包まれた結果のレベルセット。
 	 @param[in] solid_offset 壁のレベルセットのオフセット。
 	 */
-	virtual void combine_levelset( const array2<double> &solid, const array2<double> &fluid, array2<double> &combined, double solid_offset=0.0 ) const = 0;
+	virtual void combine_levelset( const array2<float> &solid, const array2<float> &fluid, array2<float> &combined, double solid_offset=0.0 ) const = 0;
 	/**
 	 \~english @brief Extrapolate fluid level set towards solid.
 	 @param[in] solid Solid level set.
@@ -69,7 +69,7 @@ public:
 	 @param[in-out] fluid 外挿する流体のレベルセット。
 	 @param[in] threshold 壁のレベルセットの表面のレベルセットの値。
 	 */
-	virtual void extrapolate_levelset( const array2<double> &solid, array2<double> &fluid, double threshold=0.0 ) const = 0;
+	virtual void extrapolate_levelset( const array2<float> &solid, array2<float> &fluid, double threshold=0.0 ) const = 0;
 	/**
 	 \~english @brief Compute the gradient of a level set.
 	 @param[in] levelset Level set.
@@ -78,14 +78,14 @@ public:
 	 @param[in] levelset レベルセット。
 	 @param[out] gradient 出力の勾配。
 	 */
-	virtual void compute_gradient( const array2<double> &levelset, array2<vec2d> &gradient ) const = 0;
+	virtual void compute_gradient( const array2<float> &levelset, array2<vec2f> &gradient ) const = 0;
 	/**
 	 \~english @brief Trim narrow band of a level set within one cell away from the interface.
 	 @param[in] levelset Fluid level set.
 	 \~japanese @brief レベルセットを境界から1セルだけ離れたセルにトリミングする。
 	 @param[in] levelset 流体のレベルセット。
 	 */
-	virtual void trim_narrowband( array2<double> &levelset ) const = 0;
+	virtual void trim_narrowband( array2<float> &levelset ) const = 0;
 	/**
 	 \~english @brief Get the area of fluid level set.
 	 @param[in] solid Solid level set.
@@ -96,7 +96,7 @@ public:
 	 @param[in] fluid 流体のレベルセット。
 	 @return 面積。
 	 */
-	virtual double get_area( const array2<double> &solid, const array2<double> &fluid ) const = 0;
+	virtual double get_area( const array2<float> &solid, const array2<float> &fluid ) const = 0;
 	//
 private:
 	virtual void initialize( const shape2 &shape, double dx ) = 0;

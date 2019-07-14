@@ -99,12 +99,34 @@ private:
 	}
 	//
 	virtual void post_initialize() override {
-		if( shape().count() ) {
+		if( shape().count() && ! m_is_initialized ) {
 			initialize(m_shape,m_background_value);
 		}
 	}
 	//
 public:
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	void send_message( unsigned message, void *ptr ) {
+		get_core()->send_message(message,ptr);
+	}
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	void send_message( unsigned message, void *ptr ) const {
+		get_core()->send_message(message,ptr);
+	}
 	/**
 	 \~english @brief Copy constructor for array2.
 	 @param[in] array Reference to an instance of array to copy from.
@@ -150,9 +172,14 @@ public:
 			set_type(array.type());
 			assert(m_core);
 			if( array.m_core ) {
-				m_core->copy(*array.m_core.get(),[&](void *target, const void *src) {
+				m_core->copy(*array.get_core(),[&](void *target, const void *src) {
 					new (target) T(*static_cast<const T *>(src));
-				},&m_parallel);
+				},m_parallel);
+			}
+			if( m_main_cache ) {
+				m_core->destroy_cache(m_main_cache);
+				m_main_cache = m_core->generate_cache();
+				m_main_thread_id = std::this_thread::get_id();
 			}
 		}
 	}
@@ -198,6 +225,12 @@ public:
 		m_background_value = value;
 		m_fillable = false;
 		m_levelset = false;
+		m_is_initialized = true;
+		m_support_cache = m_core->support_cache();
+		if( m_support_cache ) {
+			m_main_cache = m_core->generate_cache();
+			m_main_thread_id = std::this_thread::get_id();
+		}
 	}
 	/**
 	 \~english @brief Set the grid as level set.
@@ -299,9 +332,9 @@ public:
 	 @param[in] j y 座標の位置。
 	 @return 塗りつぶされていれば \c true なければ \c false が返る。
 	 */
-	bool filled( int i, int j) const {
+	bool filled( int i, int j ) const {
 		bool filled;
-		(*m_core)(i,j,filled);
+		(*m_core)(i,j,filled,get_cache());
 		return filled;
 	}
 	/**
@@ -312,7 +345,7 @@ public:
 	 @param[in] pi 位置。
 	 @return 塗りつぶされていれば \c true なければ \c false が返る。
 	 */
-	bool filled( const vec2i &pi ) const {
+	bool filled( const vec2i &pi  ) const {
 		return filled(pi[0],pi[1]);
 	}
 	/**
@@ -458,6 +491,10 @@ public:
 		parallel_actives([&](iterator& it) {
 			it.set_off();
 		});
+		if( m_main_cache ) {
+			m_core->destroy_cache(m_main_cache);
+			m_main_cache = nullptr;
+		}
 	}
 	/**
 	 \~english @brief Clear out the grid with the new backgroud value.
@@ -481,12 +518,12 @@ public:
 	 @param[in] j y 座標上の位置。
 	 @param[in] value この位置で設定する値。
 	 */
-	void set( int i, int j, const T& value ) {
+	void set( int i, int j, const T& value  ) {
 		m_core->set(i,j,[&](void *value_ptr, bool &active){
 			if( ! active ) new (value_ptr) T(value);
 			else *static_cast<T *>(value_ptr) = value;
 			active = true;
-		});
+		},get_cache());
 	}
 	/**
 	 \~english @brief Set value on grid.
@@ -496,7 +533,7 @@ public:
 	 @param[in] pi グリッドの位置。
 	 @param[in] value この位置で設定する値。
 	 */
-	void set( const vec2i &pi, const T& value ) {
+	void set( const vec2i &pi, const T& value  ) {
 		set(pi[0],pi[1],value);
 	}
 	/**
@@ -509,9 +546,9 @@ public:
 	 @param[in] j y 座標上の位置。
 	 @return アクティブなら \c true 非アクティブなら \c false。
 	 */
-	bool active( int i, int j) const {
+	bool active( int i, int j ) const {
 		bool filled;
-		return (*m_core)(i,j,filled) != nullptr;
+		return (*m_core)(i,j,filled,get_cache()) != nullptr;
 	}
 	/**
 	 \~english @brief Get if a position on grid is active.
@@ -521,7 +558,7 @@ public:
 	 @param[in] pi x グリッドでの位置。
 	 @return アクティブなら \c true 非アクティブなら \c false。
 	 */
-	bool active( const vec2i &pi ) const {
+	bool active( const vec2i &pi  ) const {
 		return active(pi[0],pi[1]);
 	}
 	/**
@@ -532,11 +569,11 @@ public:
 	 @param[in] i x 座標上の位置。
 	 @param[in] j y 座標上の位置。
 	 */
-	void set_off( int i, int j) {
+	void set_off( int i, int j  ) {
 		m_core->set(i,j,[&](void *value_ptr, bool &active){
 			if( active ) (static_cast<T *>(value_ptr))->~T();
 			active = false;
-		});
+		},get_cache());
 	}
 	/**
 	 \~english @brief Set a position on grid inactive.
@@ -544,7 +581,7 @@ public:
 	 \~japanese @brief グリッドの指定された位置を非アクティブにする。
 	 @param[in] pi グリッドでの位置。
 	 */
-	void set_off( const vec2i &pi ) {
+	void set_off( const vec2i &pi  ) {
 		set_off(pi[0],pi[1]);
 	}
 	/**
@@ -557,14 +594,14 @@ public:
 	 @param[in] j y 座標上の位置。
 	 @param[in] value この位置で加算する値。
 	 */
-	void increment( int i, int j, const T& value ) {
+	void increment( int i, int j, const T& value  ) {
 		m_core->set(i,j,[&](void *value_ptr, bool &active){
 			if( active ) *static_cast<T *>(value_ptr) += value;
 			else {
 				*static_cast<T *>(value_ptr) = m_background_value + value;
 				active = true;
 			}
-		});
+		},get_cache());
 	}
 	/**
 	 \~english @brief Increment value on grid.
@@ -574,7 +611,7 @@ public:
 	 @param[in] pi グリッドでの位置。
 	 @param[in] value この位置で加算する値。
 	 */
-	void increment( const vec2i &pi, const T& value ) {
+	void increment( const vec2i &pi, const T& value  ) {
 		increment(pi[0],pi[1],value);
 	}
 	/**
@@ -587,14 +624,14 @@ public:
 	 @param[in] j y 座標上の位置。
 	 @param[in] value この位置で減算する値。
 	 */
-	void subtract( int i, int j, const T& value ) {
+	void subtract( int i, int j, const T& value  ) {
 		m_core->set(i,j,[&](void *value_ptr, bool &active){
 			if( active ) *static_cast<T *>(value_ptr) -= value;
 			else {
 				*static_cast<T *>(value_ptr) = m_background_value - value;
 				active = true;
 			}
-		});
+		},get_cache());
 	}
 	/**
 	 \~english @brief Subtract value on grid.
@@ -604,7 +641,7 @@ public:
 	 @param[in] pi グリッドでの位置。
 	 @param[in] value この位置で減算する値。
 	 */
-	void subtract( const vec2i &pi, const T& value ) {
+	void subtract( const vec2i &pi, const T& value  ) {
 		subtract(pi[0],pi[1],value);
 	}
 	/**
@@ -617,14 +654,14 @@ public:
 	 @param[in] j y 座標上の位置。
 	 @param[in] value この位置で乗算する値。
 	 */
-	void multiply( int i, int j, const T& value ) {
+	void multiply( int i, int j, const T& value  ) {
 		m_core->set(i,j,[&](void *value_ptr, bool &active){
 			if( active ) *static_cast<T *>(value_ptr) *= value;
 			else {
 				*static_cast<T *>(value_ptr) = m_background_value * value;
 				active = true;
 			}
-		});
+		},get_cache());
 	}
 	/**
 	 \~english @brief Multiply value on grid.
@@ -634,7 +671,7 @@ public:
 	 @param[in] pi グリッドの位置。
 	 @param[in] value この位置で乗算する値。
 	 */
-	void multiply( const vec2i &pi, const T& value ) {
+	void multiply( const vec2i &pi, const T& value  ) {
 		multiply(pi[0],pi[1],value);
 	}
 	/**
@@ -647,7 +684,7 @@ public:
 	 @param[in] j y 座標上の位置。
 	 @param[in] value この位置で割り算する値。
 	 */
-	void divide( int i, int j, const T& value ) {
+	void divide( int i, int j, const T& value  ) {
 		multiply(i,j,1.0/value);
 	}
 	/**
@@ -658,7 +695,7 @@ public:
 	 @param[in] pi グリッドの位置。
 	 @param[in] value この位置で割り算する値。
 	 */
-	void divide( const vec2i &pi, const T& value ) {
+	void divide( const vec2i &pi, const T& value  ) {
 		divide(pi[0],pi[1],value);
 	}
 	/**
@@ -669,9 +706,9 @@ public:
 	 @param[in] i x 座標上の位置。
 	 @param[in] j y 座標上の位置。
 	 */
-	T* ptr(int i, int j) {
+	T* ptr(int i, int j ) {
 		bool filled (false);
-		return const_cast<T *>(static_cast<const T *>((*m_core)(i,j,filled)));
+		return const_cast<T *>(static_cast<const T *>((*m_core)(i,j,filled,get_cache())));
 	}
 	/**
 	 \~english @brief Get the const pointer to the value at a position on grid
@@ -681,7 +718,7 @@ public:
 	 @param[in] i x 座標上の位置。
 	 @param[in] j y 座標上の位置。
 	 */
-	const T* ptr(int i, int j) const {
+	const T* ptr(int i, int j ) const {
 		return const_cast<array2<T> *>(this)->ptr(i,j);
 	}
 	/**
@@ -710,9 +747,9 @@ public:
 	 @param[in] i x 座標上の位置。
 	 @param[in] j y 座標上の位置。
 	 */
-	const T& operator()(int i, int j) const {
+	const T& operator()(int i, int j ) const {
 		bool filled (false);
-		const T* ptr = static_cast<const T *>((*m_core)(i,j,filled));
+		const T* ptr = static_cast<const T *>((*m_core)(i,j,filled,get_cache()));
 		if( ptr ) return *ptr;
 		else return filled ? m_fill_value : m_background_value;
 	}
@@ -722,7 +759,7 @@ public:
 	 \~japanese @brief グリッドの指定した位置での値を得る。
 	 @param[in] pi グリッドの位置。
 	 */
-	const T& operator()(const vec2i &pi) const {
+	const T& operator()(const vec2i &pi ) const {
 		return (*const_cast<array2<T> *>(this))(pi[0],pi[1]);
 	}
 	/**
@@ -1639,6 +1676,24 @@ public:
 	std::string get_core_name() const {
 		return m_core_name;
 	}
+	/**
+	 \~english @brief Get pointer to the core module.
+	 @return Pointer to the core module.
+	 \~japanese @brief コアモジュールのポインターを取得する。
+	 @return コアモジュールへのポインタ。
+	 */
+	const array_core2 * get_core() const {
+		return m_core.get();
+	}
+	/**
+	 \~english @brief Get pointer to the core module.
+	 @return Pointer to the core module.
+	 \~japanese @brief コアモジュールのポインターを取得する。
+	 @return コアモジュールへのポインタ。
+	 */
+	array_core2 * get_core() {
+		return m_core.get();
+	}
 	/// \~english @brief Collection of properties of this grid.
 	/// \~japanese @brief このグリッドのプロパティー集。
 	struct type2 {
@@ -1706,9 +1761,38 @@ private:
 	shape2 m_shape;
 	parallel_driver m_parallel{this};
 	T m_background_value {T()}, m_fill_value {T()};
-	bool m_touch_only_actives {false}, m_fillable {false}, m_levelset {false};
+	bool m_touch_only_actives {false}, m_fillable {false}, m_levelset {false}, m_is_initialized {false};
 	array2_ptr m_core;
 	std::string m_core_name;
+	void *m_main_cache {nullptr};
+	std::thread::id m_main_thread_id;
+	bool m_support_cache {false};
+	//
+	struct cache_struct {
+		cache_struct ( array_core2 *core ) : core(core) {
+			ptr = core->generate_cache();
+		}
+		~cache_struct() {
+			core->destroy_cache(ptr);
+		}
+		void *ptr;
+		const array_core2 *core;
+	};
+	//
+	void * get_cache() const {
+		//
+		if( ! m_support_cache ) return nullptr;
+		//
+		thread_local std::thread::id thread_id = std::this_thread::get_id();
+		if( thread_id == m_main_thread_id ) return m_main_cache;
+		//
+		thread_local std::vector<std::pair<void *,std::shared_ptr<cache_struct> > > cache_list;
+		for( const auto &c : cache_list ) {
+			if( c.first == (void *)this ) return c.second->ptr;
+		}
+		cache_list.push_back({(void *)this,std::make_shared<cache_struct>(m_core.get())});
+		return cache_list.back().second->ptr;
+	};
 };
 //
 SHKZ_END_NAMESPACE

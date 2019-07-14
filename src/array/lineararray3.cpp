@@ -43,8 +43,9 @@ private:
 	//
 	LONG_NAME("Linear Array 3D")
 	ARGUMENT_NAME("LinArray")
+	MODULE_NAME("lineararray3")
 	//
-	virtual void initialize( unsigned nx, unsigned ny, unsigned nz, unsigned element_size ) override {
+	virtual void initialize( unsigned nx, unsigned ny, unsigned nz, unsigned element_bytes ) override {
 		//
 		dealloc();
 		//
@@ -52,9 +53,9 @@ private:
 		m_ny = ny;
 		m_nz = nz;
 		//
-		m_element_size = element_size;
-		if( element_size ) {
-			m_buffer = new unsigned char [m_nx*m_ny*m_nz*m_element_size];
+		m_element_bytes = element_bytes;
+		if( element_bytes ) {
+			m_buffer = new unsigned char [m_nx*m_ny*m_nz*m_element_bytes];
 		}
 		//
 		m_bit_mask_size = std::ceil(m_nx*m_ny*m_nz/8.0);
@@ -62,15 +63,18 @@ private:
 		std::memset(m_bit_mask,0,m_bit_mask_size);
 		//
 	}
-	virtual void get( unsigned &nx, unsigned &ny, unsigned &nz, unsigned &element_size ) const override {
+	//
+	virtual void get( unsigned &nx, unsigned &ny, unsigned &nz, unsigned &element_bytes ) const override {
 		nx = m_nx;
 		ny = m_ny;
 		nz = m_nz;
-		element_size = m_element_size;
+		element_bytes = m_element_bytes;
 	}
+	//
 	virtual ~lineararray3() {
 		dealloc();
 	}
+	//
 	void dealloc () {
 		if( m_buffer ) {
 			delete [] m_buffer;
@@ -91,7 +95,7 @@ private:
 		return bitcount::count(m_bit_mask,m_bit_mask_size,&parallel);
 	}
 	//
-	virtual void copy( const array_core3 &array, std::function<void(void *target, const void *src)> copy_func, const parallel_driver *parallel ) override {
+	virtual void copy( const array_core3 &array, std::function<void(void *target, const void *src)> copy_func, const parallel_driver &parallel ) override {
 		//
 		auto mate_array = dynamic_cast<const lineararray3 *>(&array);
 		dealloc();
@@ -101,68 +105,71 @@ private:
 			m_nx = mate_array->m_nx;
 			m_ny = mate_array->m_ny;
 			m_nz = mate_array->m_nz;
-			m_element_size = mate_array->m_element_size;
+			m_element_bytes = mate_array->m_element_bytes;
 			m_bit_mask_size = mate_array->m_bit_mask_size;
 			//
 			if( m_bit_mask_size ) {
 				m_bit_mask = new unsigned char [m_bit_mask_size];
 				std::memcpy(m_bit_mask,mate_array->m_bit_mask,m_bit_mask_size);
-				if( mate_array->m_fill_mask ) {
+				if( mate_array->m_fill_mask && m_element_bytes ) {
 					m_fill_mask = new unsigned char [m_bit_mask_size];
 					std::memcpy(m_fill_mask,mate_array->m_fill_mask,m_bit_mask_size);
 				}
 			}
-			if( mate_array->m_buffer && m_element_size ) {
-				size_t size = m_nx*m_ny*m_nz*m_element_size;
+			if( mate_array->m_buffer && m_element_bytes ) {
+				size_t size = m_nx*m_ny*m_nz*m_element_bytes;
 				m_buffer = new unsigned char [size];
 				auto copy_body = [&]( size_t n ) {
-					const unsigned char &mask = *(m_bit_mask+n/8);
-					if((mask >> n%8) & 1U) {
-						size_t offset = n*m_element_size;
+					const unsigned char &mask = *(m_bit_mask+(n>>3));
+					if((mask >> (n&7)) & 1U) {
+						size_t offset = n*m_element_bytes;
 						copy_func(m_buffer+offset,mate_array->m_buffer+offset);
 					}
 				};
-				if( parallel ) {
-					parallel->for_each(m_nx*m_ny*m_nz,[&](size_t n) { copy_body(n); });
-				} else {
-					for( size_t n=0; n<m_nx*m_ny*m_nz; ++n ) copy_body(n);
-				}
+				parallel.for_each(m_nx*m_ny*m_nz,[&](size_t n) { copy_body(n); });
 			}
 		} else {
 			//
-			unsigned m_nx, m_ny, m_nz, m_element_size;
-			array.get(m_nx,m_ny,m_nz,m_element_size);
-			initialize(m_nx,m_ny,m_nz,m_element_size);
+			unsigned m_nx, m_ny, m_nz, m_element_bytes;
+			array.get(m_nx,m_ny,m_nz,m_element_bytes);
+			initialize(m_nx,m_ny,m_nz,m_element_bytes);
 			//
 			array.const_serial_actives([&](int i, int j, int k, const void *value_ptr, const bool &filled ) {
 				const size_t n = encode(i,j,k);
-				unsigned char &mask = *(m_bit_mask+n/8);
-				mask |= 1UL << n%8;
-				if( filled ) {
-					if( ! m_fill_mask ) {
-						m_fill_mask = new unsigned char [m_bit_mask_size]; 
-						std::memset(m_fill_mask,0,m_bit_mask_size);
-					}
-					*(m_fill_mask+n/8) |= 1UL << n%8;
-				}
-				copy_func(m_buffer ? m_buffer+n*m_element_size : nullptr,value_ptr);
+				unsigned char &mask = *(m_bit_mask+(n>>3));
+				mask |= 1UL << (n&7);
+				copy_func(m_buffer ? m_buffer+n*m_element_bytes : nullptr,value_ptr);
 				return false;
 			});
-			array.const_serial_inside([&](int i, int j, int k, const void *value_ptr, const bool &active ) {
-				if( ! active ) {
-					const size_t n = encode(i,j,k);
-					if( ! m_fill_mask ) {
-						m_fill_mask = new unsigned char [m_bit_mask_size]; 
-						std::memset(m_fill_mask,0,m_bit_mask_size);
+			//
+			if( m_element_bytes ) {
+				array.const_serial_inside([&](int i, int j, int k, const void *value_ptr, const bool &active ) {
+					if( ! active ) {
+						const size_t n = encode(i,j,k);
+						if( ! m_fill_mask ) {
+							m_fill_mask = new unsigned char [m_bit_mask_size]; 
+							std::memset(m_fill_mask,0,m_bit_mask_size);
+						}
+						*(m_fill_mask+(n>>3)) |= 1UL << (n&7);
 					}
-					*(m_fill_mask+n/8) |= 1UL << n%8;
-				}
-				return false;
-			});
+					return false;
+				});
+			}
 		}
 	}
 	//
-	inline bool check_bound( int i, int j, int k ) const {
+	virtual bool support_cache() const override {
+		return false;
+	}
+	//
+	virtual void* generate_cache() const override {
+		return nullptr;
+	}
+	//
+	virtual void destroy_cache( void *cache ) const override {
+	}
+	//
+	bool check_bound( int i, int j, int k ) const {
 		if( i >= 0 && j >= 0 && k >= 0 && i < m_nx && j < m_ny && k < m_nz ) {
 			return true;
 		} else {
@@ -171,63 +178,42 @@ private:
 		}
 	}
 	//
-	virtual void set( int i, int j, int k, std::function<void(void *value_ptr, bool &active)> func ) override {
+	virtual void set( int i, int j, int k, std::function<void(void *value_ptr, bool &active)> func, void *cache ) override {
 		//
 #if SHKZ_DEBUG
 		assert(check_bound(i,j,k));
 #endif
 		const size_t n = encode(i,j,k);
-		unsigned char &mask = *(m_bit_mask+n/8);
-		bool active = (mask >> n%8) & 1U;
-		unsigned char *ptr = m_buffer ? m_buffer+n*m_element_size : nullptr;
+		unsigned char &mask = *(m_bit_mask+(n>>3));
+		bool active = (mask >> (n&7)) & 1U;
+		unsigned char *ptr = m_buffer ? m_buffer+n*m_element_bytes : nullptr;
 		//
 		func(ptr,active);
 		//
-		if( active ) mask |= 1UL << n%8;
-		else mask &= ~(1UL << n%8);
+		if( active ) mask |= 1UL << (n&7);
+		else mask &= ~(1UL << (n&7));
 	}
 	//
-	virtual const void * operator()( int i, int j, int k, bool &filled ) const override {
+	virtual const void * operator()( int i, int j, int k, bool &filled, void *cache ) const override {
 		//
 #if SHKZ_DEBUG
 		assert(check_bound(i,j,k));
 #endif
 		const size_t n = encode(i,j,k);
-		unsigned char &mask = *(m_bit_mask+n/8);
-		filled = m_fill_mask ? (*(m_fill_mask+n/8) >> n%8) & 1U : false;
+		unsigned char &mask = *(m_bit_mask+(n>>3));
+		filled = m_fill_mask ? (*(m_fill_mask+(n>>3)) >> (n&7)) & 1U : false;
 		static char tmp_ptr;
-		if( mask & (1U << n%8)) return m_buffer ? m_buffer + n*m_element_size : (void *)&tmp_ptr;
+		if( mask & (1U << (n&7))) return m_buffer ? m_buffer + n*m_element_bytes : (void *)&tmp_ptr;
 		return nullptr;
 	}
 	//
 	virtual void dilate( std::function<void(int i, int j, int k, void *value_ptr, bool &active, const bool &filled, int thread_index)> func, const parallel_driver &parallel ) override {
-		//
-		std::vector<size_t> dilate_coords;
-		dilate_coords = dilate3::dilate(shape3(m_nx,m_ny,m_nz),m_bit_mask,m_bit_mask_size,&parallel);
-		//
-		std::vector<size_t> active_states[parallel.get_thread_num()];
-		const size_t plane_size = m_nx*m_ny;
-		parallel.for_each(dilate_coords.size(),[&]( size_t q, int thread_index ) {
-			size_t n = dilate_coords[q];
-			int i, j, k;
-			decode(n,i,j,k);
-			bool active (false);
-			bool filled = m_fill_mask ? (*(m_fill_mask+n/8) >> n%8) & 1U : false;
-			func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,active,filled,thread_index);
-			if( active ) {
-				active_states[thread_index].push_back(n);
-			}
-		});
-		//
-		for( const auto &e : active_states ) {
-			for( const auto &n : e ) {
-				unsigned char &mask = *(m_bit_mask+n/8);
-				mask |= 1UL << n%8;
-			}
-		}
+		dilate3::dilate<size_t>(this,func,parallel);
 	}
 	//
 	virtual void flood_fill( std::function<bool(void *value_ptr)> inside_func, const parallel_driver &parallel ) override {
+		//
+		if( ! m_element_bytes ) return;
 		//
 		if( ! m_fill_mask ) m_fill_mask = new unsigned char [m_bit_mask_size];
 		std::memset(m_fill_mask,0,m_bit_mask_size);
@@ -236,11 +222,11 @@ private:
 		auto markable = [&]( vec3i pi, bool default_result ) {
 			if( ! shape3(m_nx,m_ny,m_nz).out_of_bounds(pi)) {
 				auto pass_fill_mask = [&]( size_t n ) {
-					return ! ((*(m_fill_mask+n/8) >> n%8) & 1U);
+					return ! ((*(m_fill_mask+(n>>3)) >> (n&7)) & 1U);
 				};
 				const size_t n = encode(pi[0],pi[1],pi[2]);
-				if( (*(m_bit_mask+n/8) >> n%8) & 1U ) {
-					return inside_func(m_buffer ? m_buffer+n*m_element_size : nullptr) && pass_fill_mask(n);
+				if( (*(m_bit_mask+(n>>3)) >> (n&7)) & 1U ) {
+					return inside_func(m_buffer ? m_buffer+n*m_element_bytes : nullptr) && pass_fill_mask(n);
 				} else {
 					return default_result && pass_fill_mask(n);
 				}
@@ -249,7 +235,7 @@ private:
 			}
 		};
 		auto mark = [&]( size_t n ) {
-			*(m_fill_mask+n/8) |= 1UL << n%8;
+			*(m_fill_mask+(n>>3)) |= 1UL << (n&7);
 		};
 		size_t count = shape3(m_nx,m_ny,m_nz).count();
 		for( size_t n8=0; n8<m_bit_mask_size; ++n8 ) {
@@ -258,7 +244,7 @@ private:
 					int i, j, k; decode(n,i,j,k);
 					vec3i pi(i,j,k);
 					if( markable(pi,false)) {
-						if( (*(m_bit_mask+n8) >> n%8) & 1U ) {
+						if( (*(m_bit_mask+n8) >> (n&7)) & 1U ) {
 							queue.push(pi);
 							while(! queue.empty()) {
 								vec3i qi = queue.top();
@@ -284,10 +270,10 @@ private:
 				unsigned char &mask = *(m_fill_mask+n8);
 				if( mask ) {
 					for( size_t n=8*n8; n < 8*(n8+1); ++n ) if ( n < count ) {
-						if( (mask >> n%8) & 1U ) {
+						if( (mask >> (n&7)) & 1U ) {
 							int i, j, k; decode(n,i,j,k);
-							bool active = ((*(m_bit_mask+n/8)) >> n%8) & 1U;
-							func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,active,thread_index);
+							bool active = ((*(m_bit_mask+(n>>3))) >> (n&7)) & 1U;
+							func(i,j,k,m_buffer ? m_buffer+n*m_element_bytes : nullptr,active,thread_index);
 						}
 					}
 				}
@@ -303,10 +289,10 @@ private:
 				if( mask ) {
 					bool do_break (false);
 					for( size_t n=8*n8; n < 8*(n8+1); ++n ) if ( n < count ) {
-						if( (mask >> n%8) & 1U ) {
+						if( (mask >> (n&7)) & 1U ) {
 							int i, j, k; decode(n,i,j,k);
-							bool active = ((*(m_bit_mask+n/8)) >> n%8) & 1U;
-							if(func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,active)) {
+							bool active = ((*(m_bit_mask+(n>>3))) >> (n&7)) & 1U;
+							if(func(i,j,k,m_buffer ? m_buffer+n*m_element_bytes : nullptr,active)) {
 								do_break = true;
 								break;
 							}
@@ -318,7 +304,7 @@ private:
 		}
 	}
 	//
-	inline void parallel_actives_loop( std::function<bool( size_t n, bool &active, const bool &filled, int thread_index )> body, const parallel_driver &parallel ) {
+	void parallel_actives_loop( std::function<bool( size_t n, bool &active, const bool &filled, int thread_index )> body, const parallel_driver &parallel ) {
 		size_t size = m_nx*m_ny*m_nz;
 		parallel.for_each(m_bit_mask_size,[&]( size_t n8, int q ) {
 			unsigned char &mask = *(m_bit_mask+n8);
@@ -328,7 +314,7 @@ private:
 					if( n < size ) {
 						bool active = (mask >> n0) & 1U;
 						if( active ) {
-							bool filled = m_fill_mask ? (*(m_fill_mask+n/8) >> n%8) & 1U : false;
+							bool filled = m_fill_mask ? (*(m_fill_mask+(n>>3)) >> (n&7)) & 1U : false;
 							if(body(n,active,filled,q)) break;
 							if( ! active ) mask &= ~(1UL << n0);
 						}
@@ -338,76 +324,76 @@ private:
 		});
 	}
 	//
-	inline void parallel_loop_actives_body ( int &i, int &j, int &k, std::function<void(int i, int j, int k, void *value_ptr, bool &active, const bool &filled )> func ) {
+	void parallel_loop_actives_body ( int &i, int &j, int &k, std::function<void(int i, int j, int k, void *value_ptr, bool &active, const bool &filled )> func ) {
 		loop_actives_body(i,j,k,[&](int i, int j, int k, void *value_ptr, bool &active, const bool &filled ) {
 			func(i,j,k,value_ptr,active,filled);
 			return false;
 		});
 	}
-	inline bool loop_actives_body ( int i, int j, int k, std::function<bool(int i, int j, int k, void *value_ptr, bool &active, const bool &filled )> func ) {
+	bool loop_actives_body ( int i, int j, int k, std::function<bool(int i, int j, int k, void *value_ptr, bool &active, const bool &filled )> func ) {
 		const size_t n = encode(i,j,k);
-		unsigned char &mask = *(m_bit_mask+n/8);
+		unsigned char &mask = *(m_bit_mask+(n>>3));
 		if( mask ) {
-			bool active = (mask >> n%8) & 1U;
+			bool active = (mask >> (n&7)) & 1U;
 			if( active ) {
-				bool filled = m_fill_mask ? (*(m_fill_mask+n/8) >> n%8) & 1U : false;
-				if(func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,active,filled)) return true;
-				if( ! active ) mask &= ~(1UL << n%8);
+				bool filled = m_fill_mask ? (*(m_fill_mask+(n>>3)) >> (n&7)) & 1U : false;
+				if(func(i,j,k,m_buffer ? m_buffer+n*m_element_bytes : nullptr,active,filled)) return true;
+				if( ! active ) mask &= ~(1UL << (n&7));
 			}
 		}
 		return false;
 	}
 	//
-	inline void parallel_const_loop_actives_body ( int i, int j, int k, std::function<void(int i, int j, int k, const void *value_ptr, const bool &filled )> func ) const {
+	void parallel_const_loop_actives_body ( int i, int j, int k, std::function<void(int i, int j, int k, const void *value_ptr, const bool &filled )> func ) const {
 		const_loop_actives_body(i,j,k,[&](int i, int j, int k, const void *value_ptr, const bool &filled ) {
 			func(i,j,k,value_ptr,filled);
 			return false;
 		});
 	}
-	inline bool const_loop_actives_body ( int i, int j, int k, std::function<bool(int i, int j, int k, const void *value_ptr, const bool &filled )> func ) const {
+	bool const_loop_actives_body ( int i, int j, int k, std::function<bool(int i, int j, int k, const void *value_ptr, const bool &filled )> func ) const {
 		const size_t n = encode(i,j,k);
-		const unsigned char &mask = *(m_bit_mask+n/8);
+		const unsigned char &mask = *(m_bit_mask+(n>>3));
 		if( mask ) {
-			if( mask & (1U << n%8) ) {
-				bool filled = m_fill_mask ? (*(m_fill_mask+n/8) >> n%8) & 1U : false;
-				if(func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,filled)) return true;
+			if( mask & (1U << (n&7)) ) {
+				bool filled = m_fill_mask ? (*(m_fill_mask+(n>>3)) >> (n&7)) & 1U : false;
+				if(func(i,j,k,m_buffer ? m_buffer+n*m_element_bytes : nullptr,filled)) return true;
 			}
 		}
 		return false;
 	}
 	//
-	inline void parallel_loop_all_body ( int i, int j, int k, std::function<void(int i, int j, int k, void *value_ptr, bool &active, const bool &filled )> func ) {
+	void parallel_loop_all_body ( int i, int j, int k, std::function<void(int i, int j, int k, void *value_ptr, bool &active, const bool &filled )> func ) {
 		loop_all_body(i,j,k,[&](int i, int j, int k, void *value_ptr, bool &active, const bool &filled) {
 			func(i,j,k,value_ptr,active,filled);
 			return false;
 		});
 	}
-	inline bool loop_all_body ( int i, int j, int k, std::function<bool(int i, int j, int k, void *value_ptr, bool &active, const bool &filled )> func ) {
+	bool loop_all_body ( int i, int j, int k, std::function<bool(int i, int j, int k, void *value_ptr, bool &active, const bool &filled )> func ) {
 		const size_t n = encode(i,j,k);
-		unsigned char &mask = *(m_bit_mask+n/8);
-		bool active = (mask >> n%8) & 1U;
+		unsigned char &mask = *(m_bit_mask+(n>>3));
+		bool active = (mask >> (n&7)) & 1U;
 		bool new_active (active);
-		bool filled = m_fill_mask ? (*(m_fill_mask+n/8) >> n%8) & 1U : false;
-		bool result = func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,new_active,filled);
+		bool filled = m_fill_mask ? (*(m_fill_mask+(n>>3)) >> (n&7)) & 1U : false;
+		bool result = func(i,j,k,m_buffer ? m_buffer+n*m_element_bytes : nullptr,new_active,filled);
 		if( new_active != active ) {
-			if( new_active ) mask |= 1UL << n%8;
-			else mask &= ~(1UL << n%8);
+			if( new_active ) mask |= 1UL << (n&7);
+			else mask &= ~(1UL << (n&7));
 		}
 		return result;
 	}
 	//
-	inline void parallel_const_loop_all_body ( int i, int j, int k, std::function<void(int i, int j, int k, const void *value_ptr, const bool &active, const bool &filled )> func ) const {
+	void parallel_const_loop_all_body ( int i, int j, int k, std::function<void(int i, int j, int k, const void *value_ptr, const bool &active, const bool &filled )> func ) const {
 		const_loop_all_body(i,j,k,[&](int i, int j, int k, const void *value_ptr, const bool &active, const bool &filled) {
 			func(i,j,k,value_ptr,active,filled);
 			return false;
 		});
 	}
-	inline bool const_loop_all_body ( int i, int j, int k, std::function<bool(int i, int j, int k, const void *value_ptr, const bool &active, const bool &filled )> func ) const {
+	bool const_loop_all_body ( int i, int j, int k, std::function<bool(int i, int j, int k, const void *value_ptr, const bool &active, const bool &filled )> func ) const {
 		const size_t n = encode(i,j,k);
-		const unsigned char &mask = *(m_bit_mask+n/8);
-		bool active = (mask >> n%8) & 1U;
-		bool filled = m_fill_mask ? (*(m_fill_mask+n/8) >> n%8) & 1U : false;
-		return func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,active,filled);
+		const unsigned char &mask = *(m_bit_mask+(n>>3));
+		bool active = (mask >> (n&7)) & 1U;
+		bool filled = m_fill_mask ? (*(m_fill_mask+(n>>3)) >> (n&7)) & 1U : false;
+		return func(i,j,k,m_buffer ? m_buffer+n*m_element_bytes : nullptr,active,filled);
 	}
 	//
 	virtual void parallel_actives ( std::function<void(int i, int j, int k, void *value_ptr, bool &active, const bool &filled, int thread_index )> func, const parallel_driver &parallel ) override {
@@ -486,7 +472,7 @@ private:
 	unsigned char *m_buffer {nullptr};
 	unsigned char *m_bit_mask {nullptr};
 	unsigned char *m_fill_mask {nullptr};
-	unsigned m_nx {0}, m_ny {0}, m_nz {0}, m_element_size {0}, m_bit_mask_size {0};
+	unsigned m_nx {0}, m_ny {0}, m_nz {0}, m_element_bytes {0}, m_bit_mask_size {0};
 	//
 	size_t encode( int i, int j, int k ) const { return i + j * m_nx + k * (m_nx*m_ny); }
 	void decode( size_t n, int &i, int &j, int &k) const { 

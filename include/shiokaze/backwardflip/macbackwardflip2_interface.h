@@ -47,21 +47,21 @@ public:
 	 @param[in] solid 壁面のレベルセット。
 	 @param[in] fluid 流体のレベルセット。
 	 */
-	virtual bool backtrace( const array2<double> &solid, const array2<double> &fluid ) = 0;
+	virtual bool backtrace( const array2<float> &solid, const array2<float> &fluid ) = 0;
 	/**
 	 \~english @brief Get the reconstructed velocity field after the long-term backtrace.
 	 @param[out] u_reconstructed Reconstructed velocity.
 	 \~japanese @brief バックトレース後に再構築された速度場を得る。
 	 @param[out] u_reconstructed 再構築された速度場。
 	 */
-	virtual bool fetch( macarray2<double> &u_reconstructed ) const = 0;
+	virtual bool fetch( macarray2<float> &u_reconstructed ) const = 0;
 	/**
 	 \~english @brief Get the reconstructed density field after the long-term backtrace.
 	 @param[out] density_reconstructed Reconstructed density.
 	 \~japanese @brief バックトレース後に再構築された密度場を得る。
 	 @param[out] density_reconstructed 再構築された密度場。
 	 */
-	virtual bool fetch( array2<double> &density_reconstructed ) const = 0;
+	virtual bool fetch( array2<float> &density_reconstructed ) const = 0;
 	/**
 	 \~english @brief Add a layer of velocity field.
 	 @param[in] u1 Velocity at the end of the step.
@@ -83,13 +83,13 @@ public:
 	 @param[in] dt 現在のタイムステップ幅。
 	 */
 	virtual void register_buffer(
-						const macarray2<double> &u1,
-						const macarray2<double> &u0,
-						const macarray2<double> *u_reconstructed,
-						const macarray2<double> *g,
-						const array2<double> *d1,
-						const array2<double> *d0,
-						const array2<double> *d_added,
+						const macarray2<float> &u1,
+						const macarray2<float> &u0,
+						const macarray2<float> *u_reconstructed,
+						const macarray2<float> *g,
+						const array2<float> *d1,
+						const array2<float> *d0,
+						const array2<float> *d_added,
 						double dt ) = 0;
 	/**
 	 \~english @brief Draw simulation information for debugging.
@@ -105,10 +105,10 @@ private:
 	virtual void initialize( const configurable::environment_map &environment ) override {
 		//
 		assert(check_set(environment,{"shape","dx"}));
-		//
-		const shape2 &shape = *reinterpret_cast<const shape2 *>(environment.at("shape"));
-		double dx = *reinterpret_cast<const double *>(environment.at("dx"));
-		initialize(shape,dx);
+		initialize(
+			get_env<shape2>(environment,"shape"),
+			get_env<double>(environment,"dx")
+		);
 	}
 };
 //

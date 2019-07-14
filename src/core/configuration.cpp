@@ -74,11 +74,11 @@ void configuration::print_bar( std::string str ) {
 	// Remove color encoding
 	std::string print_str = str;
 	while(true) {
-		auto n0 = str.find('\e');
+		auto n0 = str.find('<');
 		if( n0 == std::string::npos ) break;
 		else {
 			for( int n1=n0+1; n1 < str.size(); ++n1 ) {
-				if( str[n1] == 'm' ) {
+				if( str[n1] == '>' ) {
 					str.erase(n0,n1-n0+1);
 					break;
 				}
@@ -121,9 +121,9 @@ void configuration::print_credit( const Group &group ) const {
 		to_simple_string(date(std::get<0>(group.date),std::get<1>(group.date),std::get<2>(group.date))) : std::string();
 	if( ! group.author.empty()) {
 		print_center(
-			"\e[91m(" + 
+			"<Light_Red>(" + 
 			group.author + ")" +
-			(date_str.empty() ? "" : (" on "+date_str)) + "\e[39m"
+			(date_str.empty() ? "" : (" on "+date_str)) + "<Default>"
 		);
 		if( ! group.address.empty()) print_center("<"+group.address+">");
 	}
@@ -144,7 +144,7 @@ void configuration::print_groupbar( const Title &group_title, const Group &group
 		if( group_title.argument_name.empty() ) {
 			print_bar(group_title.name);
 		} else {
-			print_bar(group_title.name+" (\e[32m"+group_title.argument_name+"\e[39m)");
+			print_bar(group_title.name+" (<Green>"+group_title.argument_name+"<Default>)");
 		}
 #endif
 	}
@@ -164,12 +164,12 @@ void configuration::print_variables () const {
 					name = name.substr(pos+1);
 				}
 				if( ! eit->second.is_default ) {
-					console::dump("\e[33m\u25cf  ");
+					console::dump("<Yellow><BlackCircle>  ");
 					console::dump( "%s = %s", name.c_str(), eit->second.value.c_str());
-					console::dump( "\e[39m\n" );
+					console::dump( "<Default>\n" );
 				} else {
 					console::dump("   ");
-					console::dump( "%s = \e[36m%s\e[39m\n", name.c_str(), eit->second.value.c_str());
+					console::dump( "%s = <Cyan>%s<Default>\n", name.c_str(), eit->second.value.c_str());
 				}
 			}
 		}
@@ -185,9 +185,10 @@ void configuration::print_help() const {
 			print_groupbar(git->first,git->second);
 			print_credit(git->second);
 			for( auto eit=entries.cbegin(); eit!=entries.cend(); ++eit ) {
-				console::dump( "   %s (\e[32m%s\e[39m): \e[36m%s\e[39m\n",
+				console::dump( "   %s (<Green>%s,%s<Default>): <Cyan>%s<Default>\n",
 					eit->first.c_str(),
 					eit->second.type.c_str(),
+					eit->second.value.c_str(),
 					eit->second.description.c_str());
 			}
 		}
@@ -197,9 +198,9 @@ void configuration::print_help() const {
 //
 void configuration::print_splash() const {
 	//
-	print_bar("Shiokaze Core \e[95m(MIT)\e[39m");
+	print_bar("Shiokaze Core <Light_Magenta>(MIT)<Default>");
 	print_center("A research-oriented fluid solver for computer graphics");
-	print_center("Designed and maintained by \e[33mRyoichi Ando \e[36m<rand@nii.ac.jp>\e[39m");
+	print_center("Designed and maintained by <Yellow>Ryoichi Ando <Cyan><rand@nii.ac.jp><Default>");
 	print_bar();
 }
 //
@@ -219,7 +220,7 @@ void configuration::check_touched () const {
 	};
 	for( auto ait=m_dictionary.cbegin(); ait!=m_dictionary.cend(); ++ait ) {
 		if( ! find_name(ait->first) ) {
-			console::dump("\e[91mWARNING: Argument \"%s\" was not touched!\e[39m\n", ait->first.c_str());
+			console::dump("<Light_Red>WARNING: Argument \"%s\" was not touched!<Default>\n", ait->first.c_str());
 		}
 	}
 }

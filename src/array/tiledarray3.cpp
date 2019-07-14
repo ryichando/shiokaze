@@ -28,20 +28,19 @@
 #include <vector>
 #include <cmath>
 #include <cassert>
-#include <sparsepp/spp.h>
+#include <limits>
 #include <shiokaze/array/array_core3.h>
 #include "bitcount/bitcount.h"
 #include "dilate3.h"
 //
 SHKZ_BEGIN_NAMESPACE
 //
-template <class T> using hash_type = spp::sparse_hash_set<T>;
-//
 class tiledarray3 : public array_core3 {
 public:
 	//
 	LONG_NAME("Tiled Array 3D")
 	ARGUMENT_NAME("TiledArray")
+	MODULE_NAME("tiledarray3")
 	//
 	tiledarray3 () = default;
 	virtual ~tiledarray3() {
@@ -50,10 +49,13 @@ public:
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_unsigned("TileSize",m_Z,"Tile size per dimension");
+		assert( m_Z*m_Z*m_Z <= std::numeric_limits<unsigned short>::max());
+		assert( m_Z <= std::numeric_limits<unsigned char>::max());
 	}
 	//
-	virtual void initialize( unsigned nx, unsigned ny, unsigned nz, unsigned element_size ) override {
+	virtual void initialize( unsigned nx, unsigned ny, unsigned nz, unsigned element_bytes ) override {
 		//
+		assert( element_bytes <= std::numeric_limits<unsigned char>::max() );
 		dealloc();
 		//
 		m_nx = nx;
@@ -63,17 +65,17 @@ public:
 		m_bx = std::ceil(m_nx/(double)m_Z);
 		m_by = std::ceil(m_ny/(double)m_Z);
 		m_bz = std::ceil(m_nz/(double)m_Z);
-		m_element_size = element_size;
+		m_element_bytes = element_bytes;
 		m_plane = m_bx*m_by;
 		//
 		m_tiles.resize(m_bx*m_by*m_bz);
 	}
 	//
-	virtual void get( unsigned &nx, unsigned &ny, unsigned &nz, unsigned &element_size ) const override {
+	virtual void get( unsigned &nx, unsigned &ny, unsigned &nz, unsigned &element_bytes ) const override {
 		nx = m_nx;
 		ny = m_ny;
 		nz = m_nz;
-		element_size = m_element_size;
+		element_bytes = m_element_bytes;
 	}
 	//
 	virtual size_t count( const parallel_driver &parallel ) const override {
@@ -88,54 +90,58 @@ public:
 		return total;
 	}
 	//
-	virtual void copy( const array_core3 &array, std::function<void(void *target, const void *src)> copy_func, const parallel_driver *parallel ) override {
+	virtual void copy( const array_core3 &array, std::function<void(void *target, const void *src)> copy_func, const parallel_driver &parallel ) override {
 		//
 		dealloc();
-		unsigned m_nx, m_ny, m_nz, m_element_size;
-		array.get(m_nx,m_ny,m_nz,m_element_size);
+		unsigned nx, ny, nz, element_bytes;
+		array.get(nx,ny,nz,element_bytes);
 		//
 		auto mate_array = dynamic_cast<const tiledarray3 *>(&array);
 		if( mate_array ) {
 			m_Z = mate_array->m_Z;
-			initialize(m_nx,m_ny,m_nz,m_element_size);
-			m_fill_mask = mate_array->m_fill_mask;
-			for( size_t n=0; n<m_bx*m_by*m_bz; ++n ) {
-				if( mate_array->m_tiles[n] ) {
-					m_tiles[n] = new chunk3(*mate_array->m_tiles[n],copy_func);
-					if( block_filled(n)) m_tiles[n]->fill_all();
+			initialize(nx,ny,nz,element_bytes);
+			if( element_bytes ) {
+				m_fill_mask = mate_array->m_fill_mask;
+				for( size_t n=0; n<m_bx*m_by*m_bz; ++n ) {
+					if( mate_array->m_tiles[n] ) {
+						m_tiles[n] = new chunk3(*mate_array->m_tiles[n],copy_func);
+						if( block_filled(n)) m_tiles[n]->fill_all();
+					}
 				}
 			}
 		} else {
-			initialize(m_nx,m_ny,m_nz,m_element_size);
+			initialize(nx,ny,nz,element_bytes);
 			array.const_serial_actives([&](int i, int j, int k, const void *src_ptr, const bool& filled) {
 				set(i,j,k,[&](void *dst_ptr, bool &active) {
 					copy_func(dst_ptr,src_ptr);
 					active = true;
+				},nullptr);
+				return false;
+			});
+			if( element_bytes ) {
+				array.const_serial_inside([&](int i, int j, int k, const void *src_ptr, const bool &active) {
+					unsigned bi = i / m_Z;
+					unsigned bj = j / m_Z;
+					unsigned bk = k / m_Z;
+					size_t n = encode(bi,bj,bk);
+					if( m_fill_mask.empty()) m_fill_mask.resize(m_bx*m_by*m_bz);
+					if( ! m_tiles[n] ) m_fill_mask[n] = true;
+					else m_tiles[n]->set_filled(i-bi*m_Z,j-bj*m_Z,k-bk*m_Z);
+					return false;
 				});
-				if( filled ) {
-					unsigned bi = i / m_Z;
-					unsigned bj = j / m_Z;
-					unsigned bk = k / m_Z;
-					size_t n = encode(bi,bj,bk);
-					if( m_fill_mask.empty()) m_fill_mask.resize(m_bx*m_by*m_bz);
-					if( ! m_tiles[n] ) m_fill_mask[n] = true;
-					else m_tiles[n]->set_filled(i-bi*m_Z,j-bj*m_Z,k-bk*m_Z);
-				}
-				return false;
-			});
-			array.const_serial_inside([&](int i, int j, int k, const void *src_ptr, const bool &active) {
-				if( ! active ) {
-					unsigned bi = i / m_Z;
-					unsigned bj = j / m_Z;
-					unsigned bk = k / m_Z;
-					size_t n = encode(bi,bj,bk);
-					if( m_fill_mask.empty()) m_fill_mask.resize(m_bx*m_by*m_bz);
-					if( ! m_tiles[n] ) m_fill_mask[n] = true;
-					else m_tiles[n]->set_filled(i-bi*m_Z,j-bj*m_Z,k-bk*m_Z);
-				}
-				return false;
-			});
+			}
 		}
+	}
+	//
+	virtual bool support_cache() const override {
+		return false;
+	}
+	//
+	virtual void* generate_cache() const override {
+		return nullptr;
+	}
+	//
+	virtual void destroy_cache( void *cache ) const override {
 	}
 	//
 	void dealloc() {
@@ -160,7 +166,7 @@ public:
 		}
 	}
 	//
-	virtual void set( int i, int j, int k, std::function<void(void *value_ptr, bool &active)> func ) override {
+	virtual void set( int i, int j, int k, std::function<void(void *value_ptr, bool &active)> func, void *cache ) override {
 		//
 #if SHKZ_DEBUG
 		assert(check_bound(i,j,k));
@@ -175,13 +181,13 @@ public:
 		//
 		if( ! m_tiles[n] ) {
 			bool active (false);
-			unsigned char buffer[m_element_size ? m_element_size : 1];
-			func(m_element_size ? buffer : nullptr,active);
+			unsigned char buffer[m_element_bytes ? m_element_bytes : 1];
+			func(m_element_bytes ? buffer : nullptr,active);
 			if( active ) {
 				unsigned Zx = std::min(m_nx-oi,m_Z);
 				unsigned Zy = std::min(m_ny-oj,m_Z);
 				unsigned Zz = std::min(m_nz-ok,m_Z);
-				m_tiles[n] = new chunk3(oi,oj,ok,Zx,Zy,Zz,m_element_size);
+				m_tiles[n] = new chunk3(oi,oj,ok,Zx,Zy,Zz,m_element_bytes);
 				if( block_filled(n)) m_tiles[n]->fill_all();
 				m_tiles[n]->set(i-oi,j-oj,k-ok,buffer);
 			}
@@ -194,7 +200,7 @@ public:
 		}
 	}
 	//
-	virtual const void * operator()( int i, int j, int k, bool &filled ) const override {
+	virtual const void * operator()( int i, int j, int k, bool &filled, void *cache ) const override {
 		//
 #if SHKZ_DEBUG
 		assert(check_bound(i,j,k));
@@ -213,171 +219,13 @@ public:
 		}
 	}
 	//
-	struct active_state3 {
-		int i, j, k;
-		std::vector<unsigned char> buffer;
-	};
 	virtual void dilate( std::function<void(int i, int j, int k, void *value_ptr, bool &active, const bool &filled, int thread_index)> func, const parallel_driver &parallel ) override {
-		//
-		auto simple_encode = [&]( const vec3i &pi ) {
-			return pi[0] + pi[1] * m_nx + pi[2] * (m_nx*m_ny);
-		};
-		auto simple_decode = [&]( size_t n, int &i, int &j, int &k ) {
-			size_t plane = m_nx*m_ny;
-			i = (n % plane) % m_nx;
-			j = (n % plane ) / m_nx;
-			k = n / plane;
-		};
-		//
-		std::vector<std::vector<size_t> > dilate_coords(parallel.get_thread_num());
-		parallel.for_each(m_bx*m_by*m_bz,[&]( size_t n, int thread_index ) {
-			if( m_tiles[n] ) {
-				unsigned Zx = m_tiles[n]->m_Zx;
-				unsigned Zy = m_tiles[n]->m_Zy;
-				unsigned Zz = m_tiles[n]->m_Zz;
-				const int query[][DIM3] = {{+1,0,0},{-1,0,0},{0,+1,0},{0,-1,0},{0,0,+1},{0,0,-1}};
-				for( int nq=0; nq<6; nq++ ) {
-					int bi, bj, bk;
-					decode(n,bi,bj,bk);
-					int nbi = bi+query[nq][0];
-					int nbj = bj+query[nq][1];
-					int nbk = bk+query[nq][2];
-					if( ! shape3(m_bx,m_by,m_bz).out_of_bounds(nbi,nbj,nbk)) {
-						size_t m = encode(nbi,nbj,nbk);
-						if( nq == 0 ) {
-							for( size_t k=0; k<Zz; ++k ) for( size_t j=0; j<Zy; ++j ) {
-								if( m_tiles[n]->get(Zx-1,j,k)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(0,j,k)) {
-										vec3i pi (
-											m_tiles[n]->m_oi+Zx,
-											m_tiles[n]->m_oj+j,
-											m_tiles[n]->m_ok+k
-										);
-										dilate_coords[thread_index].push_back(simple_encode(pi));
-									}
-								}
-							}
-						} else if( nq == 1 ) {
-							for( size_t k=0; k<Zz; ++k ) for( size_t j=0; j<Zy; ++j ) {
-								if( m_tiles[n]->get(0,j,k)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(m_tiles[m]->m_Zx-1,j,k)) {
-										vec3i pi (
-											m_tiles[n]->m_oi-1,
-											m_tiles[n]->m_oj+j,
-											m_tiles[n]->m_ok+k
-										);
-										dilate_coords[thread_index].push_back(simple_encode(pi));
-									}
-								}
-							}
-						} else if( nq == 2 ) {
-							for( size_t k=0; k<Zz; ++k ) for( size_t i=0; i<Zx; ++i ) {
-								if( m_tiles[n]->get(i,Zy-1,k)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(i,0,k)) {
-										vec3i pi (
-											m_tiles[n]->m_oi+i,
-											m_tiles[n]->m_oj+Zy,
-											m_tiles[n]->m_ok+k
-										);
-										dilate_coords[thread_index].push_back(simple_encode(pi));
-									}
-								}
-							}
-						} else if( nq == 3 ) {
-							for( size_t k=0; k<Zz; ++k ) for( size_t i=0; i<Zx; ++i ) {
-								if( m_tiles[n]->get(i,0,k)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(i,m_tiles[m]->m_Zy-1,k)) {
-										vec3i pi (
-											m_tiles[n]->m_oi+i,
-											m_tiles[n]->m_oj-1,
-											m_tiles[n]->m_ok+k
-										);
-										dilate_coords[thread_index].push_back(simple_encode(pi));
-									}
-								}
-							}
-						} else if( nq == 4 ) {
-							for( size_t i=0; i<Zx; ++i ) for( size_t j=0; j<Zy; ++j ) {
-								if( m_tiles[n]->get(i,j,Zz-1)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(i,j,0)) {
-										vec3i pi (
-											m_tiles[n]->m_oi+i,
-											m_tiles[n]->m_oj+j,
-											m_tiles[n]->m_ok+Zz
-										);
-										dilate_coords[thread_index].push_back(simple_encode(pi));
-									}
-								}
-							}
-						} else if( nq == 5 ) {
-							for( size_t i=0; i<Zx; ++i ) for( size_t j=0; j<Zy; ++j ) {
-								if( m_tiles[n]->get(i,j,0)) {
-									if( ! m_tiles[m] || ! m_tiles[m]->get(i,j,m_tiles[m]->m_Zz-1)) {
-										vec3i pi (
-											m_tiles[n]->m_oi+i,
-											m_tiles[n]->m_oj+j,
-											m_tiles[n]->m_ok-1
-										);
-										dilate_coords[thread_index].push_back(simple_encode(pi));
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		});
-		//
-		parallel.for_each(m_bx*m_by*m_bz,[&]( size_t n, int thread_index ) {
-			if( m_tiles[n] ) {
-				std::vector<vec3i> active_coords;
-				m_tiles[n]->dilate(shape3(m_nx,m_ny,m_nz),thread_index,active_coords);
-				for( const auto &e : active_coords ) {
-					dilate_coords[thread_index].push_back(simple_encode(e));
-				}
-			}
-		});
-		//
-		hash_type<size_t> assembled;
-		for( const auto &e : dilate_coords ) {
-			for( const auto &it : e ) { assembled.insert(it); }
-		}
-		std::vector<size_t> result;
-		result.assign(assembled.begin(),assembled.end());
-		//
-		std::vector<active_state3> active_states[parallel.get_thread_num()];
-		parallel.for_each(result.size(),[&]( size_t q, int thread_index ) {
-			size_t n = result[q];
-			int i, j, k;
-			simple_decode(n,i,j,k);
-			if( ! shape3(m_nx,m_ny,m_nz).out_of_bounds(i,j,k)) {
-				//
-				bool active (false);
-				active_state3 state;
-				state.i = i;
-				state.j = j;
-				state.k = k;
-				state.buffer.resize(m_element_size);
-				bool filled;
-				operator()(i,j,k,filled);
-				func(i,j,k,m_element_size ? state.buffer.data() : nullptr,active,filled,thread_index);
-				if( active ) {
-					active_states[thread_index].push_back(state);
-				}
-			}
-		});
-		//
-		for( const auto &e : active_states ) {
-			for( const auto &state : e ) {
-				set(state.i, state.j, state.k, [&](void *value_ptr, bool &active) {
-					active = true;
-					if( m_element_size ) memcpy(value_ptr,state.buffer.data(),m_element_size);
-				});
-			}
-		}
+		dilate3::dilate<size_t>(this,func,parallel);
 	}
 	//
 	virtual void flood_fill( std::function<bool(void *value_ptr)> inside_func, const parallel_driver &parallel ) override {
+		//
+		if( ! m_element_bytes ) return;
 		//
 		parallel.for_each(m_bx*m_by*m_bz,[&]( size_t n ) {
 			if( m_tiles[n] ) {
@@ -415,10 +263,10 @@ public:
 		}
 		//
 		std::stack<vec3i> queue;
-		auto markable = [&]( vec3i ni ) {
+		auto markable = [&]( const vec3i &ni ) {
 			if( ! shape3(m_bx,m_by,m_bz).out_of_bounds(ni)) {
 				size_t n = encode(ni[0],ni[1],ni[2]);
-				return m_fill_mask[n] == false && m_tiles[n] == nullptr;
+				return m_fill_mask[n] == false && ( ! m_tiles[n] || m_tiles[n]->count_filled() == 0 );
 			} else {
 				return false;
 			}
@@ -432,7 +280,11 @@ public:
 			queue.push(pi);
 			while( ! queue.empty()) {
 				vec3i qi = queue.top();
-				m_fill_mask[encode(qi[0],qi[1],qi[2])] = true;
+				size_t m = encode(qi[0],qi[1],qi[2]);
+				m_fill_mask[m] = true;
+				if( m_tiles[m] && ! m_tiles[m]->count_filled()) {
+					m_tiles[m]->fill_all();
+				}
 				queue.pop();
 				for( int dim : DIMS3 ) for( int dir=-1; dir<=1; dir+=2 ) {
 					vec3i ni = qi+dir*vec3i(dim==0,dim==1,dim==2);
@@ -548,7 +400,7 @@ loop_escape:
 			}
 			if( result ) return true;
 		} else {
-			unsigned char buffer[m_element_size ? m_element_size : 1];
+			unsigned char buffer[m_element_bytes ? m_element_bytes : 1];
 			int oi = bi*m_Z;
 			int oj = bj*m_Z;
 			int ok = bk*m_Z;
@@ -560,13 +412,13 @@ loop_escape:
 				int i = oi+ii;
 				int j = oj+jj;
 				int k = ok+kk;
-				func(i,j,k,m_element_size ? buffer : nullptr,active,block_filled(n));
+				func(i,j,k,m_element_bytes ? buffer : nullptr,active,block_filled(n));
 				if( active ) {
 					if( ! m_tiles[n] ) {
 						unsigned Zx = std::min(m_nx-oi,m_Z);
 						unsigned Zy = std::min(m_ny-oj,m_Z);
 						unsigned Zz = std::min(m_nz-ok,m_Z);
-						m_tiles[n] = new chunk3(oi,oj,ok,Zx,Zy,Zz,m_element_size);
+						m_tiles[n] = new chunk3(oi,oj,ok,Zx,Zy,Zz,m_element_bytes);
 						if( block_filled(n)) m_tiles[n]->fill_all();
 					}
 					m_tiles[n]->set(ii,jj,kk,buffer);
@@ -656,15 +508,14 @@ private:
 	//
 	struct chunk3 {
 		//
-		chunk3 ( int oi, int oj, int ok, unsigned Zx, unsigned Zy, unsigned Zz, unsigned element_size ) : m_oi(oi), m_oj(oj), m_ok(ok), m_Zx(Zx), m_Zy(Zy), m_Zz(Zz), m_element_size(element_size) {
+		chunk3 ( int oi, int oj, int ok, unsigned Zx, unsigned Zy, unsigned Zz, unsigned element_bytes ) : m_oi(oi), m_oj(oj), m_ok(ok), m_Zx(Zx), m_Zy(Zy), m_Zz(Zz), m_element_bytes(element_bytes) {
 			//
-			m_plane = m_Zx * m_Zy;
-			if( m_element_size ) {
-				m_buffer = new unsigned char [m_Zx*m_Zy*m_Zz*m_element_size];
+			if( m_element_bytes ) {
+				m_buffer = new unsigned char [m_Zx*m_Zy*m_Zz*m_element_bytes];
 			}
 			m_bit_mask_size = std::ceil(m_Zx*m_Zy*m_Zz/8.0);
 			m_bit_mask = new unsigned char [m_bit_mask_size];
-			std::memset(m_buffer,0,m_element_size*m_Zx*m_Zy*m_Zz);
+			std::memset(m_buffer,0,m_element_bytes*m_Zx*m_Zy*m_Zz);
 			std::memset(m_bit_mask,0,m_bit_mask_size);
 			m_num_active = 0;
 		}
@@ -679,11 +530,10 @@ private:
 			m_Zx = instance.m_Zx;
 			m_Zy = instance.m_Zy;
 			m_Zz = instance.m_Zz;
-			m_plane = m_Zx * m_Zy;
 			m_oi = instance.m_oi;
 			m_oj = instance.m_oj;
 			m_ok = instance.m_ok;
-			m_element_size = instance.m_element_size;
+			m_element_bytes = instance.m_element_bytes;
 			//
 			m_bit_mask_size = instance.m_bit_mask_size;
 			m_bit_mask = new unsigned char [m_bit_mask_size];
@@ -693,18 +543,18 @@ private:
 				std::memcpy(m_fill_mask,instance.m_fill_mask,m_bit_mask_size);
 			}
 			//
-			if( m_element_size ) {
-				size_t size = m_Zx*m_Zy*m_Zz*m_element_size;
+			if( m_element_bytes ) {
+				size_t size = m_Zx*m_Zy*m_Zz*m_element_bytes;
 				m_buffer = new unsigned char [size];
 			}
 			//
 			for( int kk=0; kk<m_Zz; ++kk ) for( int jj=0; jj<m_Zy; ++jj ) for( int ii=0; ii<m_Zx; ++ii ) {
 				size_t n = encode(ii,jj,kk);
-				unsigned char &mask = *(m_bit_mask+n/8);
+				unsigned char &mask = *(m_bit_mask+(n>>3));
 				if( mask ) {
-					if((mask >> n%8) & 1U) {
-						size_t offset = n*m_element_size;
-						if( m_element_size ) copy_func(m_buffer+offset,instance.m_buffer+offset);
+					if((mask >> (n&7)) & 1U) {
+						size_t offset = n*m_element_bytes;
+						if( m_element_bytes ) copy_func(m_buffer+offset,instance.m_buffer+offset);
 					}
 				}
 			}
@@ -717,7 +567,7 @@ private:
 				if( m_bit_mask[n8] == 0xFF ) verify_count += 8;
 				else if( m_bit_mask[n8] ) {
 					for( size_t n=8*n8; n<8*(n8+1); ++n ) {
-						if( (*(m_bit_mask+n/8) >> n%8) & 1U ) ++ verify_count;
+						if( (*(m_bit_mask+(n>>3)) >> (n&7)) & 1U ) ++ verify_count;
 					}
 				}
 			}
@@ -736,22 +586,8 @@ private:
 		size_t count() const {
 			return bitcount::count(m_bit_mask,m_bit_mask_size,nullptr);
 		}
-		void add_bitmask_positions( std::vector<vec3i> &actives, unsigned char *m_bit_mask ) {
-			//
-			for( int kk=0; kk<m_Zz; ++kk ) for( int jj=0; jj<m_Zy; ++jj ) for( int ii=0; ii<m_Zx; ++ii ) {
-				size_t n = encode(ii,jj,kk);
-				const unsigned char &mask = *(m_bit_mask+n/8);
-				if((mask >> n%8) & 1U) {
-					actives.push_back(vec3i(m_oi+ii,m_oj+jj,m_ok+kk));
-				}
-			}
-		}
-		void add_actives( std::vector<vec3i> &actives ) {
-			add_bitmask_positions(actives,m_bit_mask);
-		}
-		void add_fills( std::vector<vec3i> &actives ) {
-			if( ! m_fill_mask ) alloc_fill(0);
-			add_bitmask_positions(actives,m_fill_mask);
+		size_t count_filled() const {
+			return m_fill_mask ? bitcount::count(m_fill_mask,m_bit_mask_size,nullptr) : 0;
 		}
 		void fill_all() {
 			if( ! m_fill_mask ) alloc_fill(0xFF);
@@ -761,7 +597,7 @@ private:
 			//
 			set(bi,bj,bk,[&](void *target_ptr, bool &active) {
 				if( value_ptr ) {
-					std::memcpy(target_ptr,value_ptr,m_element_size);
+					std::memcpy(target_ptr,value_ptr,m_element_bytes);
 					active = true;
 				} else {
 					active = false;
@@ -771,21 +607,22 @@ private:
 		void set( int bi, int bj, int bk, std::function<void(void *value_ptr, bool &active)> func ) {
 			//
 			size_t n = encode(bi,bj,bk);
-			unsigned char &mask = *(m_bit_mask+n/8);
-			bool active = (mask >> n%8) & 1U;
-			unsigned char *ptr = m_buffer ? m_buffer+n*m_element_size : nullptr;
+			unsigned char &mask = *(m_bit_mask+(n>>3));
+			bool active = (mask >> (n&7)) & 1U;
+			unsigned char *ptr = m_buffer ? m_buffer+n*m_element_bytes : nullptr;
 			//
 			if( active ) {
 				func(ptr,active);
 				if( ! active ) {
+					assert(m_num_active);
 					m_num_active --;
-					mask &= ~(1UL << n%8);
+					mask &= ~(1UL << (n&7));
 				}
 			} else {
 				func(ptr,active);
 				if( active ) {
 					m_num_active ++;
-					mask |= 1UL << n%8;
+					mask |= 1UL << (n&7);
 				}
 			}
 		}
@@ -793,23 +630,7 @@ private:
 			//
 			if( ! m_fill_mask ) alloc_fill(0);
 			size_t n = encode(bi,bj,bk);
-			*(m_fill_mask+n/8) |= 1UL << n%8;
-		}
-		void dilate( const shape3 &shape, int thread_index, std::vector<vec3i> &active_coords ) {
-			//
-			std::vector<size_t> dilate_coords;
-			dilate_coords = dilate3::dilate(shape3(m_Zx,m_Zy,m_Zz),m_bit_mask,m_bit_mask_size);
-			//
-			for( size_t n : dilate_coords ) {
-				int bi, bj, bk;
-				decode(n,bi,bj,bk);
-				int global_i = m_oi+bi;
-				int global_j = m_oj+bj;
-				int global_k = m_ok+bk;
-				if( global_i < shape.w && global_j < shape.h && global_k < shape.d ) {
-					active_coords.push_back(vec3i(global_i,global_j,global_k));
-				}
-			}
+			*(m_fill_mask+(n>>3)) |= 1UL << (n&7);
 		}
 		void flood_fill( std::function<bool(void *value_ptr)> inside_func ) {
 			//
@@ -822,11 +643,11 @@ private:
 			auto markable = [&]( vec3i pi, bool default_result ) {
 				if( ! local_shape.out_of_bounds(pi) && ! global_shape.out_of_bounds(pi+vec3i(m_oi,m_oj,m_ok))) {
 					auto pass_fill_mask = [&]( size_t n ) {
-						return ! ((*(m_fill_mask+n/8) >> n%8) & 1U);
+						return ! ((*(m_fill_mask+(n>>3)) >> (n&7)) & 1U);
 					};
 					const size_t n = encode(pi[0],pi[1],pi[2]);
-					if( (*(m_bit_mask+n/8) >> n%8) & 1U ) {
-						return inside_func(m_buffer ? m_buffer+n*m_element_size : nullptr) && pass_fill_mask(n);
+					if( (*(m_bit_mask+(n>>3)) >> (n&7)) & 1U ) {
+						return inside_func(m_buffer ? m_buffer+n*m_element_bytes : nullptr) && pass_fill_mask(n);
 					} else {
 						return default_result && pass_fill_mask(n);
 					}
@@ -835,7 +656,7 @@ private:
 				}
 			};
 			auto mark = [&]( size_t n ) {
-				*(m_fill_mask+n/8) |= 1UL << n%8;
+				*(m_fill_mask+(n>>3)) |= 1UL << (n&7);
 			};
 			size_t count = local_shape.count();
 			for( size_t n8=0; n8<m_bit_mask_size; ++n8 ) {
@@ -844,7 +665,7 @@ private:
 						int bi, bj, bk; decode(n,bi,bj,bk);
 						vec3i pi(bi,bj,bk);
 						if( markable(pi,false)) {
-							if( (*(m_bit_mask+n8) >> n%8) & 1U ) {
+							if( (*(m_bit_mask+n8) >> (n&7)) & 1U ) {
 								queue.push(pi);
 								while(! queue.empty()) {
 									vec3i qi = queue.top();
@@ -867,13 +688,13 @@ private:
 			if( m_fill_mask ) {
 				for( int kk=0; kk<m_Zz; ++kk ) for( int jj=0; jj<m_Zy; ++jj ) for( int ii=0; ii<m_Zx; ++ii ) {
 					size_t n = encode(ii,jj,kk);
-					unsigned char &mask = *(m_fill_mask+n/8);
-					if( (mask >> n%8) & 1U ) {
-						bool active = (*(m_bit_mask+n/8) >> n%8) & 1U;
+					unsigned char &mask = *(m_fill_mask+(n>>3));
+					if( (mask >> (n&7)) & 1U ) {
+						bool active = (*(m_bit_mask+(n>>3)) >> (n&7)) & 1U;
 						int i = m_oi+ii;
 						int j = m_oj+jj;
 						int k = m_ok+kk;
-						if(func(i,j,k,active ? (m_buffer ? m_buffer+n*m_element_size : nullptr) : nullptr,active)) return true;
+						if(func(i,j,k,active ? (m_buffer ? m_buffer+n*m_element_bytes : nullptr) : nullptr,active)) return true;
 					}
 				}
 			}
@@ -883,17 +704,18 @@ private:
 			//
 			for( int kk=0; kk<m_Zz; ++kk ) for( int jj=0; jj<m_Zy; ++jj ) for( int ii=0; ii<m_Zx; ++ii ) {
 				size_t n = encode(ii,jj,kk);
-				unsigned char &mask = *(m_bit_mask+n/8);
+				unsigned char &mask = *(m_bit_mask+(n>>3));
 				if( mask ) {
-					bool active = (mask >> n%8) & 1U;
+					bool active = (mask >> (n&7)) & 1U;
 					if( active ) {
 						int i = m_oi+ii;
 						int j = m_oj+jj;
 						int k = m_ok+kk;
-						bool result = func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,active,filled(n));
+						bool result = func(i,j,k,m_buffer ? m_buffer+n*m_element_bytes : nullptr,active,filled(n));
 						if( ! active ) {
+							assert(m_num_active);
 							m_num_active --;
-							mask &= ~(1UL << n%8);
+							mask &= ~(1UL << (n&7));
 						}
 						if( result ) return true;
 					}
@@ -908,13 +730,13 @@ private:
 			//
 			for( int kk=0; kk<m_Zz; ++kk ) for( int jj=0; jj<m_Zy; ++jj ) for( int ii=0; ii<m_Zx; ++ii ) {
 				size_t n = encode(ii,jj,kk);
-				unsigned char &mask = *(m_bit_mask+n/8);
+				unsigned char &mask = *(m_bit_mask+(n>>3));
 				if( mask ) {
-					if( (mask >> n%8) & 1U ) {
+					if( (mask >> (n&7)) & 1U ) {
 						int i = m_oi+ii;
 						int j = m_oj+jj;
 						int k = m_ok+kk;
-						if(func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,filled(n))) return true;
+						if(func(i,j,k,m_buffer ? m_buffer+n*m_element_bytes : nullptr,filled(n))) return true;
 					}
 				}
 			}
@@ -924,20 +746,21 @@ private:
 			//
 			for( int kk=0; kk<m_Zz; ++kk ) for( int jj=0; jj<m_Zy; ++jj ) for( int ii=0; ii<m_Zx; ++ii ) {
 				size_t n = encode(ii,jj,kk);
-				unsigned char &mask = *(m_bit_mask+n/8);
-				bool active = (mask >> n%8) & 1U;
+				unsigned char &mask = *(m_bit_mask+(n>>3));
+				bool active = (mask >> (n&7)) & 1U;
 				bool new_active (active);
 				int i = m_oi+ii;
 				int j = m_oj+jj;
 				int k = m_ok+kk;
-				bool result = func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,new_active,filled(n));
+				bool result = func(i,j,k,m_buffer ? m_buffer+n*m_element_bytes : nullptr,new_active,filled(n));
 				if( new_active != active ) {
 					if( new_active ) {
 						m_num_active ++;
-						mask |= 1UL << n%8;
+						mask |= 1UL << (n&7);
 					} else {
+						assert(m_num_active);
 						m_num_active --;
-						mask &= ~(1UL << n%8);
+						mask &= ~(1UL << (n&7));
 					}
 				}
 				if( result ) return true;
@@ -951,27 +774,27 @@ private:
 			//
 			for( int kk=0; kk<m_Zz; ++kk ) for( int jj=0; jj<m_Zy; ++jj ) for( int ii=0; ii<m_Zx; ++ii ) {
 				size_t n = encode(ii,jj,kk);
-				const unsigned char &mask = *(m_bit_mask+n/8);
-				bool active = (mask >> n%8) & 1U;
+				const unsigned char &mask = *(m_bit_mask+(n>>3));
+				bool active = (mask >> (n&7)) & 1U;
 				int i = m_oi+ii;
 				int j = m_oj+jj;
 				int k = m_ok+kk;
-				if(func(i,j,k,m_buffer ? m_buffer+n*m_element_size : nullptr,active,filled(n))) return true;
+				if(func(i,j,k,m_buffer ? m_buffer+n*m_element_bytes : nullptr,active,filled(n))) return true;
 			}
 			return false;
 		}
 		const void* get( int bi, int bj, int bk, bool *_filled=nullptr ) const {
 			//
 			size_t n = encode(bi,bj,bk);
-			unsigned char &mask = *(m_bit_mask+n/8);
+			unsigned char &mask = *(m_bit_mask+(n>>3));
 			if( _filled ) *_filled = filled(n);
 			static char tmp;
-			if( (mask >> n%8) & 1U ) return m_buffer ? m_buffer+n*m_element_size : (void *)&tmp;
+			if( (mask >> (n&7)) & 1U ) return m_buffer ? m_buffer+n*m_element_bytes : (void *)&tmp;
 			else return nullptr;
 		}
 		bool filled( size_t n ) const {
 			if( m_fill_mask ) {
-				return (*(m_fill_mask+n/8) >> n%8) & 1U;
+				return (*(m_fill_mask+(n>>3)) >> (n&7)) & 1U;
 			} else {
 				return false;
 			}
@@ -983,28 +806,29 @@ private:
 			return m_num_active == 0;
 		}
 		//
-		size_t m_num_active {0};
-		int m_oi {0}, m_oj {0}, m_ok {0};
-		unsigned m_Zx {0}, m_Zy {0}, m_Zz {0}, m_plane {0};
-		unsigned m_element_size {0};
-		size_t m_bit_mask_size {0};
+		unsigned short m_num_active {0};
+		unsigned m_oi {0}, m_oj {0}, m_ok {0};
+		unsigned char m_Zx {0}, m_Zy {0}, m_Zz {0};
+		unsigned char m_element_bytes {0};
+		unsigned short m_bit_mask_size {0};
 		unsigned char *m_buffer {nullptr};
 		unsigned char *m_bit_mask {nullptr};
 		unsigned char *m_fill_mask {nullptr};
 		//
 		size_t encode ( int i, int j, int k ) const {
-			return i + j * m_Zx + k * m_plane;
-		};
+			return i + j * m_Zx + k * (m_Zx * m_Zy);
+		}
 		void decode ( size_t n, int &i, int &j, int &k ) const {
-			i = (n % m_plane) % m_Zx;
-			j = (n % m_plane) / m_Zx;
-			k = n / m_plane;
+			unsigned plane_num = m_Zx * m_Zy;
+			i = (n % plane_num) % m_Zx;
+			j = (n % plane_num) / m_Zx;
+			k = n / plane_num;
 		};
 	};
 	//
 	std::vector<chunk3 *> m_tiles;
 	std::vector<bool> m_fill_mask;
-	unsigned m_nx {0}, m_ny {0}, m_nz {0}, m_bx {0}, m_by {0}, m_bz {0}, m_element_size {0};
+	unsigned m_nx {0}, m_ny {0}, m_nz {0}, m_bx {0}, m_by {0}, m_bz {0}, m_element_bytes {0};
 	unsigned m_Z {16};
 	size_t m_plane {0};
 	//

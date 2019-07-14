@@ -64,12 +64,22 @@ def build(bld):
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
-	bld.shlib(source = 'injection2.cpp',
-			target = 'injection2'+bld.env.suffix,
+	bld.shlib(source = 'tiltedliquid3.cpp',
+			target = 'tiltedliquid3'+bld.env.suffix,
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
-	bld.shlib(source = 'injection3.cpp',
-			target = 'injection3'+bld.env.suffix,
+	bld.shlib(source = 'tiltedliquid2.cpp',
+			target = 'tiltedliquid2'+bld.env.suffix,
+			cxxflags = ['-Wno-return-type-c-linkage'],
+			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'filmliquid2.cpp',
+			target = 'filmliquid2'+bld.env.suffix,
+			cxxflags = ['-Wno-return-type-c-linkage'],
+			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'filmliquid3.cpp',
+			target = 'filmliquid3'+bld.env.suffix,
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))

@@ -22,8 +22,8 @@
 **	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 //
-#ifndef SHKZ_SHARED_ARRAY3_H
-#define SHKZ_SHARED_ARRAY3_H
+#ifndef SHKZ_SHARED_ARRAY_CORE3_H
+#define SHKZ_SHARED_ARRAY_CORE3_H
 //
 #include <shiokaze/array/shape.h>
 #include <functional>
@@ -63,7 +63,12 @@ public:
 	 \~english @brief Clear grid storage.
 	 \~japanese @brief グリッドの倉庫を空になる。
 	 */
-	static void clear();
+	static size_t clear();
+	/**
+	 \~english @brief Get the number of current shared arrays.
+	 \~japanese @brief 現在の共有グリッドの数を得る。
+	 */
+	static size_t get_total_grid_count();
 };
 //
 SHKZ_END_NAMESPACE

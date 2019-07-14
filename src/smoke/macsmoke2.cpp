@@ -71,8 +71,15 @@ void macsmoke2::configure( configuration &config ) {
 	double scale (1.0);
 	config.get_double("ResolutionScale",scale,"Resolution doubling scale");
 	//
-	m_shape *= scale;
-	m_dx = m_shape.dx();
+	double view_scale (1.0);
+	config.get_double("ViewScale",view_scale,"View scale");
+	//
+	double resolution_scale (1.0);
+	config.get_double("ResolutionScale",resolution_scale,"Resolution doubling scale");
+	//
+	m_shape *= resolution_scale;
+	m_dx = view_scale * m_shape.dx();
+	set_view_scale(view_scale);
 }
 //
 void macsmoke2::post_initialize () {
@@ -109,7 +116,7 @@ void macsmoke2::post_initialize () {
 	// Seed dust particles if requested
 	if( m_param.use_dust ) {
 		//
-		shared_array2<double> density_copy(m_density);
+		shared_array2<float> density_copy(m_density);
 		density_copy->dilate();
 		//
 		double space = 1.0 / m_param.r_sample;
@@ -118,8 +125,8 @@ void macsmoke2::post_initialize () {
 				int jj = ii % 2 == 0 ? pjj : m_param.r_sample-pjj-1;
 				vec2d unit_pos = 0.5*vec2d(space,space)+vec2d(ii*space,jj*space);
 				vec2d pos = m_dx*(unit_pos+vec2d(i,j));
-				if( array_interpolator2::interpolate<double>(m_solid,pos/m_dx) > 0.0 && 
-					array_interpolator2::interpolate<double>(m_density,pos/m_dx-vec2d(0.5,0.5))) {
+				if( array_interpolator2::interpolate<float>(m_solid,pos/m_dx) > 0.0 && 
+					array_interpolator2::interpolate<float>(m_density,pos/m_dx-vec2d(0.5,0.5))) {
 					m_dust_particles.push_back(pos);
 				}
 			}
@@ -134,7 +141,7 @@ void macsmoke2::drag( int width, int height, double x, double y, double u, doubl
 	m_force_exist = true;
 }
 //
-void macsmoke2::inject_external_force( macarray2<double> &velocity ) {
+void macsmoke2::inject_external_force( macarray2<float> &velocity ) {
 	//
 	if( m_force_exist ) {
 		velocity += m_external_force;
@@ -143,7 +150,7 @@ void macsmoke2::inject_external_force( macarray2<double> &velocity ) {
 	}
 }
 //
-void macsmoke2::add_source ( macarray2<double> &velocity, array2<double> &density, double time, double dt ) {
+void macsmoke2::add_source ( macarray2<float> &velocity, array2<float> &density, double time, double dt ) {
 	auto add_func = reinterpret_cast<void(*)(const vec2d &, vec2d &, double &, double, double)>(m_dylib.load_symbol("add"));
 	if( add_func ) {
 		//
@@ -156,7 +163,7 @@ void macsmoke2::add_source ( macarray2<double> &velocity, array2<double> &densit
 		});
 		//
 		// Density
-		auto add_density = [&]( array2<double> &density ) {
+		auto add_density = [&]( array2<float> &density ) {
 			density.parallel_all([&](int i, int j, auto &it) {
 				vec2d p = m_dx*vec2i(i,j).cell();
 				double d(0.0); vec2d dummy;
@@ -196,7 +203,7 @@ void macsmoke2::add_source ( macarray2<double> &velocity, array2<double> &densit
 	}
 }
 //
-void macsmoke2::rasterize_dust_particles( array2<double> &rasterized_density ) {
+void macsmoke2::rasterize_dust_particles( array2<float> &rasterized_density ) {
 	//
 	rasterized_density.clear();
 	double scale = 1.0 / pow(m_param.r_sample,DIM2);
@@ -208,11 +215,11 @@ void macsmoke2::rasterize_dust_particles( array2<double> &rasterized_density ) {
 	}
 }
 //
-void macsmoke2::add_buoyancy_force( macarray2<double> &velocity, const array2<double> &density, double dt ) {
+void macsmoke2::add_buoyancy_force( macarray2<float> &velocity, const array2<float> &density, double dt ) {
 	//
 	velocity[1].parallel_all([&]( int i, int j, auto &it, int tn ) {
 		vec2i pi = vec2i(i,j).face(1);
-		double d = array_interpolator2::interpolate<double>(density,(pi-vec2d(0.5,0.5)));
+		float d = array_interpolator2::interpolate<float>(density,(pi-vec2d(0.5,0.5)));
 		it.increment(m_param.buoyancy_factor*dt*d);
 	});
 }
@@ -232,7 +239,7 @@ void macsmoke2::idle() {
 		});
 	}
 	//
-	shared_macarray2<double> velocity_save(m_velocity);
+	shared_macarray2<float> velocity_save(m_velocity);
 	m_macadvection->advect_vector(m_velocity,velocity_save(),m_fluid,dt);
 	//
 	// Add buoyancy force
@@ -252,20 +259,20 @@ void macsmoke2::idle() {
 	m_macstats->dump_stats(m_solid,m_fluid,m_velocity,m_timestepper.get());
 }
 //
-void macsmoke2::advect_dust_particles( const macarray2<double> &velocity, double dt ) {
+void macsmoke2::advect_dust_particles( const macarray2<float> &velocity, double dt ) {
 	//
 	m_parallel.for_each( m_dust_particles.size(), [&]( size_t n, int tn ) {
 		vec2d &p = m_dust_particles[n];
-		vec2d u0 = macarray_interpolator2::interpolate<double>(velocity,p/m_dx);
-		vec2d u1 =  macarray_interpolator2::interpolate<double>(velocity,(p+dt*u0)/m_dx);
+		vec2d u0 = macarray_interpolator2::interpolate<float>(velocity,p/m_dx);
+		vec2d u1 =  macarray_interpolator2::interpolate<float>(velocity,(p+dt*u0)/m_dx);
 		p += 0.5 * dt * (u0+u1);
 	});
 	//
 	m_parallel.for_each( m_dust_particles.size(), [&]( size_t n, int tn ) {
 		vec2d &p = m_dust_particles[n];
-		double phi = array_interpolator2::interpolate<double>(m_solid,p/m_dx);
+		float phi = array_interpolator2::interpolate<float>(m_solid,p/m_dx);
 		if( phi < 0.0 ) {
-			double derivative[DIM2];
+			float derivative[DIM2];
 			array_derivative2::derivative(m_solid,p/m_dx,derivative);
 			p = p - phi*vec2d(derivative).normal();
 		}
@@ -307,10 +314,6 @@ void macsmoke2::draw( graphics_engine &g, int width, int height ) const {
 	//
 	// Draw velocity
 	m_macvisualizer->draw_velocity(g,m_velocity);
-	//
-	// Draw energy
-	graphics_utility::draw_number(g,"Energy",m_macutility->get_kinetic_energy(m_solid,m_fluid,m_velocity),width,height);
-	//
 }
 //
 extern "C" module * create_instance() {

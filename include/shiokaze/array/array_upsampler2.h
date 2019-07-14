@@ -56,7 +56,7 @@ namespace array_upsampler2 {
 		//
 		doubled_array.parallel_actives([&]( int i, int j, auto &it, int tn) {
 			vec2d p = 0.5*vec2i(i,j).cell()-vec2d(0.5,0.5);
-			it.set(array_interpolator2::interpolate<double>(array,p));
+			it.set(array_interpolator2::interpolate<T>(array,p));
 		});
 		//
 		if( array.is_levelset()) {
@@ -88,7 +88,7 @@ namespace array_upsampler2 {
 		//
 		doubled_array.parallel_actives([&]( int i, int j, auto &it, int tn) {
 			vec2d p = 0.5*vec2i(i,j).nodal();
-			it.set(array_interpolator2::interpolate<double>(array,p));
+			it.set(array_interpolator2::interpolate<T>(array,p));
 		});
 		//
 		if( array.is_levelset()) {

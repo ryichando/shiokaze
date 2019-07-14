@@ -247,7 +247,7 @@ public:
 	 \~japanese @brief 入力の std::vector ベクトルをこの種類のベクトルに変換する。
 	 @param[in] v 入力のベクトル。
 	 */
-	void convert_from( const std::vector<T> &v ) {
+	template<class Y> void convert_from( const std::vector<Y> &v ) {
 		resize(v.size());
 		for( N i=0; i<v.size(); ++i ) set(i,v[i]);
 	}
@@ -257,7 +257,7 @@ public:
 	 \~japanese @brief std::vector へ変換する。
 	 @param[out] v 出力のベクトル。
 	 */
-	void convert_to( std::vector<T> &v ) const {
+	template<class Y> void convert_to( std::vector<Y> &v ) const {
 		v.resize(size());
 		for( N i=0; i<v.size(); ++i ) v[i] = at(i);
 	}
@@ -295,7 +295,7 @@ public:
 	 @param[in] rhs 入力のベクトル。
 	 @param[out] result 結果のベクトル。
 	 */
-	void multiply(const std::vector<T> &rhs, std::vector<T> &result ) const {
+	template<class Y> void multiply(const std::vector<Y> &rhs, std::vector<T> &result ) const {
 		auto _rhs = allocate_vector(rhs.size()); _rhs->convert_from(rhs);
 		auto _result = allocate_vector(rhs.size());
 		multiply(_rhs,_result);
@@ -582,7 +582,7 @@ public:
 	 @param[in] rhs 入力のベクトル。
 	 @param[out] result 結果のベクトル。
 	 */
-	virtual void multiply( const std::vector<T> &rhs, std::vector<T> &result ) const {
+	template<class Y> void multiply( const std::vector<Y> &rhs, std::vector<Y> &result ) const {
 		assert( rhs.size() == columns());
 		auto _rhs = this->allocate_vector(rows()); _rhs->convert_from(rhs);
 		auto _result = this->allocate_vector(rows());
@@ -595,10 +595,10 @@ public:
 	 \~japanese @brief 入力のベクトルにかけ算を行う。std::vector との互換性を保つために提供される。
 	 @param[in-out] rhs 入力のベクトル。
 	 */
-	std::vector<T> multiply( const std::vector<T> &rhs ) const {
+	template<class Y> std::vector<Y> multiply( const std::vector<Y> &rhs ) const {
 		assert( rhs.size() == columns());
-		std::vector<T> result;
-		multiply(rhs,result);
+		std::vector<Y> result;
+		multiply<Y>(rhs,result);
 		return result;
 	}
 };

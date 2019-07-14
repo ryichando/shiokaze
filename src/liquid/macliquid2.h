@@ -61,10 +61,10 @@ protected:
 	virtual void configure( configuration &config ) override;
 	virtual void post_initialize() override;
 	//
-	macarray2<double> m_velocity{this};
-	macarray2<double> m_external_force{this};
-	array2<double> m_fluid{this};
-	array2<double> m_solid{this};
+	macarray2<float> m_velocity{this};
+	macarray2<float> m_external_force{this};
+	array2<float> m_fluid{this};
+	array2<float> m_solid{this};
 	//
 	environment_setter arg_shape{this,"shape",&m_shape};
 	environment_setter arg_dx{this,"dx",&m_dx};
@@ -93,7 +93,7 @@ protected:
 	//
 	Parameters m_param;
 	//
-	virtual void inject_external_force( macarray2<double> &velocity, double dt );
+	virtual void inject_external_force( macarray2<float> &velocity, double dt );
 	virtual void set_volume_correction( macproject2_interface *macproject );
 	virtual void extend_both();
 };

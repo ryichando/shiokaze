@@ -29,7 +29,7 @@ SHKZ_BEGIN_NAMESPACE
 //
 class bitcount {
 public:
-	static size_t count( unsigned char *bit_mask, size_t bit_mask_size, const parallel_driver *parallel );
+	static size_t count( const unsigned char *bit_mask, size_t bit_mask_size, const parallel_driver *parallel );
 };
 //
 SHKZ_END_NAMESPACE

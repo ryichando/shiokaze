@@ -23,4 +23,4 @@
 #	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 brew update
-brew install libpng tbb openexr boost gsl glfw3
+brew install libpng tbb openexr boost gsl

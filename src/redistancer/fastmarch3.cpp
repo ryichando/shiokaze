@@ -38,13 +38,14 @@ class fastmarch3 : public redistancer3_interface {
 private:
 	//
 	LONG_NAME("FastMarch 3D")
+	MODULE_NAME("fastmarch3")
 	ARGUMENT_NAME("FastMarch")
 	//
-	virtual void redistance( array3<double> &phi_array, unsigned width ) override {
+	virtual void redistance( array3<float> &phi_array, unsigned width ) override {
 		//
-		std::vector<vec3d> positions;
+		std::vector<vec3f> positions;
 		std::vector<std::vector<size_t> > connections;
-		std::vector<double> levelset;
+		std::vector<float> levelset;
 		//
 		// Generate a mesh
 		shared_array3<std::vector<std::array<vec3d,3> > > triangles(phi_array.shape()-shape3(1,1,1));
@@ -72,7 +73,7 @@ private:
 		});
 		//
 		// Compute the closest distance
-		shared_array3<double> fixed_dists(phi_array.shape());
+		shared_array3<float> fixed_dists(phi_array.shape());
 		fixed_dists->activate_as(phi_array);
 		fixed_dists->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			//

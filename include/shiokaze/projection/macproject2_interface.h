@@ -60,8 +60,8 @@ public:
 	 @param[in] fluid 水のレベルセット。
 	 */
 	virtual void project (
-			double dt, macarray2<double> &velocity,
-			const array2<double> &solid, const array2<double> &fluid
+			double dt, macarray2<float> &velocity,
+			const array2<float> &solid, const array2<float> &fluid
 	) = 0;
 	/**
 	 \~english @brief Draw internal information.

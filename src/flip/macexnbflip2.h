@@ -35,7 +35,7 @@ protected:
 	LONG_NAME("MAC Extended Narrowband FLIP 2D")
 	//
 	virtual void configure( configuration &config ) override;
-	virtual void compute_sizing_func( const array2<double> &fluid, const bitarray2 &mask, const macarray2<double> &velocity, array2<double> &sizing_array ) const override;
+	virtual void compute_sizing_func( const array2<float> &fluid, const bitarray2 &mask, const macarray2<float> &velocity, array2<float> &sizing_array ) const override;
 	//
 	struct Parameters {
 		unsigned diffuse_count {4};
@@ -51,10 +51,10 @@ protected:
 	//
 private:
 	//
-	virtual void internal_sizing_func(array2<double> &sizing_array,
+	virtual void internal_sizing_func(array2<float> &sizing_array,
 							const bitarray2 &mask,
-							const array2<double> &fluid,
-							const macarray2<double> &velocity ) const;
+							const array2<float> &fluid,
+							const macarray2<float> &velocity ) const;
 };
 //
 SHKZ_END_NAMESPACE

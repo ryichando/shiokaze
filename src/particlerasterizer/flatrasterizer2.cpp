@@ -35,9 +35,9 @@ public:
 	//
 	LONG_NAME("Flat Rasterizer 2D")
 	//
-	virtual void build_levelset( array2<double> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const override {
+	virtual void build_levelset( array2<float> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const override {
 		//
-		std::vector<vec2d> points(particles.size());
+		std::vector<vec2f> points(particles.size());
 		for( size_t n=0; n<points.size(); ++n ) points[n] = particles[n].p;
 		const_cast<pointgridhash2_driver &>(m_pointgridhash)->sort_points(points);
 		//

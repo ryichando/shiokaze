@@ -45,7 +45,8 @@
 	</bsdf>
 </shape>
 
-<shape type="ply">
+<shape type="serialized">
+	<float name="maxSmoothAngle" value="30"/>
 	<string name="filename" value="$mesh_filename"/>
 	<bsdf type="dielectric">
 		<string name="intIOR" value="water"/>

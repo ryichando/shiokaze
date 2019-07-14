@@ -41,7 +41,7 @@ Shiokaze currently comes with following algorithms:
 \li MacCormack advetion method.
 \li Six-th order accurate WENO interpolation.
 \li Built-in matrix and vector operations.
-\li Tile-based sparse grid and standard linear grid.
+\li Linear, tile-based and tree-based sparse grids.
 \li Narrow band level set with flood fill using bit operations.
 \li Level set generation from point cloud using convex hulls and the method of [Zhu and Bridson.](https://dl.acm.org/citation.cfm?id=1073298)
 \li Surface mesh generation from level set using [Marching Cubes](http://paulbourke.net/geometry/polygonise/) and [Dual Marching Cubes](https://github.com/dominikwodniok/dualmc) by [Dominik Wodniok](http://dominikwodniok.de/).
@@ -116,7 +116,7 @@ Shiokaze is currently being actively developed and maintained at [National Insti
 \li MacCormack法による移流
 \li 6次精度 WENO 補間
 \li 内蔵された行列とベクトル演算
-\li タイルベースの疎なグリッドと線形グリッド
+\li 線形、タイルベース、及びツリーベースの疎なグリッド
 \li ビット演算を用いたフラッドフィルを備えたナローバンドレベルセット法
 \li コンベックスハルを使った点群のレベルセット生成と [Zhu and Bridson](https://dl.acm.org/citation.cfm?id=1073298) らの手法を用いた点群のレベルセット生成
 \li [Marching Cubes](http://paulbourke.net/geometry/polygonise/) と [Dominik Wodniok](http://dominikwodniok.de/) の [Dual Marching Cubes](https://github.com/dominikwodniok/dualmc) を用いたレベルセットからサーフェスメッシュの生成

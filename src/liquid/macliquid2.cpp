@@ -39,7 +39,6 @@ macliquid2::macliquid2 () {
 	m_param.volume_change_tol_ratio = 0.03;
 	//
 	m_shape = shape2{64,32};
-	m_dx = m_shape.dx();
 }
 //
 void macliquid2::load( configuration &config ) {
@@ -61,11 +60,15 @@ void macliquid2::configure( configuration &config ) {
 	config.get_unsigned("ResolutionX",m_shape[0],"Resolution towards X axis");
 	config.get_unsigned("ResolutionY",m_shape[1],"Resolution towards Y axis");
 	//
-	double scale (1.0);
-	config.get_double("ResolutionScale",scale,"Resolution doubling scale");
+	double view_scale (1.0);
+	config.get_double("ViewScale",view_scale,"View scale");
 	//
-	m_shape *= scale;
-	m_dx = m_shape.dx();
+	double resolution_scale (1.0);
+	config.get_double("ResolutionScale",resolution_scale,"Resolution doubling scale");
+	//
+	m_shape *= resolution_scale;
+	m_dx = view_scale * m_shape.dx();
+	set_view_scale(view_scale);
 }
 //
 void macliquid2::setup_window( std::string &name, int &width, int &height ) const {
@@ -95,7 +98,7 @@ void macliquid2::post_initialize () {
 	m_macsurfacetracker->assign(m_solid,m_fluid);
 	m_initial_volume = m_gridutility->get_area(m_solid,m_fluid);
 	//
-	shared_macarray2<double> velocity_actives(m_velocity.type());
+	shared_macarray2<float> velocity_actives(m_velocity.type());
 	for( int dim : DIMS2 ) {
 		velocity_actives()[dim].activate_inside_as(m_fluid);
 		velocity_actives()[dim].activate_inside_as(m_fluid,vec2i(dim==0,dim==1));
@@ -118,7 +121,7 @@ void macliquid2::drag( int width, int height, double x, double y, double u, doub
 	m_force_exist = true;
 }
 //
-void macliquid2::inject_external_force( macarray2<double> &m_velocity, double dt ) {
+void macliquid2::inject_external_force( macarray2<float> &m_velocity, double dt ) {
 	//
 	if( m_force_exist ) {
 		m_velocity += m_external_force;
@@ -149,7 +152,7 @@ void macliquid2::set_volume_correction( macproject2_interface *macproject ) {
 void macliquid2::extend_both() {
 	//
 	unsigned width = 2+m_timestepper->get_current_CFL();
-	macarray_extrapolator2::extrapolate<double>(m_velocity,width);
+	macarray_extrapolator2::extrapolate<float>(m_velocity,width);
 	m_macutility->constrain_velocity(m_solid,m_velocity);
 	m_fluid.dilate(width);
 }
@@ -168,7 +171,7 @@ void macliquid2::idle() {
 	m_macsurfacetracker->get(m_fluid);
 	//
 	// Advect velocity
-	shared_macarray2<double> velocity_save(m_velocity);
+	shared_macarray2<float> velocity_save(m_velocity);
 	m_macadvection->advect_vector(m_velocity,velocity_save(),m_fluid,dt);
 	//
 	// Add external force

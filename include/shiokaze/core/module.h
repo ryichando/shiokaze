@@ -43,6 +43,8 @@ SHKZ_BEGIN_NAMESPACE
 		return unique_alloc_module<CLASS_T>(config,ARG_NAME,name,DESCRIPTION); \
 	}
 //
+#define MODULE_NAME(name) virtual std::string get_module_name() const override { return name; }
+//
 /// \~english @brief Module class.
 /// \~japanese @brief モジュールクラス。
 class module : public credit {
@@ -57,6 +59,31 @@ public:
 	 \~japanese @brief モジュールのデフォルトデストラクタ。
 	 */
 	virtual ~module();
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	virtual void send_message( unsigned message, void *ptr ) {}
+	/**
+	 \~english @brief Send a message to the core module.
+	 @param[in] message Message
+	 @param[in] ptr Pointer to some value.
+	 \~japanese @brief コアモジュールにメッセージを送る
+	 @param[in] message メッセージ
+	 @param[in] ptr あるポインターの値
+	 */
+	virtual void send_message( unsigned message, void *ptr ) const {}
+	/**
+	 \~english @brief Get the module name
+	 @return module name
+	 \~japanese @brief モジュールの名前を得る
+	 @return モジュールの名前
+	 */
+	virtual std::string get_module_name() const { return std::string(); }
 	/**
 	 \~english @brief Get the path to the dynamic library. e.g., "mylib" -> "symlink-public/lib/libshiokaze_mylib.dylib"
 	 @param[in] module_name Name of module.

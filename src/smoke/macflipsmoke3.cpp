@@ -56,7 +56,7 @@ void macflipsmoke3::post_initialize () {
 	scoped_timer timer(this);
 	timer.tick(); console::dump( ">>> Started FLIP initialization\n" );
 	//
-	shared_array3<double> fluid(m_shape);
+	shared_array3<float> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
 	m_flip->seed(fluid(),[&](const vec3d &p){ return interpolate_solid(p); },m_velocity);
 	//
@@ -83,7 +83,7 @@ void macflipsmoke3::idle() {
 	m_flip->correct([&](const vec3d &p){ return -1.0; });
 	//
 	// Reseed particles
-	shared_array3<double> fluid(m_shape);
+	shared_array3<float> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
 	m_flip->seed(m_fluid,
 		[&](const vec3d &p){ return interpolate_solid(p); },
@@ -102,8 +102,8 @@ void macflipsmoke3::idle() {
 	}
 	//
 	// Splat momentum and mass of FLIP particles onto grids
-	shared_macarray3<double> mass(m_shape);
-	shared_macarray3<double> momentum(m_shape);
+	shared_macarray3<float> mass(m_shape);
+	shared_macarray3<float> momentum(m_shape);
 	m_flip->splat(momentum(),mass());
 	//
 	// Overwrite grid velocity
@@ -113,7 +113,7 @@ void macflipsmoke3::idle() {
 	});
 	//
 	// Save the current velocity
-	shared_macarray3<double> save_velocity(m_velocity);
+	shared_macarray3<float> save_velocity(m_velocity);
 	//
 	// Add external force
 	inject_external_force(m_velocity);
@@ -150,7 +150,7 @@ vec3d macflipsmoke3::interpolate_velocity( const vec3d &p ) const {
 void macflipsmoke3::draw( graphics_engine &g, int width, int height ) const {
 	//
 	g.color4(1.0,1.0,1.0,0.5);
-	graphics_utility::draw_wired_box(g);
+	graphics_utility::draw_wired_box(g,get_view_scale());
 	//
 	// Draw density
 	if( (macsmoke3::m_param).use_dust ) draw_dust_particles(g);

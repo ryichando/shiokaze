@@ -43,17 +43,18 @@ class maclevelsetsurfacetracker3 : public macsurfacetracker3_interface {
 private:
 	//
 	LONG_NAME("MAC Levelset Surface Tracker 3D")
+	MODULE_NAME("maclevelsetsurfacetracker3")
 	//
-	virtual void assign( const array3<double> &solid, const array3<double> &fluid ) override {
+	virtual void assign( const array3<float> &solid, const array3<float> &fluid ) override {
 		m_solid.copy(solid);
 		m_fluid.copy(fluid);
 	}
 	//
-	virtual void advect( const macarray3<double> &u, double dt ) override {
+	virtual void advect( const macarray3<float> &u, double dt ) override {
 		//
 		scoped_timer timer(this);
 		if( dt ) {
-			shared_array3<double> fluid_save(m_fluid);
+			shared_array3<float> fluid_save(m_fluid);
 			m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt,"levelset");
 		}
 		//
@@ -68,7 +69,7 @@ private:
 		console::dump( "Done. Took %s\n", timer.stock("exprapolate_levelset").c_str());
 	}
 	//
-	virtual void get( array3<double> &fluid ) override { fluid.copy(m_fluid); }
+	virtual void get( array3<float> &fluid ) override { fluid.copy(m_fluid); }
 	virtual void draw( graphics_engine &g ) const override {
 		m_gridvisualizer->draw_fluid(g,m_solid,m_fluid);
 	}
@@ -80,7 +81,7 @@ private:
 		std::string path_wo_suffix = console::format_str("%s/%u_mesh", path_to_directory.c_str(), frame );
 		export_fluid_mesh(path_wo_suffix,m_fluid,true,vertex_color_func,uv_coordinate_func);
 		//
-		shared_array3<double> fluid_closed(m_shape);
+		shared_array3<float> fluid_closed(m_shape);
 		if( m_param.enclose_solid ) {
 			m_gridutility->combine_levelset(m_solid,m_fluid,fluid_closed());
 		} else {
@@ -134,7 +135,7 @@ private:
 		export_fluid_mesh(path_wo_suffix+"_enclosed",fluid_closed(), ! m_param.enclose_solid, vertex_color_func,uv_coordinate_func);
 	}
 	//
-	virtual void export_fluid_mesh( std::string path_wo_suffix, const array3<double> &fluid, bool delete_solid_embedded,
+	virtual void export_fluid_mesh( std::string path_wo_suffix, const array3<float> &fluid, bool delete_solid_embedded,
 							  std::function<vec3d(const vec3d &)> vertex_color_func=nullptr,
 							  std::function<vec2d(const vec3d &)> uv_coordinate_func=nullptr ) const {
 		//
@@ -176,6 +177,7 @@ private:
 			mesh_exporter->set_texture_coordinates(uv_coordinates);
 		}
 		//
+		mesh_exporter->export_mitsuba(console::format_str("%s.serialized",path_wo_suffix.c_str()));
 		mesh_exporter->export_ply(console::format_str("%s.ply",path_wo_suffix.c_str()));
 	}
 	//
@@ -197,7 +199,7 @@ private:
 		m_solid.initialize(shape.nodal());
 	}
 	//
-	array3<double> m_solid{this}, m_fluid{this};
+	array3<float> m_solid{this}, m_fluid{this};
 	macadvection3_driver m_macadvection{this,"macadvection3"};
 	redistancer3_driver m_redistancer{this,"pderedistancer3"};
 	cellmesher3_driver m_mesher{this,"marchingcubes"};

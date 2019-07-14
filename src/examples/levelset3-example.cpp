@@ -37,55 +37,60 @@ private:
 	//
 	virtual void configure( configuration &config ) override {
 		//
-		config.get_unsigned("ResolutionX",shape[0],"Resolution towards X axis");
-		config.get_unsigned("ResolutionY",shape[1],"Resolution towards Y axis");
-		config.get_unsigned("ResolutionZ",shape[2],"Resolution towards Z axis");
+		config.get_unsigned("ResolutionX",m_shape[0],"Resolution towards X axis");
+		config.get_unsigned("ResolutionY",m_shape[1],"Resolution towards Y axis");
+		config.get_unsigned("ResolutionZ",m_shape[2],"Resolution towards Z axis");
 		//
-		double scale (1.0);
-		config.get_double("ResolutionScale",scale,"Resolution doubling scale");
-		shape *= scale;
-		dx = shape.dx();
+		double view_scale (1.0);
+		config.get_double("ViewScale",view_scale,"View scale");
 		//
-		set_environment("shape",&shape);
-		set_environment("dx",&dx);
+		double resolution_scale (1.0);
+		config.get_double("ResolutionScale",resolution_scale,"Resolution doubling scale");
+		//
+		m_shape *= resolution_scale;
+		m_dx = view_scale * m_shape.dx();
+		set_view_scale(view_scale);
+		//
+		set_environment("shape",&m_shape);
+		set_environment("dx",&m_dx);
 	}
 	//
 	void fill( double time ) {
 		//
-		array.parallel_all([&](int i, int j, int k, auto &it) {
+		m_array.parallel_all([&](int i, int j, int k, auto &it) {
 			double r (0.225);
 			double w (0.25);
 			vec3d center0(0.5+w*cos(time),0.5+0.75*r,0.5);
 			vec3d center1(0.5-w*cos(time),0.5-0.75*r,0.5);
-			vec3d p = dx*vec3i(i,j,k).cell();
+			vec3d p = m_dx*vec3i(i,j,k).cell();
 			double d (1.0);
 			d = std::min(d,(p-center0).len()-r);
 			d = std::min(d,(p-center1).len()-r);
-			if( std::abs(d) < 2.0*dx) it.set(d);
+			if( std::abs(d) < 2.0*m_dx) it.set(d);
 			else it.set_off();
 		});
 		//
-		array.flood_fill();
+		m_array.flood_fill();
 	}
 	//
 	virtual void post_initialize() override {
 		//
-		array.initialize(shape);
-		array.set_as_levelset(2.0*dx);
-		time = 0.0;
-		fill(time);
+		m_array.initialize(m_shape);
+		m_array.set_as_levelset(2.0*m_dx);
+		m_time = 0.0;
+		fill(m_time);
 	}
 	//
 	virtual void idle() override {
 		//
-		time += 0.01;
-		fill(time);
+		m_time += 0.01;
+		fill(m_time);
 	}
 	//
 	virtual bool keyboard ( char key ) override {
 		//
 		if( key == 'M' ) {
-			mode = ! mode;
+			m_mode = ! m_mode;
 			return true;
 		}
 		return drawable::keyboard(key);
@@ -94,23 +99,23 @@ private:
 	virtual void draw( graphics_engine &g, int width, int height ) const override {
 		//
 		g.color4(1.0,1.0,1.0,0.5);
-		graphics_utility::draw_wired_box(g);
+		graphics_utility::draw_wired_box(g,get_view_scale());
 		//
-		gridvisualizer->draw_grid(g);
+		m_gridvisualizer->draw_grid(g);
 		g.color4(0.5,0.6,1.0,0.5);
-		gridvisualizer->draw_levelset(g,array);
-		if( mode ) gridvisualizer->draw_active(g,array);
-		else gridvisualizer->draw_inside(g,array);
+		m_gridvisualizer->draw_levelset(g,m_array);
+		if( m_mode ) m_gridvisualizer->draw_active(g,m_array);
+		else m_gridvisualizer->draw_inside(g,m_array);
 		//
 		g.color4(1.0,1.0,1.0,1.0);
 		g.draw_string(vec2d(0.01,0.01).v, "Press \"M\" to toggle mode");
 	}
 	//
-	bool mode {false};
-	array3<double> array {this};
-	shape3 shape {32,32,32};
-	double dx, time {0.0};
-	gridvisualizer3_driver gridvisualizer{this,"gridvisualizer3"};
+	bool m_mode {false};
+	array3<float> m_array {this};
+	shape3 m_shape {32,32,32};
+	double m_dx, m_time {0.0};
+	gridvisualizer3_driver m_gridvisualizer{this,"gridvisualizer3"};
 };
 //
 extern "C" module * create_instance() {

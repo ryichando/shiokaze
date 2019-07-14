@@ -34,6 +34,8 @@ class macbackwardflipsmoke2 : public macsmoke2 {
 public:
 	//
 	LONG_NAME("MAC Backward FLIP Smoke 2D")
+	MODULE_NAME("macbackwardflipsmoke2")
+	//
 	macbackwardflipsmoke2();
 	virtual ~macbackwardflipsmoke2() {}
 	//

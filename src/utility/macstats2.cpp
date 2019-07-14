@@ -37,12 +37,14 @@ using namespace array_interpolator2;
 class macstats2 : public macstats2_interface {
 private:
 	//
-	virtual void dump_stats( const array2<double> &solid, const array2<double> &fluid, const macarray2<double> &velocity, const timestepper_interface *tmstepper ) const override {
+	MODULE_NAME("macstats2")
+	//
+	virtual void dump_stats( const array2<float> &solid, const array2<float> &fluid, const macarray2<float> &velocity, const timestepper_interface *tmstepper ) const override {
 		//
 		unsigned num_active_fluid (0);
 		if( levelset_exist(solid)) {
 			fluid.const_serial_actives([&](int i, int j, const auto &it) {
-				if( it() < 0.0 && interpolate<double>(solid,vec2i(i,j).cell()) > 0.0 ) num_active_fluid ++;
+				if( it() < 0.0 && interpolate<float>(solid,vec2i(i,j).cell()) > 0.0 ) num_active_fluid ++;
 			});
 		} else {
 			fluid.const_serial_actives([&](const auto &it) {

@@ -50,9 +50,9 @@ public:
 	 @param[in] solid 壁のレベルセット関数。
 	 @param[in] velocity 初期速度場を与えるための速度関数。
 	 */
-	virtual size_t seed( const array3<double> &fluid,
+	virtual size_t seed( const array3<float> &fluid,
 						 std::function<double(const vec3d &p)> solid,
-						 const macarray3<double> &velocity ) = 0;
+						 const macarray3<float> &velocity ) = 0;
 	/**
 	 \~english @brief Splat FLIP momentum and mass onto the grids.
 	 @param[out] momentum Grid of momentum to be mapped.
@@ -61,7 +61,7 @@ public:
 	 @param[out] momentum 転写される運動量のグリッド。
 	 @param[out] mass 転写される質量のグリッド。
 	 */
-	virtual void splat( macarray3<double> &momentum, macarray3<double> &mass ) const = 0;
+	virtual void splat( macarray3<float> &momentum, macarray3<float> &mass ) const = 0;
 	/**
 	 \~english @brief Advect FLIP particles along the input velocity field.
 	 @param[in] solid Solid level set function.
@@ -103,7 +103,7 @@ public:
 	 @param[in] fluid 液体のレベルセット。
 	 @param[in] solid 壁のレベルセット関数。
 	 */
-	virtual void update( std::function<double(const vec3d &p)> solid, array3<double> &fluid ) = 0;
+	virtual void update( std::function<double(const vec3d &p)> solid, array3<float> &fluid ) = 0;
 	/**
 	 \~english @brief Update momentum of FLIP particles.
 	 @param[in] prev_velocity Velocity before the pressure projection.
@@ -118,8 +118,8 @@ public:
 	 @param[in] gravity 重力定数。
 	 @param[in] PICFLIP PIC と FLIP を補間する定数。1.0 なら FLIP を、0.0 なら PIC となる。もし APIC が使用される時、このパラメータは無視される。
 	 */
-	virtual void update( const macarray3<double> &prev_velocity,
-						 const macarray3<double> &new_velocity,
+	virtual void update( const macarray3<float> &prev_velocity,
+						 const macarray3<float> &new_velocity,
 						 double dt, vec3d gravity, double PICFLIP ) = 0;
 	/**
 	 \~english @brief Directly update momentum of FLIP particles.
@@ -127,14 +127,14 @@ public:
 	 \~japanese @brief FLIP 粒子の運動量を直接更新する。
 	 @param[in] func 新しい運動量を指定する関数。
 	 */
-	virtual void update( std::function<void(const vec3d &p, vec3d &velocity, double &mass, bool bullet )> func ) = 0;
+	virtual void update( std::function<void(const vec3f &p, vec3f &velocity, float &mass, bool bullet )> func ) = 0;
 	/**
 	 \~english @brief Delete particles where the function test passes.
 	 @param[in] test_function Test function.
 	 \~japanese @brief テスト関数をパスする粒子を削除する。
 	 @param[in] test_function テスト関数。
 	 */
-	virtual size_t remove(std::function<double(const vec3d &p)> test_function ) = 0;
+	virtual size_t remove(std::function<double(const vec3f &p, bool bullet)> test_function ) = 0;
 	/**
 	 \~english @brief Draw FLIP particles.
 	 @param[in] g Graphics engine.
@@ -159,12 +159,12 @@ public:
 		 \~english @brief Position.
 		 \~japanese @brief 位置。
 		 */
-		vec3d p;
+		vec3f p;
 		/**
 		 \~english @brief Radius.
 		 \~japanese @brief 半径。
 		 */
-		double r;
+		float r;
 		/**
 		 \~english @brief Value of sizing function.
 		 \~japanese @brief サイズ関数の値。
@@ -192,7 +192,7 @@ public:
 protected:
 	//
 	// Compute sizing function
-	virtual void compute_sizing_func( const array3<double> &fluid, const bitarray3 &mask, const macarray3<double> &velocity, array3<double> &sizing_array ) const {
+	virtual void compute_sizing_func( const array3<float> &fluid, const bitarray3 &mask, const macarray3<float> &velocity, array3<float> &sizing_array ) const {
 		sizing_array.clear(1.0);
 	}
 	//

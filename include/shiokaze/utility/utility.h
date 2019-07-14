@@ -56,6 +56,18 @@ public:
 		return !(n & (n - 1)); //this checks if the integer n is a power of two or not
 	}
 	/**
+	 \~english @brief Get of the number of active bit in power of two number.
+	 @return Index of active bit.
+	 \~japanese @brief 2の冪乗の数字のアクティブビットの番号を得る。
+	 @return アクティブビットのインデックス。
+	 */
+	static unsigned char log2( size_t n ) {
+		size_t tmp (n);
+		unsigned char result (0);
+		while( tmp >>= 1 ) ++ result;
+		return result;
+	}
+	/**
 	 \~english @brief Get microseconds.
 	 @return Microseconds.
 	 \~japanese @brief マイクロ秒を取得する。

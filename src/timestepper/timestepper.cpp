@@ -34,6 +34,8 @@ SHKZ_USING_NAMESPACE
 class timestepper : public timestepper_interface {
 public:
 	//
+	MODULE_NAME("timestepper")
+	//
 	timestepper () {
 		//
 	#ifdef USE_OPENGL
@@ -42,6 +44,7 @@ public:
 		m_maximal_frame = 600;
 	#endif
 	}
+private:
 	//
 	// Advance time by the maximal velocity. Returns delta t (time step size)
 	virtual double advance( double max_velocity, double dx ) override {
@@ -155,8 +158,6 @@ public:
 	// Get if we should terminate the simulation
 	virtual bool should_quit() const override { return m_maximal_frame ? m_frame >= m_maximal_frame : false; }
 	//
-protected:
-	//
 	virtual void configure( configuration &config ) override {
 		//
 		config.get_double("TimeStep",m_fixed_timestep,"Target time step");
@@ -180,8 +181,6 @@ protected:
 		m_current_CFL = 0.0;
 		console::set_time(0.0);
 	}
-	//
-private:
 	//
 	double m_time, m_FPS {120.0}, m_CFL {3.0}, m_min_dt {0.1/120.0};
 	double m_accumulated_time;

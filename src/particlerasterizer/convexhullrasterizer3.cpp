@@ -33,7 +33,7 @@ public:
 	LONG_NAME("Convex Hull Rasterizer 3D")
 	ARGUMENT_NAME("ConvexHullRasterizer")
 	//
-	virtual void build_levelset( array3<double> &fluid, const bitarray3 &mask, const std::vector<Particle3> &particles ) const override {
+	virtual void build_levelset( array3<float> &fluid, const bitarray3 &mask, const std::vector<Particle3> &particles ) const override {
 		//
 		auto sqr = [](double x) { return x*x; };
 		auto getParticleConvextHullLevelsetSphere = [&]( const vec3d p, const Particle3 &p0 ) {
@@ -201,7 +201,7 @@ public:
 			return min_phi;
 		};
 		//
-		std::vector<vec3d> points(particles.size());
+		std::vector<vec3f> points(particles.size());
 		for( size_t n=0; n<points.size(); ++n ) {
 			points[n] = particles[n].p;
 		}
