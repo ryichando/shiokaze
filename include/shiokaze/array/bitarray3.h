@@ -41,10 +41,10 @@ SHKZ_BEGIN_NAMESPACE
 //
 #define shkz_default_array_core3 "tiledarray3"
 //
+template <class T> class array3;
 /** @file */
 /// \~english @brief Three dimensional bit grid class designed to be defined as instance member in recursive_configurable class.
 /// \~japanese @brief recursive_configurable インスタンスのメンバーインスタンスとして定義可能な3次元ビット配列クラス。
-template <class T> class array3;
 class bitarray3 : public recursive_configurable {
 public:
 	/**

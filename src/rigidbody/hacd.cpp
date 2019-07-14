@@ -132,7 +132,7 @@ private:
 			size_t num_points = myHACD->GetNPointsCH(n);
 			size_t num_triangles = myHACD->GetNTrianglesCH(n);
 			//
-			convex_object obj;
+			hacd_io::convex_object obj;
 			obj.vertices.resize(num_points);
 			obj.faces.resize(num_triangles);
 			//
@@ -157,7 +157,7 @@ private:
 		if( m_param.export_path.size()) {
 			//
 			console::dump( "Saving HACD to %s...\n", m_param.export_path.c_str());
-			write_hacd(m_param.export_path,m_objects);
+			hacd_io::write_hacd(m_param.export_path,m_objects);
 			console::dump( "Done.\n" );
 		}
 		//
@@ -239,7 +239,7 @@ private:
 	};
 	//
 	Parameters m_param;
-	std::vector<convex_object> m_objects;
+	std::vector<hacd_io::convex_object> m_objects;
 };
 //
 extern "C" module * create_instance() {

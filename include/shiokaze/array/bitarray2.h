@@ -41,10 +41,10 @@ SHKZ_BEGIN_NAMESPACE
 //
 #define shkz_default_array_core2 "tiledarray2"
 //
+template <class T> class array2;
 /** @file */
 /// \~english @brief Two dimensional bit grid class designed to be defined as instance member in recursive_configurable class.
 /// \~japanese @brief recursive_configurable インスタンスのメンバーインスタンスとして定義可能な2次元ビット配列クラス。
-template <class T> class array2;
 class bitarray2 : public recursive_configurable {
 public:
 	/**

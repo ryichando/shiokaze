@@ -144,7 +144,7 @@ private:
 				v = w * scale * (v - center);
 			}
 			//
-			std::vector<convex_object> objects = read_hacd(m_param.mesh_file_path+".hacd");
+			std::vector<hacd_io::convex_object> objects = hacd_io::read_hacd(m_param.mesh_file_path+".hacd");
 			std::vector<rg3::polyshape3> polyshapes;
 			//
 			for( auto &obj : objects ) {
