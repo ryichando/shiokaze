@@ -40,9 +40,10 @@
 SHKZ_BEGIN_NAMESPACE
 //
 struct host2;
+struct leaf2;
 struct leaf_cache2 {
 	const host2 *host;
-	void *ptr {nullptr};
+	leaf2 *ptr {nullptr};
 };
 //
 struct host2 {
@@ -57,7 +58,7 @@ struct host2 {
 	//
 	Parameters param;
 	//
-	void* generate_cache() const {
+	leaf_cache2* generate_cache() const {
 		//
 		if( param.support_cache ) {
 			leaf_cache2 *result = new leaf_cache2;
@@ -68,8 +69,8 @@ struct host2 {
 		}
 	}
 	//
-	void destroy_cache( void *cache ) const {
-		if( cache ) delete static_cast<leaf_cache2 *>(cache);
+	void destroy_cache( leaf_cache2 *cache ) const {
+		if( cache ) delete cache;
 	}
 	//
 	std::vector<unsigned char> log2_global_size_per_depth;
@@ -111,17 +112,8 @@ struct leaf2 {
 		return const_cast<leaf2 *>(this)->find_root(i,j,attempts);
 	}
 	//
-	void set_cache( const leaf2 *leaf, void *cache ) const {
-		if( cache ) {
-			reinterpret_cast<leaf_cache2 *>(cache)->ptr = reinterpret_cast<void *>(const_cast<leaf2 *>(leaf));
-		}
-	}
-	//
-	const leaf2 *get_leaf_cache( void *cache ) const {
-		if( cache ) {
-			return reinterpret_cast<const leaf2 *>(reinterpret_cast<leaf_cache2 *>(cache)->ptr);
-		}
-		return nullptr;
+	void set_cache( leaf2 *leaf, leaf_cache2 *cache ) const {
+		if( cache ) cache->ptr = leaf;
 	}
 	//
 	void alloc_fill_mask() {
@@ -179,11 +171,11 @@ struct leaf2 {
 	}
 	//
 	virtual size_t count() const = 0;
-	virtual bool set( const vec2i &global_pi, std::function<void(void *value_ptr, bool &active)> func, void *cache ) = 0;
-	virtual const void * operator()( const vec2i &global_pi, bool &filled, void *cache ) const = 0;
+	virtual bool set( const vec2i &global_pi, std::function<void(void *value_ptr, bool &active)> func, leaf_cache2 *cache ) = 0;
+	virtual const void * operator()( const vec2i &global_pi, bool &filled, leaf_cache2 *cache ) const = 0;
 	virtual bool flood_fill( std::function<bool(void *value_ptr)> inside_func ) = 0;
 	virtual bool deletable() const = 0;
-	virtual void prune( void *cache ) = 0;
+	virtual void prune( leaf_cache2 *cache ) = 0;
 	//
 	vec2i convert_to_local( const vec2i &global_pi ) const {
 		//
@@ -316,9 +308,9 @@ struct terminal_leaf2 : public leaf2 {
 		return count() == 0;
 	}
 	//
-	virtual void prune( void *cache ) override {}
+	virtual void prune( leaf_cache2 *cache ) override {}
 	//
-	virtual bool set( const vec2i &global_pi, std::function<void(void *value_ptr, bool &active)> func, void *cache ) override {
+	virtual bool set( const vec2i &global_pi, std::function<void(void *value_ptr, bool &active)> func, leaf_cache2 *cache ) override {
 		//
 		vec2i local_pi = convert_to_local(global_pi);
 		size_t n = m_shape.encode(local_pi);
@@ -335,12 +327,12 @@ struct terminal_leaf2 : public leaf2 {
 		return active_flag;
 	}
 	//
-	virtual const void * operator()( const vec2i &global_pi, bool &filled, void *cache ) const override {
+	virtual const void * operator()( const vec2i &global_pi, bool &filled, leaf_cache2 *cache ) const override {
 		//
 		vec2i local_pi = convert_to_local(global_pi);
 		size_t n = m_shape.encode(local_pi);
 		filled = this->filled(n);
-		set_cache(this,cache);
+		set_cache((leaf2 *)this,cache);
 		//
 		thread_local char tmp;
 		if( active(n)) return m_host.element_bytes ? m_data.data()+n*m_host.element_bytes : (void *)&tmp;
@@ -623,7 +615,7 @@ struct intermediate_leaf2 : public leaf2 {
 		return m_num_children == 0;
 	}
 	//
-	virtual void prune( void *cache ) override {
+	virtual void prune( leaf_cache2 *cache ) override {
 		//
 		if( m_num_children ) {
 			for( size_t n=0; n<m_children.size(); ++n ) {
@@ -633,7 +625,7 @@ struct intermediate_leaf2 : public leaf2 {
 			for( size_t n=0; n<m_children.size(); ++n ) {
 				auto &child = m_children[n];
 				if( child && child->deletable()) {
-					if( get_leaf_cache(cache) == child ) {
+					if( cache->ptr == child ) {
 						set_cache(nullptr,cache);
 					}
 					delete child;
@@ -657,7 +649,7 @@ struct intermediate_leaf2 : public leaf2 {
 		return m_children[m_shape.encode(local_pi)] != nullptr;
 	}
 	//
-	virtual bool set( const vec2i &global_pi, std::function<void(void *value_ptr, bool &active)> func, void *cache ) override {
+	virtual bool set( const vec2i &global_pi, std::function<void(void *value_ptr, bool &active)> func, leaf_cache2 *cache ) override {
 		//
 		vec2i local_pi = convert_to_local(global_pi);
 		vec2i o = convert_to_global(local_pi);
@@ -730,14 +722,14 @@ struct intermediate_leaf2 : public leaf2 {
 		return active_flag;
 	}
 	//
-	virtual const void * operator()( const vec2i &global_pi, bool &filled, void *cache ) const override {
+	virtual const void * operator()( const vec2i &global_pi, bool &filled, leaf_cache2 *cache ) const override {
 		//
 		size_t n = m_shape.encode(convert_to_local(global_pi));
 		const auto child = m_children[n];
 		if( child ) {
 			return child->operator()(global_pi,filled,cache);
 		} else {
-			set_cache(this,cache);
+			set_cache((leaf2 *)this,cache);
 			filled = this->filled(n);
 		}
 		return nullptr;
@@ -758,7 +750,7 @@ struct intermediate_leaf2 : public leaf2 {
 		std::stack<size_t> start_queue;
 		const size_t global_tile_size = 1UL << m_host.log2_global_size_per_depth[m_depth];
 		//
-		void *cache = m_host.generate_cache();
+		leaf_cache2 *cache = m_host.generate_cache();
 		m_shape.for_each([&]( int local_i, int local_j ) {
 			//
 			size_t n = m_shape.encode(local_i,local_j);
@@ -1035,7 +1027,7 @@ struct cache_struct {
 	~cache_struct() {
 		host.destroy_cache(ptr);
 	}
-	void *ptr;
+	leaf_cache2 *ptr;
 	const host2 &host;
 };
 //
@@ -1061,7 +1053,7 @@ public:
 		}
 	}
 	//
-	void * get_cache() const {
+	leaf_cache2 * get_cache() const {
 		//
 		if( ! m_host.param.support_cache ) return nullptr;
 		//
@@ -1327,27 +1319,24 @@ public:
 		if( m_root ) m_root->const_serial_inside(func);
 	}
 	//
-	leaf2 * find_root( int i, int j, void *cache, int &attempts ) {
+	leaf2 * find_root( int i, int j, leaf_cache2 *cache, int &attempts ) {
 		if( cache && m_host.param.support_cache ) {
-			//
-			leaf_cache2 *lf = reinterpret_cast<leaf_cache2 *>(cache);
-			assert( lf->host == &m_host );
-			leaf2 *last_leaf = reinterpret_cast<leaf2 *>(lf->ptr);
-			if( last_leaf ) {
-				leaf2 *result = last_leaf->find_root(i,j,attempts);
+			assert( cache->host == &m_host );
+			if( cache->ptr ) {
+				leaf2 *result = cache->ptr->find_root(i,j,attempts);
 				if( result ) return result;
 			}
 		}
 		return m_root;
 	}
 	//
-	const leaf2 * find_root( int i, int j, void *cache, int &attempts ) const {
+	const leaf2 * find_root( int i, int j, leaf_cache2 *cache, int &attempts ) const {
 		return const_cast<treearray2 *>(this)->find_root(i,j,cache,attempts);
 	}
 	//
 	host2 m_host;
 	intermediate_leaf2 *m_root {nullptr};
-	void *m_main_cache {nullptr};
+	leaf_cache2 *m_main_cache {nullptr};
 	std::thread::id m_main_thread_id;
 };
 //
