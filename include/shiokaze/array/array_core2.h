@@ -85,54 +85,29 @@ public:
 	 */
 	virtual void copy( const array_core2 &array, std::function<void(void *target, const void *src)> copy_func, const parallel_driver &parallel ) = 0;
 	/**
-	 \~english @brief Get if support cache.
-	 @return Whether the grid supports cache.
-	 \~japanese @brief キャッシュをサポートするか得る。
-	 @return キャッシュをサポートするか。
-	 */
-	virtual bool support_cache() const = 0;
-	/**
-	 \~english @brief Generate a cache.
-	 @return Pointer to a generated cache.
-	 \~japanese @brief キャッシュを作成する。
-	 @return 生成されたキャッシュ。
-	 */
-	virtual void* generate_cache() const = 0;
-	/**
-	 \~english @brief Destroy a cache.
-	 @param[in] cache Pointer to a generated cache to destroy.
-	 \~japanese @brief キャッシュを破棄する。
-	 @param[in] cache 破棄するキャッシュへのポインタ。
-	 */
-	virtual void destroy_cache( void *cache ) const = 0;
-	/**
 	 \~english @brief Set a value of a cell.
 	 @param[in] i Position on x coordinate
 	 @param[in] j Position on y coordinate
 	 @param[in] func Function that sets a value.
-	 @param[in] cache Pointer to a cache.
 	 \~japanese @brief セルに値を設定する。
 	 @param[in] i x 座標上の位置。
 	 @param[in] j y 座標上の位置。
 	 @param[in] func 値の設定を代行する関数。
-	 @param[in] cache キャッシュへのポインタ。
 	 */
-	virtual void set( int i, int j, std::function<void(void *value_ptr, bool &active)> func, void *cache ) = 0;
+	virtual void set( int i, int j, std::function<void(void *value_ptr, bool &active)> func ) = 0;
 	/**
 	 \~english @brief Get a value of a cell.
 	 @param[in] i Position on x coordinate
 	 @param[in] j Position on y coordinate
 	 @param[out] filled Whether the position is filled.
-	 @param[in] cache Pointer to a cache.
 	 @return Pointer to the value of the cell.
 	 \~japanese @brief セルの値を得る。
 	 @param[in] i x 座標上の位置。
 	 @param[in] j y 座標上の位置。
 	 @param[out] filled グリッドの位置が塗りつぶされているか。
-	 @param[in] cache キャッシュへのポインタ。
 	 @return セルの値へのポインター。
 	 */
-	virtual const void * operator()( int i, int j, bool &filled, void *cache ) const = 0;
+	virtual const void * operator()( int i, int j, bool &filled ) const = 0;
 	/**
 	 \~english @brief Loop over all the active cells in parallel.
 	 @param[in] func Function that processes a cell.

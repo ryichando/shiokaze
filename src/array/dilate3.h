@@ -47,14 +47,11 @@ public:
 		core->get(shape[0],shape[1],shape[2],element_bytes);
 		//
 		std::vector<std::vector<vec3i> > dilate_coords(parallel.get_thread_num());
-		std::vector<void *> caches(parallel.get_thread_num());
-		//
-		for( auto &cache : caches ) cache = core->generate_cache();
 		core->const_parallel_actives([&]( int i, int j, int k, const void *value_ptr, const bool &filled, int thread_index ) {
 			bool qi_filled;
 			for( int dim : DIMS3 ) for( int dir=-1; dir<=1; dir+=2 ) {
 				vec3i qi = vec3i(i,j,k)+dir*vec3i(dim==0,dim==1,dim==2);
-				if( ! shape.out_of_bounds(qi) && ! (*core)(qi[0],qi[1],qi[2],qi_filled,caches[thread_index])) {
+				if( ! shape.out_of_bounds(qi) && ! (*core)(qi[0],qi[1],qi[2],qi_filled)) {
 					dilate_coords[thread_index].push_back(qi);
 				}
 			}
@@ -82,7 +79,7 @@ public:
 			state.pi = pi;
 			state.buffer.resize(element_bytes);
 			bool filled;
-			(*core)(pi[0],pi[1],pi[2],filled,caches[thread_index]);
+			(*core)(pi[0],pi[1],pi[2],filled);
 			func(pi[0],pi[1],pi[2],element_bytes ? state.buffer.data() : nullptr,active,filled,thread_index);
 			if( active ) {
 				active_states[thread_index].push_back(state);
@@ -94,11 +91,9 @@ public:
 				core->set(state.pi[0],state.pi[1],state.pi[2],[&](void *value_ptr, bool &active) {
 					active = true;
 					if( element_bytes ) std::memcpy(value_ptr,state.buffer.data(),element_bytes);
-				},caches[0]);
+				});
 			}
 		}
-		//
-		for( auto &cache : caches ) core->destroy_cache(cache);
 	}
 };
 //

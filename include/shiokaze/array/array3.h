@@ -176,11 +176,6 @@ public:
 					new (target) T(*static_cast<const T *>(src));
 				},m_parallel);
 			}
-			if( m_main_cache ) {
-				m_core->destroy_cache(m_main_cache);
-				m_main_cache = m_core->generate_cache();
-				m_main_thread_id = std::this_thread::get_id();
-			}
 		}
 	}
 	/**
@@ -226,11 +221,6 @@ public:
 		m_fillable = false;
 		m_levelset = false;
 		m_is_initialized = true;
-		m_support_cache = m_core->support_cache();
-		if( m_support_cache ) {
-			m_main_cache = m_core->generate_cache();
-			m_main_thread_id = std::this_thread::get_id();
-		}
 	}
 	/**
 	 \~english @brief Set the grid as level set.
@@ -336,7 +326,7 @@ public:
 	 */
 	bool filled( int i, int j, int k ) const {
 		bool filled;
-		(*m_core)(i,j,k,filled,get_cache());
+		(*m_core)(i,j,k,filled);
 		return filled;
 	}
 	/**
@@ -493,10 +483,6 @@ public:
 		parallel_actives([&](iterator& it) {
 			it.set_off();
 		});
-		if( m_main_cache ) {
-			m_core->destroy_cache(m_main_cache);
-			m_main_cache = nullptr;
-		}
 	}
 	/**
 	 \~english @brief Clear out the grid with the new backgroud value.
@@ -527,7 +513,7 @@ public:
 			if( ! active ) new (value_ptr) T(value);
 			else *static_cast<T *>(value_ptr) = value;
 			active = true;
-		},get_cache());
+		});
 	}
 	/**
 	 \~english @brief Set value on grid.
@@ -554,7 +540,7 @@ public:
 	 */
 	bool active( int i, int j, int k ) const {
 		bool filled (false);
-		return (*m_core)(i,j,k,filled,get_cache()) != nullptr;
+		return (*m_core)(i,j,k,filled) != nullptr;
 	}
 	/**
 	 \~english @brief Get if a position on grid is active.
@@ -581,7 +567,7 @@ public:
 		m_core->set(i,j,k,[&](void *value_ptr, bool &active){
 			if( active ) (static_cast<T *>(value_ptr))->~T();
 			active = false;
-		},get_cache());
+		});
 	}
 	/**
 	 \~english @brief Set a position on grid inactive.
@@ -611,7 +597,7 @@ public:
 				*static_cast<T *>(value_ptr) = m_background_value + value;
 				active = true;
 			}
-		},get_cache());
+		});
 	}
 	/**
 	 \~english @brief Increment value on grid.
@@ -643,7 +629,7 @@ public:
 				*static_cast<T *>(value_ptr) = m_background_value - value;
 				active = true;
 			}
-		},get_cache());
+		});
 	}
 	/**
 	 \~english @brief Subtract value on grid.
@@ -675,7 +661,7 @@ public:
 				*static_cast<T *>(value_ptr) = m_background_value * value;
 				active = true;
 			}
-		},get_cache());
+		});
 	}
 	/**
 	 \~english @brief Multiply value on grid.
@@ -726,7 +712,7 @@ public:
 	 */
 	T* ptr(unsigned i, unsigned j, unsigned k ) {
 		bool filled (false);
-		return const_cast<T *>(static_cast<const T *>((*m_core)(i,j,k,filled,get_cache())));
+		return const_cast<T *>(static_cast<const T *>((*m_core)(i,j,k,filled)));
 	}
 	/**
 	 \~english @brief Get the const pointer to the value at a position on grid
@@ -771,7 +757,7 @@ public:
 	 */
 	const T& operator()(int i, int j, int k ) const {
 		bool filled (false);
-		const T* ptr = static_cast<const T *>((*m_core)(i,j,k,filled,get_cache()));
+		const T* ptr = static_cast<const T *>((*m_core)(i,j,k,filled));
 		if( ptr ) return *ptr;
 		else return filled ? m_fill_value : m_background_value;
 	}
@@ -1787,35 +1773,6 @@ private:
 	char m_levelset_halfwidth {0};
 	array3_ptr m_core;
 	std::string m_core_name;
-	void *m_main_cache {nullptr};
-	std::thread::id m_main_thread_id;
-	bool m_support_cache {false};
-	//
-	struct cache_struct {
-		cache_struct ( array_core3 *core ) : core(core) {
-			ptr = core->generate_cache();
-		}
-		~cache_struct() {
-			core->destroy_cache(ptr);
-		}
-		void *ptr;
-		const array_core3 *core;
-	};
-	//
-	void * get_cache() const {
-		//
-		if( ! m_support_cache ) return nullptr;
-		//
-		thread_local std::thread::id thread_id = std::this_thread::get_id();
-		if( thread_id == m_main_thread_id ) return m_main_cache;
-		//
-		thread_local std::vector<std::pair<void *,std::shared_ptr<cache_struct> > > cache_list;
-		for( const auto &c : cache_list ) {
-			if( c.first == (void *)this ) return c.second->ptr;
-		}
-		cache_list.push_back({(void *)this,std::make_shared<cache_struct>(m_core.get())});
-		return cache_list.back().second->ptr;
-	};
 };
 //
 SHKZ_END_NAMESPACE

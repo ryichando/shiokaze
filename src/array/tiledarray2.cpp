@@ -110,7 +110,7 @@ public:
 				set(i,j,[&](void *dst_ptr, bool &active) {
 					copy_func(dst_ptr,src_ptr);
 					active = true;
-				},nullptr);
+				});
 				return false;
 			});
 			if( element_bytes ) {
@@ -125,17 +125,6 @@ public:
 				});
 			}
 		}
-	}
-	//
-	virtual bool support_cache() const override {
-		return false;
-	}
-	//
-	virtual void* generate_cache() const override {
-		return nullptr;
-	}
-	//
-	virtual void destroy_cache( void *cache ) const override {
 	}
 	//
 	void dealloc() {
@@ -160,7 +149,7 @@ public:
 		}
 	}
 	//
-	virtual void set( int i, int j, std::function<void(void *value_ptr, bool &active)> func, void *cache ) override {
+	virtual void set( int i, int j, std::function<void(void *value_ptr, bool &active)> func ) override {
 		//
 		assert(check_bound(i,j));
 		unsigned bi = i / m_Z;
@@ -188,7 +177,7 @@ public:
 			}
 		}
 	}
-	virtual const void * operator()( int i, int j, bool &filled, void *cache ) const override {
+	virtual const void * operator()( int i, int j, bool &filled ) const override {
 		//
 		assert(check_bound(i,j));
 		unsigned bi = i / m_Z;

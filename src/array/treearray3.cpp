@@ -32,6 +32,7 @@
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <thread>
 #include <cstring>
 #include "bitcount/bitcount.h"
 #include "dilate3.h"
@@ -71,11 +72,9 @@ struct host3 {
 		if( cache ) delete static_cast<leaf_cache3 *>(cache);
 	}
 	//
-	std::vector<size_t> global_size_per_depth;
 	std::vector<unsigned char> log2_global_size_per_depth;
 	unsigned char element_bytes {0};
 	unsigned char total_depth {0};
-	unsigned char log2_tile_size {0};
 	shape3 shape;
 };
 //
@@ -116,6 +115,13 @@ struct leaf3 {
 		if( cache ) {
 			reinterpret_cast<leaf_cache3 *>(cache)->ptr = reinterpret_cast<void *>(const_cast<leaf3 *>(leaf));
 		}
+	}
+	//
+	const leaf3 *get_leaf_cache( void *cache ) const {
+		if( cache ) {
+			return reinterpret_cast<const leaf3 *>(reinterpret_cast<leaf_cache3 *>(cache)->ptr);
+		}
+		return nullptr;
 	}
 	//
 	void alloc_fill_mask() {
@@ -177,7 +183,7 @@ struct leaf3 {
 	virtual const void * operator()( const vec3i &global_pi, bool &filled, void *cache ) const = 0;
 	virtual bool flood_fill( std::function<bool(void *value_ptr)> inside_func ) = 0;
 	virtual bool deletable() const = 0;
-	virtual void prune() = 0;
+	virtual void prune( void *cache ) = 0;
 	//
 	vec3i convert_to_local( const vec3i &global_pi ) const {
 		//
@@ -312,7 +318,7 @@ struct terminal_leaf3 : public leaf3 {
 		return count() == 0;
 	}
 	//
-	virtual void prune() override {}
+	virtual void prune( void *cache ) override {}
 	//
 	virtual bool set( const vec3i &global_pi, std::function<void(void *value_ptr, bool &active)> func, void *cache ) override {
 		//
@@ -619,16 +625,19 @@ struct intermediate_leaf3 : public leaf3 {
 		return m_num_children == 0;
 	}
 	//
-	virtual void prune() override {
+	virtual void prune( void *cache ) override {
 		//
 		if( m_num_children ) {
 			for( size_t n=0; n<m_children.size(); ++n ) {
-				if( m_children[n] ) m_children[n]->prune();
+				if( m_children[n] ) m_children[n]->prune(cache);
 			}
 			//
 			for( size_t n=0; n<m_children.size(); ++n ) {
 				auto &child = m_children[n];
 				if( child && child->deletable()) {
+					if( get_leaf_cache(cache) == child ) {
+						set_cache(nullptr,cache);
+					}
 					delete child;
 					child = nullptr;
 					assert( m_num_children );
@@ -674,7 +683,7 @@ struct intermediate_leaf3 : public leaf3 {
 			//
 			if( func == nullptr || active_flag ) {
 				//
-				if( m_host.global_size_per_depth.size() == m_depth+1 ) {
+				if( m_host.total_depth == m_depth+1 ) {
 					shape3 terminal_shape(m_host.param.tile_size,m_host.param.tile_size,m_host.param.tile_size);
 					for( int dim : DIMS3 ) {
 						terminal_shape[dim] += std::min(0,(int)m_host.shape[dim]-(int)o[dim]-(int)terminal_shape[dim]);
@@ -749,7 +758,7 @@ struct intermediate_leaf3 : public leaf3 {
 		//
 		std::vector<bool> flags (m_shape.count(),false);
 		std::stack<size_t> start_queue;
-		const size_t &global_tile_size = m_host.global_size_per_depth[m_depth];
+		const size_t global_tile_size = 1UL << m_host.log2_global_size_per_depth[m_depth];
 		//
 		void *cache = m_host.generate_cache();
 		m_shape.for_each([&]( int local_i, int local_j, int local_k ) {
@@ -885,7 +894,7 @@ struct intermediate_leaf3 : public leaf3 {
 				child->serial_all(func);
 			} else {
 				//
-				const size_t &tile_size = m_host.global_size_per_depth[m_depth];
+				const size_t tile_size = 1UL << m_host.log2_global_size_per_depth[m_depth];
 				vec3i local_pi = m_shape.decode(n);
 				bool fill_flag = filled(n);
 				//
@@ -917,7 +926,7 @@ struct intermediate_leaf3 : public leaf3 {
 				//
 				if( n % total_threads == thread_index ) {
 				//
-					const size_t &tile_size = m_host.global_size_per_depth[m_depth];
+					const size_t tile_size = 1UL << m_host.log2_global_size_per_depth[m_depth];
 					vec3i local_pi = m_shape.decode(n);
 					//
 					bool active_flag (false);
@@ -942,7 +951,7 @@ struct intermediate_leaf3 : public leaf3 {
 				child->const_serial_all(func);
 			} else {
 				//
-				const size_t &tile_size = m_host.global_size_per_depth[m_depth];
+				const size_t tile_size = 1UL << m_host.log2_global_size_per_depth[m_depth];
 				vec3i local_pi = m_shape.decode(n);
 				vec3i local_origin = convert_to_global(local_pi);
 				//
@@ -969,7 +978,7 @@ struct intermediate_leaf3 : public leaf3 {
 				//
 				if( n % total_threads == thread_index ) {
 				//
-					const size_t &tile_size = m_host.global_size_per_depth[m_depth];
+					const size_t tile_size = 1UL << m_host.log2_global_size_per_depth[m_depth];
 					vec3i local_pi = m_shape.decode(n);
 					vec3i local_origin = convert_to_global(local_pi);
 					//
@@ -997,7 +1006,7 @@ struct intermediate_leaf3 : public leaf3 {
 				child->const_serial_inside(func);
 			} else {
 				//
-				const size_t &tile_size = m_host.global_size_per_depth[m_depth];
+				const size_t tile_size = 1UL << m_host.log2_global_size_per_depth[m_depth];
 				vec3i local_pi = m_shape.decode(n);
 				vec3i local_origin = convert_to_global(local_pi);
 				//
@@ -1021,6 +1030,17 @@ struct intermediate_leaf3 : public leaf3 {
 	unsigned m_num_children {0};
 };
 //
+struct cache_struct {
+	cache_struct ( const host3 &host ) : host(host) {
+		ptr = host.generate_cache();
+	}
+	~cache_struct() {
+		host.destroy_cache(ptr);
+	}
+	void *ptr;
+	const host3 &host;
+};
+//
 class treearray3 : public array_core3 {
 public:
 	//
@@ -1038,6 +1058,21 @@ public:
 			m_root = nullptr;
 		}
 	}
+	//
+	void * get_cache() const {
+		//
+		if( ! m_host.param.support_cache ) return nullptr;
+		//
+		thread_local std::thread::id thread_id = std::this_thread::get_id();
+		if( thread_id == m_main_thread_id ) return m_main_cache;
+		//
+		thread_local std::vector<std::pair<void *,std::shared_ptr<cache_struct> > > cache_list;
+		for( const auto &c : cache_list ) {
+			if( c.first == (void *)this ) return c.second->ptr;
+		}
+		cache_list.push_back({(void *)this,std::make_shared<cache_struct>(m_host)});
+		return cache_list.back().second->ptr;
+	};
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_unsigned("TileSize",m_host.param.tile_size,"Tile size per dimension");
@@ -1061,24 +1096,26 @@ public:
 		assert( m_host.total_depth >= 1 );
 		if( m_host.param.debug ) printf( "treearray3: total depth = %u\n", m_host.total_depth );
 		//
-		m_host.log2_tile_size = utility::log2(m_host.param.tile_size);
-		m_host.global_size_per_depth.resize(m_host.total_depth);
+		unsigned log2_tile_size = utility::log2(m_host.param.tile_size);
 		m_host.log2_global_size_per_depth.resize(m_host.total_depth);
 		for( int depth=0; depth < m_host.total_depth; ++ depth ) {
-			m_host.global_size_per_depth[depth] = (size_t)m_host.param.tile_size << (m_host.log2_tile_size * (m_host.total_depth-1-depth));
-			m_host.log2_global_size_per_depth[depth] = utility::log2(m_host.global_size_per_depth[depth]);
+			m_host.log2_global_size_per_depth[depth] = log2_tile_size + (log2_tile_size * (m_host.total_depth-1-depth));
 		}
 		//
 		m_host.shape = shape3(nx,ny,nz);
 		m_host.element_bytes = element_bytes;
 		//
 		shape3 child_shape;
-		const size_t &next_global_tile_size = m_host.global_size_per_depth[0];
+		const size_t &next_global_tile_size = 1UL << m_host.log2_global_size_per_depth[0];
 		for( int dim : DIMS3 ) {
 			child_shape[dim] = std::ceil(m_host.shape[dim]/(double)next_global_tile_size);
 		}
 		//
 		m_root = new intermediate_leaf3(m_host,nullptr,child_shape,vec3i(),0);
+		if( m_host.param.support_cache ) {
+			m_main_cache = m_host.generate_cache();
+			m_main_thread_id = std::this_thread::get_id();
+		}
 	}
 	//
 	virtual void send_message( unsigned message, void *ptr ) override {
@@ -1119,33 +1156,25 @@ public:
 			array.get(nx,ny,nz,element_bytes);
 			initialize(nx,ny,nz,element_bytes);
 			//
-			auto cache = generate_cache();
 			array.const_serial_actives([&](int i, int j, int k, const void *src_ptr, const bool &filled) {
 				set(i,j,k,[&](void *dst_ptr, bool &active) {
 					copy_func(dst_ptr,src_ptr);
 					active = true;
-				},cache);
+				});
 				return false;
 			});
 			//
 			array.const_serial_inside([&](int i, int j, int k, const void *src_ptr, const bool &active) {
-				set(i,j,k,nullptr,cache);
+				set(i,j,k,nullptr);
 				return false;
 			});
-			destroy_cache(cache);
 		}
-	}
-	//
-	virtual bool support_cache() const override {
-		return m_host.param.support_cache;
-	}
-	//
-	virtual void* generate_cache() const override {
-		return m_host.generate_cache();
-	}
-	//
-	virtual void destroy_cache( void *cache ) const override {
-		return m_host.destroy_cache(cache);
+		//
+		if( m_main_cache ) {
+			m_host.destroy_cache(m_main_cache);
+			m_main_cache = m_host.generate_cache();
+			m_main_thread_id = std::this_thread::get_id();
+		}
 	}
 	//
 	bool check_bound( int i, int j, int k ) const {
@@ -1157,18 +1186,20 @@ public:
 		}
 	}
 	//
-	virtual void set( int i, int j, int k, std::function<void(void *value_ptr, bool &active)> func, void *cache ) override {
+	virtual void set( int i, int j, int k, std::function<void(void *value_ptr, bool &active)> func ) override {
 		//
 		assert(check_bound(i,j,k));
 		assert(m_root);
 		int attempts (0);
+		auto cache = get_cache();
 		find_root(i,j,k,cache,attempts)->set(vec3i(i,j,k),func,cache);
 	}
 	//
-	virtual const void * operator()( int i, int j, int k, bool &filled, void *cache ) const override {
+	virtual const void * operator()( int i, int j, int k, bool &filled ) const override {
 		//
 		assert(check_bound(i,j,k));
 		int attempts (0);
+		auto cache = get_cache();
 		const auto leaf = find_root(i,j,k,cache,attempts);
 		return leaf->operator()(vec3i(i,j,k),filled,cache);
 	}
@@ -1180,7 +1211,7 @@ public:
 			parallel.for_each(total_threads,[&]( size_t thread_index ) {
 				m_root->parallel_actives(func,thread_index,total_threads);
 			});
-			m_root->prune();
+			m_root->prune(m_main_cache);
 		}
 	}
 	//
@@ -1188,7 +1219,7 @@ public:
 		//
 		if( m_root ) {
 			m_root->serial_actives(func);
-			m_root->prune();
+			m_root->prune(m_main_cache);
 		}
 	}
 	//
@@ -1212,9 +1243,6 @@ public:
 		std::vector<unsigned char> buffer(buffer_size * m_host.element_bytes);
 		std::vector<unsigned char> flags(buffer_size);
 		//
-		std::vector<void *> caches(parallel.get_thread_num());
-		for( auto &cache : caches ) cache = generate_cache();
-		//
 		size_t advanced (0);
 		while( true ) {
 			//
@@ -1224,7 +1252,7 @@ public:
 				bool prev_active_flag, active_flag, filled_flag;
 				vec3i coord = m_host.shape.decode(n+advanced);
 				void *dst_ptr = m_host.element_bytes ? buffer.data()+n*m_host.element_bytes : nullptr;
-				const void *src_ptr = operator()(coord[0],coord[1],coord[2],filled_flag,caches[thread_index]);
+				const void *src_ptr = operator()(coord[0],coord[1],coord[2],filled_flag);
 				if( src_ptr ) {
 					std::memcpy(dst_ptr,src_ptr,m_host.element_bytes);
 					prev_active_flag = true;
@@ -1248,22 +1276,20 @@ public:
 						if( active && m_host.element_bytes ) {
 							std::memcpy(value_ptr,buffer.data()+n*m_host.element_bytes,m_host.element_bytes);
 						}
-					},caches[0]);
+					});
 				}
 			}
 			//
 			advanced += advance_size;
 			if( advanced == m_host.shape.count()) break;
 		}
-		//
-		for( auto &cache : caches ) destroy_cache(cache);
 	}
 	//
 	virtual void serial_all ( std::function<bool(int i, int j, int k, void *value_ptr, bool &active, const bool &filled )> func ) override {
 		//
 		if( m_root ) {
 			m_root->serial_all(func);
-			m_root->prune();
+			m_root->prune(m_main_cache);
 		}
 	}
 	//
@@ -1322,6 +1348,8 @@ public:
 	//
 	host3 m_host;
 	intermediate_leaf3 *m_root {nullptr};
+	void *m_main_cache {nullptr};
+	std::thread::id m_main_thread_id;
 };
 //
 extern "C" module * create_instance() {
