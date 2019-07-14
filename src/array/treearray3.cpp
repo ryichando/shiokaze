@@ -627,7 +627,7 @@ struct intermediate_leaf3 : public leaf3 {
 			for( size_t n=0; n<m_children.size(); ++n ) {
 				auto &child = m_children[n];
 				if( child && child->deletable()) {
-					if( cache->ptr == child ) {
+					if( cache && cache->ptr == child ) {
 						set_cache(nullptr,cache);
 					}
 					delete child;
