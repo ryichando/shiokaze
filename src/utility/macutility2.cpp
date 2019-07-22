@@ -39,7 +39,7 @@ using namespace array_utility2;
 using namespace array_interpolator2;
 //
 class macutility2 : public macutility2_interface {
-private:
+protected:
 	//
 	MODULE_NAME("macutility2")
 	//

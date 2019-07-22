@@ -31,7 +31,7 @@
 SHKZ_USING_NAMESPACE
 //
 class flatrasterizer3 : public particlerasterizer3_interface {
-public:
+protected:
 	//
 	LONG_NAME("Flat Rasterizer 3D")
 	MODULE_NAME("flatrasterizer3")
@@ -77,8 +77,6 @@ public:
 			}
 		});
 	}
-	//
-protected:
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_double("RadiusFactor",m_param.r_factor,"Radius exaggeration factor");

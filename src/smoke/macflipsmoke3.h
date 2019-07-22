@@ -38,7 +38,7 @@ public:
 	MODULE_NAME("macflipsmoke3")
 	//
 	virtual void idle() override;
-	virtual void draw( graphics_engine &g, int width, int height ) const override;
+	virtual void draw( graphics_engine &g ) const override;
 	//
 protected:
 	//

@@ -30,9 +30,10 @@
 SHKZ_BEGIN_NAMESPACE
 //
 class dispersed_splitter : public loop_splitter {
-public:
+protected:
 	//
 	LONG_NAME("Dispersed Loop Splitter")
+	MODULE_NAME("dispersed_splitter")
 	//
 	virtual const void* new_context ( size_t size, int num_threads ) const override {
 		assert( num_threads <= size );
@@ -59,7 +60,7 @@ public:
 	virtual void delete_context( const void *context_ptr ) const override {
 		delete reinterpret_cast<const context *>(context_ptr);
 	}
-private:
+	//
 	struct context {
 		size_t size;
 		int num_threads;

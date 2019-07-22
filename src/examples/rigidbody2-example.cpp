@@ -41,17 +41,14 @@ private:
 		config.get_double("BoxWidth",m_param.box_width,"Box width");
 		config.get_unsigned("Substeps",m_param.substeps,"Substeps");
 		config.get_double("TimeStep",m_param.timestep,"Timestep size");
-		//
-		double view_scale (1.0);
-		config.get_double("ViewScale",view_scale,"View scale");
-		set_view_scale(view_scale);
+		config.get_double("ViewScale",m_view_scale,"View scale");
 	}
 	//
 	virtual void post_initialize() override {
 		//
 		m_world->clear();
 		//
-		const double vs = get_view_scale();
+		const double vs (m_view_scale);
 		const double hw = vs * 0.5;
 		const double gap (0.1);
 		//
@@ -89,12 +86,11 @@ private:
 		}
 	};
 	//
-	virtual void draw( graphics_engine &g, int width, int height ) const override {
+	virtual void draw( graphics_engine &g ) const override {
 		//
 		// Draw a message
 		g.color4(1.0,1.0,1.0,1.0);
 		g.draw_string(vec2d(0.025,0.025).v, console::format_str("Engine name = %s", m_world->engine_name().c_str()));
-		//
 		m_world->draw(g);
 	};
 	//
@@ -107,6 +103,7 @@ private:
 	Parameters m_param;
 	//
 	rigidworld2_driver m_world{this,"box2d_rigidworld2"};
+	double m_view_scale {1.0};
 };
 //
 extern "C" module * create_instance() {

@@ -85,7 +85,7 @@ public:
 };
 //
 class reactphysics3d_rigidworld3 : public rigidworld3_interface {
-private:
+protected:
 	//
 	LONG_NAME("Reactphysics 3D Rigidbody Engine")
 	MODULE_NAME("reactphysics3d_rigidworld3")

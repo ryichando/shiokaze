@@ -23,7 +23,6 @@
 */
 //
 #include "macsmoke3.h"
-#include <shiokaze/graphics/graphics_utility.h>
 #include <shiokaze/core/console.h>
 #include <shiokaze/core/timer.h>
 #include <shiokaze/core/filesystem.h>
@@ -69,6 +68,7 @@ void macsmoke3::configure( configuration &config ) {
 	} else {
 		config.get_double("MinimalActiveDensity",m_param.minimal_density,"Minimal density to trim active cells");
 	}
+	config.get_bool("MouseInteration",m_param.mouse_interaction, "Enable mouse interaction");
 	config.get_double("BuoyancyFactor",m_param.buoyancy_factor,"Buoyancy force rate");
 	config.get_unsigned("SolidExtrapolationDepth",m_param.extrapolated_width,"Solid extrapolation depth");
 	config.get_unsigned("ResolutionX",m_shape[0],"Resolution towards X axis");
@@ -85,7 +85,6 @@ void macsmoke3::configure( configuration &config ) {
 	//
 	m_shape *= resolution_scale;
 	m_dx = view_scale * m_shape.dx();
-	set_view_scale(view_scale);
 }
 //
 void macsmoke3::post_initialize () {
@@ -144,7 +143,17 @@ void macsmoke3::post_initialize () {
 		console::dump( "Done. Seeded=%d. Took %s.\n", m_dust_particles.size(), timer.stock("seed_m_dust_particles").c_str());
 	}
 	//
+	m_camera->set_bounding_box(vec3d().v,m_shape.box(m_dx).v,true);
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
+}
+//
+void macsmoke3::drag( double x, double y, double z, double u, double v, double w ) {
+	//
+	if( m_param.mouse_interaction ) {
+		double scale (1e3);
+		m_macutility->add_force(vec3d(x,y,z),scale*vec3d(u,v,w),m_external_force);
+		m_force_exist = true;
+	}
 }
 //
 void macsmoke3::inject_external_force( macarray3<float> &velocity ) {
@@ -320,10 +329,7 @@ void macsmoke3::draw_dust_particles( graphics_engine &g ) const {
 	g.end();
 }
 //
-void macsmoke3::draw( graphics_engine &g, int width, int height ) const {
-	//
-	g.color4(1.0,1.0,1.0,0.5);
-	graphics_utility::draw_wired_box(g,get_view_scale());
+void macsmoke3::draw( graphics_engine &g ) const {
 	//
 	// Draw velocity
 	m_macvisualizer->draw_velocity(g,m_velocity);

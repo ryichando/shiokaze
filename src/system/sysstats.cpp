@@ -34,7 +34,7 @@
 SHKZ_USING_NAMESPACE
 //
 class sysstats : public sysstats_interface {
-public:
+protected:
 	//
 	MODULE_NAME("sysstats")
 	//
@@ -66,8 +66,6 @@ public:
 			global_timer::resume();
 		}
 	}
-	//
-protected:
 	//
 	virtual void configure ( configuration &config ) override {
 		cmdparser parser(config.get_dictionary());

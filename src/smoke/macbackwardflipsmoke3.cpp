@@ -124,9 +124,9 @@ void macbackwardflipsmoke3::idle() {
 	export_density();
 }
 //
-void macbackwardflipsmoke3::draw( graphics_engine &g, int width, int height ) const {
+void macbackwardflipsmoke3::draw( graphics_engine &g ) const {
 	//
-	macsmoke3::draw(g,width,height);
+	macsmoke3::draw(g);
 	m_backwardflip->draw(g);
 	//
 	if( m_param.use_dust ) draw_dust_particles(g);

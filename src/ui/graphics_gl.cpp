@@ -29,24 +29,18 @@ SHKZ_USING_NAMESPACE
 //
 graphics_gl::graphics_gl () {
 	//
-	setHiDPIScalingFactor(1.0);
-	m_position[0] = -1.0;
-	m_position[1] = 1.3;
-	m_position[2] = -1.5;
-	m_target[0] = 0.5;
-	m_target[1] = 0.25;
-	m_target[2] = 0.5;
-	m_dimension = 2;
+	set_HiDPI_scaling_factor(1.0);
+	m_ratio = 1.0;
 }
 //
-void graphics_gl::setHiDPIScalingFactor( double factor ) {
+void graphics_gl::set_HiDPI_scaling_factor( double factor ) {
 	//
 	m_HiDPI_factor = factor;
 }
 //
-void graphics_gl::setup_graphics ( double r, double g, double b, double a ) {
+void graphics_gl::setup_graphics () {
 	//
-	glClearColor(r,g,b,a);
+	glClearColor(0.0,0.0,0.0,0.0);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_LINE_SMOOTH);
@@ -57,31 +51,29 @@ void graphics_gl::setup_graphics ( double r, double g, double b, double a ) {
 	line_width(1.0);
 }
 //
-void graphics_gl::set_camera( const double target[3], const double position[3] ) {
-	//
-	for( int i=0; i<3; ++i ) m_target[i] = target[i];
-	for( int i=0; i<3; ++i ) m_position[i] = position[i];
+void graphics_gl::set_2D_coordinate( double left, double right, double bottom, double top ) {
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glOrtho(left,right,bottom,top,-1.0,1.0);
 }
 //
-void graphics_gl::configure_view( unsigned width, unsigned height, unsigned dim, double scale ) {
-	//
-	m_dimension = dim;
-	glViewport(0,0,width,height);
-	if( dim == 2 ) {
-		glLoadIdentity();
-		glOrtho(0.0,scale,0.0,scale * height / (double)width,-1.0,1.0);
-	} else if ( dim == 3 ) {
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluPerspective( 35, width / (double) height, std::min(0.001,1.0/scale), 5.0*scale );
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glScaled(-1.0, 1.0, 1.0);
-		gluLookAt( m_position[0], m_position[1], m_position[2], m_target[0], m_target[1], m_target[2], 0, 1, 0 );
-	}
+void graphics_gl::set_viewport( unsigned x, unsigned y, unsigned width, unsigned height ) {
+	glViewport(x,y,width,height);
+	m_ratio = width / (double) height;
 }
 //
-void graphics_gl::clear() {
+void graphics_gl::look_at( const double target[3], const double position[3], const double up[3], double fov, double near, double far ) {
+	//
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(fov,m_ratio,near,far);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt( position[0], position[1], position[2], target[0], target[1], target[2], up[0], up[1], up[2] );
+}
+//
+void graphics_gl::clear( const double *v ) {
+	if( v ) glClearColor(v[0],v[1],v[2],v[3]);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 //
@@ -131,8 +123,7 @@ void graphics_gl::vertex3v( const double *v ) {
 //
 void graphics_gl::draw_string( const double *v, std::string str ) const {
 	const char *str_ptr = str.c_str();
-	if( m_dimension == 2 ) glRasterPos2dv(v);
-	if( m_dimension == 3 ) glRasterPos3dv(v);
+	glRasterPos3dv(v);
 	auto font = GLUT_BITMAP_HELVETICA_10;
 	if( m_HiDPI_factor > 1.2 ) font = GLUT_BITMAP_HELVETICA_12;
 	if( m_HiDPI_factor > 1.8 ) font = GLUT_BITMAP_HELVETICA_18;

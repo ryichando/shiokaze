@@ -30,7 +30,7 @@ SHKZ_USING_NAMESPACE
 //
 static const std::vector<size_t> empty;
 class pointgridhash3 : public pointgridhash3_interface {
-private:
+protected:
 	//
 	MODULE_NAME("pointgridhash3")
 	//

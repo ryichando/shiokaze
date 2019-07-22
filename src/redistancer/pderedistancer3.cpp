@@ -31,7 +31,7 @@
 SHKZ_USING_NAMESPACE
 //
 class pderedistancer3 : public redistancer3_interface {
-public:
+protected:
 	//
 	LONG_NAME("PDE Redistancer 3D")
 	MODULE_NAME("pderedistancer3")

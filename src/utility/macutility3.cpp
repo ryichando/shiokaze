@@ -42,7 +42,7 @@ using namespace array_utility3;
 using namespace array_interpolator3;
 //
 class macutility3 : public macutility3_interface {
-private:
+protected:
 	//
 	MODULE_NAME("macutility3")
 	//
@@ -242,6 +242,8 @@ private:
 		// Scoped timer
 		scoped_timer timer(this,"assign_initial_variables");
 		//
+		timer.tick(); console::dump( ">>> Assigining variables...\n" );
+		//
 		// Assign velocity
 		const double sqrt3 = sqrt(3.0);
 		auto velocity_func = reinterpret_cast<vec3d(*)(const vec3d &)>(dylib.load_symbol("velocity"));
@@ -281,6 +283,7 @@ private:
 			auto fluid_func = reinterpret_cast<double(*)(const vec3d &)>(dylib.load_symbol("fluid"));
 			auto solid_func = reinterpret_cast<double(*)(const vec3d &)>(dylib.load_symbol("solid"));
 			if( fluid_func ) {
+				timer.tick(); console::dump( "Assigining fluid levelset..." );
 				if( solid_func ) {
 					fluid->parallel_all([&](int i, int j, int k, auto &it) {
 						vec3d p = m_dx*vec3i(i,j,k).cell();
@@ -295,6 +298,7 @@ private:
 						if( std::abs(value) < sqrt3*m_dx ) it.set(value);
 					});
 				}
+				console::dump( "Done. Took %s.\n", timer.stock("assign_fluid").c_str());
 			}
 			fluid->set_as_levelset(sqrt3*m_dx);
 			fluid->flood_fill();
@@ -311,6 +315,8 @@ private:
 				console::dump( "Done. Took %s.\n", timer.stock("evaluate_density").c_str());
 			}
 		}
+		//
+		console::dump( "<<< Done. Took %s.\n", timer.stock("assign_variables").c_str());
 	}
 	virtual void add_force( vec3d p, vec3d f, macarray3<float> &external_force ) const override {
 		for( unsigned dim : DIMS3 ) {

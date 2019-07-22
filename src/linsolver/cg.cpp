@@ -28,7 +28,7 @@
 SHKZ_USING_NAMESPACE
 //
 template <class N, class T> class cg_solver : public RCMatrix_solver_interface<N,T> {
-private:
+protected:
 	//
 	LONG_NAME("Conjugate Gradient Solver")
 	ARGUMENT_NAME("CG")

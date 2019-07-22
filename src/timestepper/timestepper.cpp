@@ -44,7 +44,7 @@ public:
 		m_maximal_frame = 600;
 	#endif
 	}
-private:
+protected:
 	//
 	// Advance time by the maximal velocity. Returns delta t (time step size)
 	virtual double advance( double max_velocity, double dx ) override {

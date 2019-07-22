@@ -400,7 +400,7 @@ private:
 };
 //
 template <class N, class T> class RCMatrix_factory : public RCMatrix_factory_interface<N,T> {
-private:
+protected:
 	//
 	MODULE_NAME("RCMatrix_factory")
 	//

@@ -35,7 +35,7 @@
 SHKZ_BEGIN_NAMESPACE
 //
 class macbackwardflip2 : public macbackwardflip2_interface {
-private:
+protected:
 	//
 	MODULE_NAME("macbackwardflip2")
 	//

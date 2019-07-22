@@ -130,7 +130,7 @@ vec2d macflipsmoke2::interpolate_velocity( const vec2d &p ) const {
 	return macarray_interpolator2::interpolate(m_velocity,vec2d(),m_dx,p);
 }
 //
-void macflipsmoke2::draw( graphics_engine &g, int width, int height ) const {
+void macflipsmoke2::draw( graphics_engine &g ) const {
 	//
 	// Draw grid lines
 	m_gridvisualizer->draw_grid(g);

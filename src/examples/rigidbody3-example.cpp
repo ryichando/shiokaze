@@ -49,10 +49,7 @@ private:
 		config.get_string("MeshFilePath",m_param.mesh_file_path,"Mesh file path");
 		config.get_unsigned("Substeps",m_param.substeps,"Substeps");
 		config.get_double("TimeStep",m_param.timestep,"Timestep size");
-		//
-		double view_scale (1.0);
-		config.get_double("ViewScale",view_scale,"View scale");
-		set_view_scale(view_scale);
+		config.get_double("ViewScale",m_view_scale,"View scale");
 		//
 		if( m_param.use_mesh_file ) {
 			if( ! filesystem::is_exist(m_param.mesh_file_path.c_str()) ) {
@@ -74,7 +71,7 @@ private:
 		polygon_storage.clear();
 		m_world->clear();
 		//
-		const double vs = get_view_scale();
+		const double vs (m_view_scale);
 		const double hw = vs * 0.5;
 		//
 		rg3::attribution3 wall_attribute = { "wall", 0.0, 0.5, 0.75, false, nullptr };
@@ -199,12 +196,12 @@ private:
 		}
 	};
 	//
-	virtual void draw( graphics_engine &g, int width, int height ) const override {
+	virtual void draw( graphics_engine &g ) const override {
 		//
 		using ge = graphics_engine;
 		//
 		g.color4(1.0,1.0,1.0,0.5);
-		graphics_utility::draw_wired_box(g,get_view_scale());
+		graphics_utility::draw_wired_box(g);
 		//
 		g.color4(1.0,1.0,1.0,1.0);
 		g.draw_string(vec3d().v, console::format_str("Engine name = %s", m_world->engine_name().c_str()));
@@ -250,6 +247,7 @@ private:
 	};
 	//
 	rigidworld3_driver m_world{this,"bullet3_rigidworld3"};
+	double m_view_scale {1.0};
 	polygon3_driver polygon_loader{this,"polygon3"};
 	//
 	struct polygon_info {

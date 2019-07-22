@@ -47,6 +47,8 @@ public:
 		dealloc();
 	}
 	//
+protected:
+	//
 	virtual void configure( configuration &config ) override {
 		config.get_unsigned("TileSize",m_Z,"Tile size per dimension");
 		assert( m_Z*m_Z*m_Z <= std::numeric_limits<unsigned short>::max());

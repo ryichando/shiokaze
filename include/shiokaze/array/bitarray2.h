@@ -30,10 +30,7 @@
 #include <cassert>
 #include <cstdio>
 #include <algorithm>
-#include <memory>
 #include <utility>
-#include <mutex>
-#include <thread>
 #include "shape.h"
 #include "array_core2.h"
 //

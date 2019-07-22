@@ -31,9 +31,10 @@
 SHKZ_USING_NAMESPACE
 //
 class flatrasterizer2 : public particlerasterizer2_interface {
-public:
+protected:
 	//
 	LONG_NAME("Flat Rasterizer 2D")
+	MODULE_NAME("flatrasterizer2")
 	//
 	virtual void build_levelset( array2<float> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const override {
 		//
@@ -76,8 +77,6 @@ public:
 			}
 		});
 	}
-	//
-protected:
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_double("RadiusFactor",m_param.r_factor,"Radius exaggeration factor");

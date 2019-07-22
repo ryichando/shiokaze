@@ -30,7 +30,7 @@
 SHKZ_USING_NAMESPACE
 //
 class SDFGen : public meshlevelset_interface {
-private:
+protected:
 	//
 	LONG_NAME("SDF Distance Field Converter")
 	AUTHOR_NAME("Christopher Batty and Robert Bridson")

@@ -32,17 +32,15 @@ SHKZ_BEGIN_NAMESPACE
 //
 class macbackwardflipsmoke3 : public macsmoke3 {
 public:
+	macbackwardflipsmoke3();
+	virtual ~macbackwardflipsmoke3() {}
+protected:
 	//
 	LONG_NAME("MAC Backward FLIP Smoke 3D")
 	MODULE_NAME("macbackwardflipsmoke3")
 	//
-	macbackwardflipsmoke3();
-	//
 	virtual void idle() override;
-	virtual void draw( graphics_engine &g, int width, int height ) const override;
-	//
-private:
-	//
+	virtual void draw( graphics_engine &g ) const override;
 	virtual void configure( configuration &config ) override;
 	//
 	macbackwardflip3_driver m_backwardflip{this,"macbackwardflip3"};

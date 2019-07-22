@@ -24,7 +24,6 @@
 //
 #include "macliquid3.h"
 #include <shiokaze/core/filesystem.h>
-#include <shiokaze/graphics/graphics_utility.h>
 #include <shiokaze/array/shared_array3.h>
 #include <shiokaze/array/array_upsampler3.h>
 #include <shiokaze/array/macarray_extrapolator3.h>
@@ -64,6 +63,7 @@ void macliquid3::configure( configuration &config ) {
 	m_param.render_mesh = console::system("mitsuba > /dev/null 2>&1") == 0;
 	//
 	config.get_vec3d("Gravity",m_param.gravity.v,"Gravity vector");
+	config.get_bool("MouseInteration",m_param.mouse_interaction, "Enable mouse interaction");
 	config.get_bool("VolumeCorrection",m_param.volume_correction,"Should perform volume correction");
 	config.get_double("VolumeChangeTolRatio",m_param.volume_change_tol_ratio,"Volume change tolerance ratio");
 	config.get_string("MeshPath",m_export_path, "Path to the directory to export meshes");
@@ -85,7 +85,6 @@ void macliquid3::configure( configuration &config ) {
 	//
 	m_shape *= resolution_scale;
 	m_dx = view_scale * m_shape.dx();
-	set_view_scale(view_scale);
 	//
 	m_doubled_shape = 2 * m_shape;
 	m_half_dx = 0.5 * m_dx;
@@ -115,8 +114,7 @@ void macliquid3::post_initialize() {
 	m_macutility->assign_initial_variables(m_dylib,m_velocity,&m_solid,&m_fluid);
 	m_velocity.set_touch_only_actives(true);
 	//
-	// Assign to surface tracker
-	m_macsurfacetracker->assign(m_solid,m_fluid);
+	// Compute the initial volume
 	timer.tick(); console::dump( "Computing the initial volume..." );
 	m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
 	//
@@ -137,11 +135,21 @@ void macliquid3::post_initialize() {
 		m_macproject->project(CFL*m_dx/max_u,m_velocity,m_solid,m_fluid);
 	}
 	//
+	m_camera->set_bounding_box(vec3d().v,m_shape.box(m_dx).v,true);
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
 }
 //
 void macliquid3::setup_window( std::string &name, int &width, int &height ) const {
 	height = width;
+}
+//
+void macliquid3::drag( double x, double y, double z, double u, double v, double w ) {
+	//
+	if( m_param.mouse_interaction ) {
+		double scale (1e3);
+		m_macutility->add_force(vec3d(x,y,z),scale*vec3d(u,v,w),m_external_force);
+		m_force_exist = true;
+	}
 }
 //
 void macliquid3::inject_external_force( macarray3<float> &velocity, double dt ) {
@@ -216,9 +224,7 @@ void macliquid3::idle() {
 	extend_both();
 	//
 	// Advect surface
-	m_macsurfacetracker->assign(m_solid,m_fluid);
-	m_macsurfacetracker->advect(m_velocity,dt);
-	m_macsurfacetracker->get(m_fluid);
+	m_macsurfacetracker->advect(m_fluid,m_solid,m_velocity,dt);
 	//
 	// Velocity advection
 	shared_macarray3<float> velocity_save(m_velocity);
@@ -268,7 +274,7 @@ void macliquid3::do_export_mesh( unsigned frame ) const {
 	auto uv_coordinate_func = [&](const vec3d &p) { return vec2d(p[0],0.0); };
 	//
 	timer.tick(); console::dump( "Generating mesh..." );
-	m_macsurfacetracker->export_fluid_mesh(m_export_path,frame,vertex_color_func,uv_coordinate_func);
+	m_macsurfacetracker->export_fluid_mesh(m_export_path,frame,m_solid,m_fluid,vertex_color_func,uv_coordinate_func);
 	console::dump( "Done. Took %s\n", timer.stock("generate_mesh").c_str());
 	do_export_solid_mesh();
 }
@@ -372,10 +378,7 @@ void macliquid3::do_export_solid_mesh() const {
 	}
 }
 //
-void macliquid3::draw( graphics_engine &g, int width, int height ) const {
-	//
-	g.color4(1.0,1.0,1.0,0.5);
-	graphics_utility::draw_wired_box(g,get_view_scale());
+void macliquid3::draw( graphics_engine &g ) const {
 	//
 	// Draw projection component
 	m_macproject->draw(g);
@@ -389,7 +392,7 @@ void macliquid3::draw( graphics_engine &g, int width, int height ) const {
 	if( array_utility3::levelset_exist(solid_to_visualize())) m_gridvisualizer->draw_solid(g,solid_to_visualize());
 	//
 	// Visualize levelset
-	m_macsurfacetracker->draw(g);
+	m_gridvisualizer->draw_fluid(g,m_solid,m_fluid);
 }
 //
 extern "C" module * create_instance() {

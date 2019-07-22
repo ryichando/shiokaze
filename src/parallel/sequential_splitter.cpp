@@ -32,9 +32,10 @@
 SHKZ_BEGIN_NAMESPACE
 //
 class sequential_splitter : public loop_splitter {
-public:
+protected:
 	//
 	LONG_NAME("Sequential Loop Splitter")
+	MODULE_NAME("sequential_splitter")
 	//
 	virtual const void* new_context ( size_t size, int num_threads ) const override {
 		//
@@ -111,7 +112,7 @@ public:
 	virtual void delete_context( const void *context_ptr ) const override {
 		delete reinterpret_cast<const context *>(context_ptr);
 	}
-private:
+	//
 	struct context {
 		std::vector<size_t> start;
 		std::vector<size_t> end;

@@ -26,31 +26,23 @@
 #define SHKZ_DRAWABLE_H
 //
 #include <shiokaze/core/runnable.h>
-#include <shiokaze/graphics/graphics_engine.h>
+#include "UI_interface.h"
+//
+#if SPATIAL_DIM == 3
+#include <shiokaze/ui/camera3_interface.h>
+#elif SPATIAL_DIM == 2
+#include <shiokaze/ui/camera2_interface.h>
+#endif
 //
 SHKZ_BEGIN_NAMESPACE
 //
 /** @file */
 /// \~english @brief Interface for implementing drawable classes.
 /// \~japanese @brief 描画可能なクラスを実装するためのインターフェース。
-class drawable : public runnable {
+class drawable : public runnable, public UI_interface {
 public:
 	//
 	LONG_NAME("Drawable")
-	/**
-	 \~english @brief Set domain scale. Default scale (1.0) would span view size from (0.0-1.0) meter domain.
-	 @param[in] scale Scale.
-	 \~japanese @brief 領域の広さのスケールを設定する。初期値のスケーリング (1.0) はビューの大きさを 0.0-1.0 メートル内に設定する。
-	 @param[in] scale スケール。
-	 */
-	void set_view_scale ( double scale ) { m_scale = scale; }
-	/**
-	 \~english @brief Get the domain scale.
-	 @return Scale.
-	 \~japanese @brief 領域の広さのスケールを得る。
-	 @return スケール。
-	 */
-	double get_view_scale () const { return m_scale; }
 	/**
 	 \~english @brief Recursively call configure.
 	 @param[in] config Configuration setting.
@@ -62,17 +54,23 @@ public:
 		runnable::recursive_initialize (environment);
 	}
 	/**
+	 \~english Handle an UI input event.
+	 @param[in] Event information.
+	 \~japanese @brief UI の入力イベントを処理する。
+	 @param[in] イベントの情報。
+	 */
+	virtual bool handle_event( const event_structure &event ) override {
+		bool handled = m_camera->handle_event(event);
+		if( ! handled && m_camera->relay_event(event)) {
+			return UI_interface::handle_event(m_camera->convert(event));
+		}
+		return handled;
+	}
+	/**
 	 \~english @brief Re-initialize instance.
 	 \~japanese @brief インスタンスを再初期化する。
 	 */
 	virtual void reinitialize() { recursive_initialize(m_environment); }
-	/**
-	 \~english @brief Set up graphics environment.
-	 @param[in] g Graphics engine.
-	 \~japanese @brief グラフィックス環境をセットアップする。
-	 @param[in] g グラフィックスエンジン。
-	 */
-	virtual void setup_graphics ( graphics_engine &g ) const { g.setup_graphics(); };
 	/**
 	 \~english @brief Set up an initial new window environment.
 	 @param[out] name Name of the window.
@@ -84,106 +82,6 @@ public:
 	 @param[out] height ウィンドウの高さ。
 	 */
 	virtual void setup_window( std::string &name, int &width, int &height ) const {}
-	/**
-	 \~english @brief Function that catches key down event.
-	 @param[in] key Capitalized key.
-	 \~japanese @brief キーが押されたら呼ばれる関数。
-	 @param[in] key 大文字の英文字。
-	 */
-	virtual bool keyboard( char key ) {
-		switch ( key ) {
-			case '/':
-				set_running(! is_running());
-				return true;
-			case 'R':
-				reinitialize();
-				return true;
-			case '.':
-				if( ! is_running()) idle ();
-				return true;
-		}
-		return false;
-	}
-	/**
-	 \~english @brief Function that catches passive cursor event.
-	 @param[in] width Window width.
-	 @param[in] height Window height.
-	 @param[in] x Cursor position on x pixel coordinate.
-	 @param[in] y Cursor position on y pixel coordinate.
-	 \~japanese @brief カーソルが動いた時に呼び出される関数。
-	 @param[in] width ウィンドウの幅。
-	 @param[in] height ウィンドウの高さ。
-	 @param[in] x カーソルの x 座標のピクセル座標。
-	 @param[in] y カーソルの y 座標のピクセル座標。
-	 */
-	virtual void cursor( int width, int height, double x, double y ) {}
-	/**
-	 \~english @brief Function that catches mouse event.
-	 @param[in] width Window width.
-	 @param[in] height Window height.
-	 @param[in] x Cursor position on x pixel coordinate.
-	 @param[in] y Cursor position on y pixel coordinate.
-	 @param[in] button Mouse button number.
-	 @param[in] action Mouse action (Mouse down = 1 Mouse release = 0)
-	 \~japanese @brief マウスイベントが発生した時に呼ばれる関数。
-	 @param[in] width ウィンドウの幅。
-	 @param[in] height ウィンドウの高さ。
-	 @param[in] x カーソルの x 座標のピクセル座標。
-	 @param[in] y カーソルの y 座標のピクセル座標。
-	 @param[in] button マウスのボタンのナンバー。
-	 @param[in] action アクションの種類。マウスダウン＝1、マウスアップ=0。
-	 */
-	virtual void mouse( int width, int height, double x, double y, int button, int action ) {}
-	/**
-	 \~english @brief Function that catches dragging cursor event.
-	 @param[in] width Window width.
-	 @param[in] height Window height.
-	 @param[in] x Cursor position on x pixel coordinate.
-	 @param[in] y Cursor position on y pixel coordinate.
-	 @param[in] u Cursor movement on x pixel coordinate.
-	 @param[in] v Cursor movement on y pixel coordinate.
-	 \~japanese @brief カーソルをドラッグした時に呼び出される関数。
-	 @param[in] width ウィンドウの幅。
-	 @param[in] height ウィンドウの高さ。
-	 @param[in] x カーソルの x 座標のピクセル座標。
-	 @param[in] y カーソルの y 座標のピクセル座標。
-	 @param[in] u カーソルの x 成分に動いた長さ。
-	 @param[in] v カーソルの y 成分に動いた長さ。
-	 */
-	virtual void drag( int width, int height, double x, double y, double u, double v ) {}
-	/**
-	 \~english @brief Function that catches window resizing events.
-	 @param[in] g Graphics engine.
-	 @param[in] width Width of the window.
-	 @param[in] height Height of the window.
-	 \~japanese @brief ウィンドウのリサイズイベントが発生する時に呼ばれる関数。
-	 @param[in] g グラフィックスエンジン。
-	 @param[in] width ウィンドウの横幅。
-	 @param[in] height ウィンドウの高さ。
-	 */
-	virtual void resize( graphics_engine &g, int width, int height ) { view_change(g,width,height); }
-	/**
-	 \~english @brief Function that catches view change evenets.
-	 @param[in] g Graphics engine.
-	 @param[in] width Width of the window.
-	 @param[in] height Height of the window.
-	 \~japanese @brief ビューの変更が発生する時に呼ばれる関数。
-	 @param[in] g グラフィックスエンジン。
-	 @param[in] width ウィンドウの横幅。
-	 @param[in] height ウィンドウの高さ。
-	 */
-	virtual void view_change( graphics_engine &g, int width, int height ) { g.configure_view(width,height,SPATIAL_DIM,m_scale); }
-	/**
-	 \~english @brief Function that catches draw event.
-	 @param[in] g Graphics engine.
-	 @param[in] width Width of the window.
-	 @param[in] height Height of the window.
-	 \~japanese @brief 描画イベントが発生する時に呼ばれる関数。
-	 @param[in] g グラフィックスエンジン。
-	 @param[in] width ウィンドウの横幅。
-	 @param[in] height ウィンドウの高さ。
-	 */
-	virtual void draw( graphics_engine &g, int width, int height ) const {}
 	/**
 	 \~english @brief Function to tell the host program that program should quit.
 	 @return If return \c true, program will exit. \c false otherwise.
@@ -205,11 +103,25 @@ public:
 	 @return もし \c true を返せば、SHKZ ロゴは表示されない。もし \c false を返せば、ロゴは表示される。
 	 */
 	virtual bool hide_logo() const { return false; }
+	/**
+	 \~english @brief Get current cursor icon.
+	 @return Current icon.
+	 \~japanese @brief 現在のカーソルのアイコンを得る。
+	 @return 現在のアイコン。
+	 */
+	virtual UI_interface::CURSOR_TYPE get_current_cursor() const override {
+		return m_camera->get_current_cursor();
+	}
 	//
-private:
+protected:
 	//
 	environment_map m_environment;
-	double m_scale {1.0};
+	//
+#if SPATIAL_DIM == 3
+	camera3_driver m_camera{this,"camera3"};
+#elif SPATIAL_DIM == 2
+	camera2_driver m_camera{this,"camera2"};
+#endif
 };
 //
 SHKZ_END_NAMESPACE

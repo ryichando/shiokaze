@@ -43,7 +43,7 @@ SHKZ_USING_NAMESPACE
 #define VERIFICATION_TEST		0
 //
 class gridutility3 : public gridutility3_interface {
-private:
+protected:
 	//
 	MODULE_NAME("gridutility3")
 	//

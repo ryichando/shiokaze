@@ -147,10 +147,10 @@ vec3d macflipsmoke3::interpolate_velocity( const vec3d &p ) const {
 	return macarray_interpolator3::interpolate(m_velocity,vec3d(),m_dx,p);
 }
 //
-void macflipsmoke3::draw( graphics_engine &g, int width, int height ) const {
+void macflipsmoke3::draw( graphics_engine &g ) const {
 	//
 	g.color4(1.0,1.0,1.0,0.5);
-	graphics_utility::draw_wired_box(g,get_view_scale());
+	graphics_utility::draw_wired_box(g);
 	//
 	// Draw density
 	if( (macsmoke3::m_param).use_dust ) draw_dust_particles(g);

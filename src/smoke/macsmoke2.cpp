@@ -79,7 +79,6 @@ void macsmoke2::configure( configuration &config ) {
 	//
 	m_shape *= resolution_scale;
 	m_dx = view_scale * m_shape.dx();
-	set_view_scale(view_scale);
 }
 //
 void macsmoke2::post_initialize () {
@@ -133,11 +132,14 @@ void macsmoke2::post_initialize () {
 		});
 		rasterize_dust_particles(m_density);
 	}
+	//
+	m_camera->set_bounding_box(vec2d().v,m_shape.box(m_dx).v,true);
 }
 //
-void macsmoke2::drag( int width, int height, double x, double y, double u, double v ) {	
+void macsmoke2::drag( double x, double y, double z, double u, double v, double w ) {
 	//
-	m_macutility->add_force(vec2d(x,y),vec2d(u,v),m_external_force);
+	double scale (1e3);
+	m_macutility->add_force(vec2d(x,y),scale*vec2d(u,v),m_external_force);
 	m_force_exist = true;
 }
 //
@@ -297,7 +299,7 @@ void macsmoke2::draw_dust_particles( graphics_engine &g ) const {
 	}
 }
 //
-void macsmoke2::draw( graphics_engine &g, int width, int height ) const {
+void macsmoke2::draw( graphics_engine &g ) const {
 	//
 	// Draw density
 	if( m_param.use_dust ) draw_dust_particles(g);

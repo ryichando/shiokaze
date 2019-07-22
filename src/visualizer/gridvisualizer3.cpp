@@ -30,7 +30,9 @@
 SHKZ_USING_NAMESPACE
 //
 class gridvisualizer3 : public gridvisualizer3_interface {
-private:
+protected:
+	//
+	MODULE_NAME("gridvisualizer3")
 	//
 	virtual void draw_active( graphics_engine &g, const array3<float> &q ) const override {
 		if( m_param.draw_active ) {

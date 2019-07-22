@@ -40,7 +40,7 @@ SHKZ_BEGIN_NAMESPACE
 class lineararray2 : public array_core2 {
 public:
 	lineararray2 () = default;
-private:
+protected:
 	//
 	LONG_NAME("Linear Array 2D")
 	ARGUMENT_NAME("LinArray")

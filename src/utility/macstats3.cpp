@@ -35,7 +35,7 @@ using namespace array_utility3;
 using namespace array_interpolator3;
 //
 class macstats3 : public macstats3_interface {
-private:
+protected:
 	//
 	MODULE_NAME("macstats3")
 	//

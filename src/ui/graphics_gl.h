@@ -44,9 +44,11 @@ public:
 	//
 	graphics_gl ();
 	//
-	virtual void setup_graphics ( double r=0.0, double g=0.0, double b=0.0, double a=1.0 ) override;
-	virtual void configure_view( unsigned width, unsigned height, unsigned dim, double scale ) override;
-	virtual void clear() override;
+	virtual void setup_graphics () override;
+	virtual void set_viewport( unsigned x, unsigned y, unsigned width, unsigned height ) override;
+	virtual void set_2D_coordinate( double left, double right, double bottom, double top ) override;
+	virtual void look_at( const double target[3], const double position[3], const double up[3], double fov, double near, double far ) override;
+	virtual void clear( const double *v ) override;
 	//
 	virtual void color4v( const double *v ) override;
 	virtual void vertex3v( const double *v ) override;
@@ -59,16 +61,13 @@ public:
 	//
 	virtual void draw_string( const double *v, std::string str ) const override;
 	//
-	void setHiDPIScalingFactor( double factor );
+	void set_HiDPI_scaling_factor( double factor );
 	double get_HiDPI_scaling_factor() const;
-	//
-	void set_camera( const double target[3], const double position[3] );
 	//
 private:
 	//
 	double m_HiDPI_factor;
-	double m_position[3], m_target[3];
-	int m_dimension;
+	double m_ratio;
 };
 //
 SHKZ_END_NAMESPACE

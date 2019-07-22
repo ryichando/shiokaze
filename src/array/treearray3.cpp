@@ -32,6 +32,7 @@
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <thread>
 #include <cstring>
 #include "bitcount/bitcount.h"
@@ -1044,6 +1045,8 @@ public:
 		dealloc();
 	}
 	//
+protected:
+	//
 	void dealloc () {
 		if( m_root ) {
 			delete m_root;
@@ -1058,11 +1061,11 @@ public:
 		thread_local std::thread::id thread_id = std::this_thread::get_id();
 		if( thread_id == m_main_thread_id ) return m_main_cache;
 		//
-		thread_local std::vector<std::pair<void *,std::shared_ptr<cache_struct> > > cache_list;
+		thread_local std::vector<std::pair<const treearray3 *,std::shared_ptr<cache_struct> > > cache_list;
 		for( const auto &c : cache_list ) {
-			if( c.first == (void *)this ) return c.second->ptr;
+			if( c.first == this ) return c.second->ptr;
 		}
-		cache_list.push_back({(void *)this,std::make_shared<cache_struct>(m_host)});
+		cache_list.push_back({this,std::make_shared<cache_struct>(m_host)});
 		return cache_list.back().second->ptr;
 	};
 	//

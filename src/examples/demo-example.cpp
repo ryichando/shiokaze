@@ -46,27 +46,31 @@ private:
 		console::dump( "Initializing demo...\n");
 	};
 	//
-	virtual bool keyboard ( char key ) override {
+	virtual bool keyboard( int key, int action, int mods ) override {
 		// Dump keyboard event
-		console::dump( "Keyboard %c\n", key );
-		return true;
+		if( key < 255 ) {
+			console::dump( "Keyboard %c action = %d, mods = %d\n", key, action, mods );
+		} else {
+			console::dump( "Keyboard = special, action = %d, mods = %d\n", action, mods );
+		}
+		return false;
 	};
 	//
 	virtual void idle() override {
 		// Do nothing for now
 	};
 	//
-	virtual void cursor( int width, int height, double x, double y ) override {
-		// Record the mouse location
+	virtual void cursor( double x, double y, double z ) override {
 		m_mouse_pos = vec2d(x,y);
 	};
 	//
-	virtual void mouse( int width, int height, double x, double y, int button, int action ) override {
+	virtual void mouse( double x, double y, double z, int button, int action, int mods ) override {
+		//
 		// Dump mouse event
-		console::dump( "Mouse (x,y) = (%.2f,%.2f), (%d), (%d)\n", x, y, button, action );
+		console::dump( "button = %d, action = %d, mods = %d, mouse = (%.2f,%.2f)\n", button, action, mods, m_mouse_pos[0], m_mouse_pos[1] );
 	};
 	//
-	virtual void draw( graphics_engine &g, int width, int height ) const override {
+	virtual void draw( graphics_engine &g ) const override {
 		//
 		// Draw a message
 		g.color4(1.0,1.0,1.0,1.0);
@@ -75,10 +79,9 @@ private:
 		// Draw a point at the mouse location
 		g.point_size(2.0);
 		g.begin(graphics_engine::MODE::POINTS);
-		g.vertex3v(m_mouse_pos.v);
+		g.vertex2v(m_mouse_pos.v);
 		g.end();
 		g.point_size(1.0);
-		//
 	};
 	//
 	vec2d m_mouse_pos;

@@ -244,7 +244,6 @@ public:
 		for( auto it=tmp_result.begin(); it!=tmp_result.end(); ++it ) result.push_back(*it);
 		return result;
 	}
-	//
 };
 //
 using rigidworld2_ptr = std::unique_ptr<rigidworld2_interface>;

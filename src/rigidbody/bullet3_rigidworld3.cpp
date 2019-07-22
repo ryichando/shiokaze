@@ -74,7 +74,7 @@ public:
 };
 //
 class bullet3_rigidworld3 : public rigidworld3_interface {
-private:
+protected:
 	//
 	LONG_NAME("Bullet3 Rigidbody Engine")
 	MODULE_NAME("bullet3_rigidworld3")

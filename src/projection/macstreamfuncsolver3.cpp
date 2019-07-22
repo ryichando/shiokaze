@@ -47,7 +47,7 @@ template<class T> static const T& permute_clamp(const macarray3<T> &array, int d
 //
 static const double eps = 1e-8;
 class macstreamfuncsolver3 : public macproject3_interface {
-private:
+protected:
 	//
 	LONG_NAME("MAC Streamfunction Solver 3D")
 	MODULE_NAME("macstreamfuncsolver3")

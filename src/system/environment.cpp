@@ -58,7 +58,7 @@ static ::std::string run( const char *format, ...) {
 }
 //
 class environment : public environment_interface {
-public:
+protected:
 	//
 	MODULE_NAME("environment")
 	//

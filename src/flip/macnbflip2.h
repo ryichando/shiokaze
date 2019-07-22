@@ -41,7 +41,7 @@
 SHKZ_BEGIN_NAMESPACE
 //
 class macnbflip2 : public macflip2_interface {
-public:
+protected:
 	//
 	LONG_NAME("MAC Narrowband FLIP 2D")
 	MODULE_NAME("macnbflip2")
@@ -87,8 +87,6 @@ public:
 	//
 	// Get all the FLIP particles.
 	virtual std::vector<macflip2_interface::particle2> get_particles() const override;
-	//
-protected:
 	//
 	virtual void initialize( const shape2 &shape, double dx ) override;
 	virtual void post_initialize() override;

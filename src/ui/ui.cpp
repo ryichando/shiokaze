@@ -50,116 +50,126 @@
 //
 SHKZ_USING_NAMESPACE
 //
-static bool space_pressed (false), keyup_pressed (false), keydown_pressed (false);
-static double camera_r (2.5);
-static double camera_angle_xz (-0.65 * 3.1514);
-static double camera_angle_y (1.0);
-//
-static vec3d camera_target, camera_position;
-static void set_camera_pos( double view_scale ) {
-	camera_target = view_scale * vec3d(0.5,0.35,0.5);
-	camera_position = camera_target + view_scale * vec3d(camera_r*cos(camera_angle_xz),camera_angle_y,camera_r*sin(camera_angle_xz));
-}
 #ifdef USE_OPENGL
 //
 static void error_callback(int error, const char* description) {
 	::fprintf(stderr, "Error: %s\n", description);
 }
 //
+static int convert_modifier( int mods ) {
+	int result (0);
+	if( mods & GLFW_MOD_SHIFT ) result |= UI_interface::MOD_SHIFT;
+	if( mods & GLFW_MOD_CONTROL ) result |= UI_interface::MOD_CONTROL;
+	if( mods & GLFW_MOD_ALT ) result |= UI_interface::MOD_ALT;
+	if( mods & GLFW_MOD_SUPER ) result |= UI_interface::MOD_SUPER;
+	if( mods & GLFW_MOD_CAPS_LOCK ) result |= UI_interface::MOD_CAPS_LOCK;
+	if( mods & GLFW_MOD_NUM_LOCK ) result |= UI_interface::MOD_NUM_LOCK;
+	return result;
+}
+//
 static void key_callback(::GLFWwindow* window, int key, int scancode, int action, int mods) {
 	//
-	if( key == GLFW_KEY_SPACE  ) {
-		space_pressed = action;
-	} else if( key == GLFW_KEY_UP  ) {
-		keyup_pressed = action;
-	} else if( key == GLFW_KEY_DOWN  ) {
-		keydown_pressed = action;
+	ui *g = static_cast<ui *>(::glfwGetWindowUserPointer(window));
+	drawable *instance = g->get_instance();
+	//
+	if ( key == GLFW_KEY_ESCAPE ) {
+		::glfwSetWindowShouldClose(window,1);
+	} else if( action == GLFW_PRESS && key == GLFW_KEY_SLASH ) {
+		instance->set_running( ! instance->is_running());
+	} else if( action == GLFW_PRESS && key == GLFW_KEY_R ) {
+		instance->reinitialize();
 	} else {
-		ui *g = static_cast<ui *>(::glfwGetWindowUserPointer(window));
-		drawable *instance = g->getInstance();
+		int a;
+		if( action == GLFW_PRESS ) a = UI_interface::ACTION::PRESS;
+		else if( action == GLFW_REPEAT ) a = UI_interface::ACTION::REPEAT;
+		else if( action == GLFW_RELEASE ) a = UI_interface::ACTION::RELEASE;
 		//
-		if( action == GLFW_PRESS ) {
-			if (key == GLFW_KEY_ESCAPE ) {
-				::glfwSetWindowShouldClose(window,1);
-			} else if( key == GLFW_KEY_SPACE ) {
-				if( g->strong_pause_step == g->step ) g->strong_pause_step = 0;
-				else instance->keyboard(key);
-			} else {
-				instance->keyboard(key);
-			}
-		}
+		UI_interface::event_structure event;
+		event.type = UI_interface::event_structure::KEYBOARD;
+		event.key = key;
+		event.action = a;
+		event.mods = convert_modifier(mods);
+		instance->handle_event(event);
 	}
-}
-//
-static void transform_coord_pos ( int width, int height, double *p ) {
-	p[0] = p[0] / (double)width;
-	p[1] = (1.0-p[1]/height) * (height / (double)width);
-}
-//
-static void transform_coord_force ( int width, int height, double *u ) {
-	double ratio = height / (double)width;
-	u[1] = -u[1] * ratio;
 }
 //
 static void cursor_position_callback(::GLFWwindow* window, double xpos, double ypos) {
 	//
 	ui *g = static_cast<ui *>(::glfwGetWindowUserPointer(window));
-	drawable *instance = g->getInstance();
-	double scale = instance->get_view_scale();
+	drawable *instance = g->get_instance();
+	float scale_x, scale_y;
+	::glfwGetWindowContentScale(window,&scale_x,&scale_y);
+	float x = scale_x*xpos;
+	float y = scale_x*ypos;
+	g->m_mouse_pos = vec2d(x,y);
 	//
-	g->mouse_p[0] = xpos * g->width / (double) g->w_width;
-	g->mouse_p[1] = ypos * g->height / (double) g->w_height;
+	UI_interface::event_structure event;
+	event.type = UI_interface::event_structure::CURSOR;
+	event.x = x;
+	event.y = y;
+	instance->handle_event(event);
 	//
-	vec2d tranformed_pos (g->mouse_p);
-	transform_coord_pos(g->width, g->height, tranformed_pos.v );
-	instance->cursor(g->width, g->height, tranformed_pos[0], tranformed_pos[1]);
-	//
-	if( g->prev_mouse_p[0] && g->mouse_pressed ) {
-		//
-		g->force = g->mouse_p - g->prev_mouse_p;
-		g->force_accumulation += g->force;
-		g->mouse_accumulation ++;
-		//
-		double u = g->force_accumulation[0] / g->mouse_accumulation;
-		double v = g->force_accumulation[1] / g->mouse_accumulation;
-		//
-		vec2d tranformed_force(u,v);
-		transform_coord_force(g->width, g->height, tranformed_force.v );
-		//
-		instance->drag( g->width, g->height, scale * tranformed_pos[0], scale * tranformed_pos[1], tranformed_force[0], tranformed_force[1] );
-		//
+	if( g->m_accumulation ) {
+		vec2d f = (vec2d(x,y)-g->m_pos0) / (double)g->m_accumulation;
+		UI_interface::event_structure event;
+		event.type = UI_interface::event_structure::DRAG;
+		event.x = x;
+		event.y = y;
+		event.u = f[0];
+		event.v = f[1];
+		instance->handle_event(event);
+		++ g->m_accumulation;
+	} else {
+		g->m_pos0 = vec2d(x,y);
 	}
+}
+//
+static void mouse_scroll_callback(::GLFWwindow* window, double xoffset, double yoffset) {
 	//
-	g->prev_mouse_p = g->mouse_p;
+	ui *g = static_cast<ui *>(::glfwGetWindowUserPointer(window));
+	drawable *instance = g->get_instance();
+	UI_interface::event_structure event;
+	event.type = UI_interface::event_structure::SCROLL;
+	event.x = xoffset;
+	event.y = yoffset;
+	instance->handle_event(event);
 }
 //
 static void mouse_button_callback(::GLFWwindow* window, int button, int action, int mods) {
 	//
 	ui *g = static_cast<ui *>(::glfwGetWindowUserPointer(window));
-	drawable *instance = g->getInstance();
+	drawable *instance = g->get_instance();
+	int a;
+	if( action == GLFW_PRESS ) a = UI_interface::ACTION::PRESS;
+	else if( action == GLFW_RELEASE ) a = UI_interface::ACTION::RELEASE;
 	//
-	vec2d tranformed_pos (g->mouse_p);
-	transform_coord_pos(g->width, g->height, tranformed_pos.v );
-	instance->mouse(g->width,g->height,tranformed_pos[0],tranformed_pos[1],button,action);
+	UI_interface::event_structure event;
+	event.type = UI_interface::event_structure::MOUSE;
+	event.x = g->m_mouse_pos[0];
+	event.y = g->m_mouse_pos[1];
+	event.button = button;
+	event.action = a;
+	event.mods = convert_modifier(mods);
+	instance->handle_event(event);
 	//
-	g->mouse_pressed = action;
-	if( ! action ) {
-		g->mouse_accumulation = 0;
-		g->force_accumulation = vec2d();
+	if( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS ) {
+		g->m_accumulation = 1;
+	} else if( action == GLFW_RELEASE ) {
+		g->m_accumulation = 0;
 	}
 }
 //
-static void window_size_callback(::GLFWwindow* window, int _width, int _height) {
+static void window_size_callback(::GLFWwindow* window, int width, int height) {
 	//
 	ui *g = static_cast<ui *>(::glfwGetWindowUserPointer(window));
-	drawable *instance = g->getInstance();
-	graphics_engine *ge = g->getGraphicsEngine();
+	drawable *instance = g->get_instance();
+	::glfwGetFramebufferSize(window,&width,&height);
 	//
-	g->w_width = _width;
-	g->w_height = _height;
-	::glfwGetFramebufferSize(window,&g->width,&g->height);
-	//
-	instance->resize(*ge,g->width,g->height);
+	UI_interface::event_structure event;
+	event.type = UI_interface::event_structure::RESIZE;
+	event.width = width;
+	event.height = height;
+	instance->handle_event(event);
 }
 //
 static void write_image( image_io_interface *image_io, std::string path, int width, int height ) {
@@ -194,21 +204,15 @@ static module* alloc_module ( configuration &config ) {
 //
 ui::ui ( drawable *instance ) {
 	//
-	this->instance = instance;
-	until = 0;
-	strong_pause_step = 0;
-	w_width = 600;
-	w_height = 600;
-	w_scale = 1.0;
-	rotate_speed = 1.0;
-	mouse_accumulation = 0;
-	mouse_pressed = false;
-	show_logo = true;
+	m_instance = instance;
+	m_until = 0;
+	m_window_scale = 1.0;
+	m_show_logo = true;
 }
 //
 ui::~ui() {
-	if( graphics_instance ) delete graphics_instance;
-	graphics_instance = nullptr;
+	if( m_graphics_instance ) delete m_graphics_instance;
+	m_graphics_instance = nullptr;
 }
 //
 static std::string group_name ("User Interface");
@@ -217,36 +221,35 @@ static std::string argument_name ("UI");
 void ui::load( configuration &config ) {
 	configuration::auto_group group(config,group_name,argument_name);
 #ifdef USE_OPENGL
-	graphics_instance = new graphics_gl;
+	m_graphics_instance = new graphics_gl;
 #else
-	graphics_instance = nullptr;
+	m_graphics_instance = nullptr;
 #endif
-	show_logo = ! instance->hide_logo();
-	config.get_bool("ShowLogo",show_logo,"Whether to show logo");
-	if( config.exist("Screenshot") || show_logo ) {
-		image_io = image_io_interface::quick_load_module(config,"image_io");
+	m_show_logo = ! m_instance->hide_logo();
+	config.get_bool("ShowLogo",m_show_logo,"Whether to show logo");
+	if( config.exist("Screenshot") || m_show_logo ) {
+		m_image_io = image_io_interface::quick_load_module(config,"image_io");
 	}
 }
 //
 void ui::configure( configuration &config ) {
 	//
 	if( console::get_root_path().size()) {
-		screenshot_path = console::get_root_path() + "/screenshot";
-		if( ! filesystem::is_exist(screenshot_path)) filesystem::create_directory(screenshot_path);
+		m_screenshot_path = console::get_root_path() + "/screenshot";
+		if( ! filesystem::is_exist(m_screenshot_path)) filesystem::create_directory(m_screenshot_path);
 	}
-	if( image_io ) {
-		image_io->recursive_configure(config);
+	if( m_image_io ) {
+		m_image_io->recursive_configure(config);
 	}
 	//
 	configuration::auto_group group(config,group_name,argument_name);
-	config.get_string("Screenshot",screenshot_path,"Screnshot path");
-	config.get_integer("RecordUntil",until,"Maximal screenshot frame to quit");
-	config.get_integer("PauseStep", strong_pause_step,"Timestep to pause");
-	config.get_double("WindowScale",w_scale,"Widnow size scale");
-	config.get_double("RotationSpeed",rotate_speed,"View rotation speed");
+	config.get_string("Screenshot",m_screenshot_path,"Screnshot path");
+	config.get_integer("RecordUntil",m_until,"Maximal screenshot frame to quit");
+	config.get_double("WindowScale",m_window_scale,"Widnow size scale");
+	config.get_bool("Paused",m_paused,"Paused on start");
 	//
-	if( screenshot_path.size()) {
-		assert(filesystem::is_exist(screenshot_path));
+	if( m_screenshot_path.size()) {
+		assert(filesystem::is_exist(m_screenshot_path));
 	}
 }
 //
@@ -276,10 +279,10 @@ void ui::run () {
 #if USE_OPENGL
 	//
 	// Make sure that the instance is not null
-	assert( instance );
-	assert( graphics_instance );
+	assert( m_instance );
+	assert( m_graphics_instance );
 	//
-	graphics_gl &ge = *static_cast<graphics_gl *>(graphics_instance);
+	graphics_gl &ge = *static_cast<graphics_gl *>(m_graphics_instance);
 	//
 	// Set error callback
 	::glfwSetErrorCallback(error_callback);
@@ -290,24 +293,24 @@ void ui::run () {
 	}
 	//
 	// Create a windowed mode window and its OpenGL context
-	std::string window_name = instance->get_name();
-	instance->setup_window(window_name,w_width,w_height);
-	w_width *= w_scale;
-	w_height *= w_scale;
-	GLFWwindow *window = ::glfwCreateWindow(w_width, w_height, window_name.c_str(), nullptr, nullptr);
+	int w_width (640);
+	int w_height (400);
+	//
+	std::string window_name = m_instance->get_name();
+	m_instance->setup_window(window_name,w_width,w_height);
+	w_width *= m_window_scale;
+	w_height *= m_window_scale;
+	GLFWwindow *window = ::glfwCreateWindow(w_width,w_height,window_name.c_str(),nullptr,nullptr);
 	if ( ! window ) {
 		::glfwTerminate();
 		return;
 	}
 	//
 	// Get frame buffer size
+	int width, height;
 	::glfwGetFramebufferSize(window,&width,&height);
 	double dpi_scaling = width / (double) w_width;
-	ge.setHiDPIScalingFactor(dpi_scaling);
-	//
-	// Set camera origin
-	set_camera_pos(instance->get_view_scale());
-	ge.set_camera(camera_target.v,camera_position.v);
+	ge.set_HiDPI_scaling_factor(dpi_scaling);
 	//
 	// Enable multi sampling for nicer view
 	::glfwWindowHint(GLFW_SAMPLES,4);
@@ -324,6 +327,9 @@ void ui::run () {
 	// Set mouse callback
 	::glfwSetMouseButtonCallback(window, mouse_button_callback);
 	//
+	// Set scroll callback
+	::glfwSetScrollCallback(window, mouse_scroll_callback);
+	//
 	// Set window resize callback
 	::glfwSetWindowSizeCallback(window, window_size_callback);
 	//
@@ -331,20 +337,26 @@ void ui::run () {
 	::glfwMakeContextCurrent(window);
 	//
 	// Initialize graphics
-	instance->setup_graphics(ge);
+	ge.setup_graphics();
 	//
 	// Call resize event
-	instance->resize(ge,width,height);
+	{
+		UI_interface::event_structure event;
+		event.type = UI_interface::event_structure::RESIZE;
+		event.width = width;
+		event.height = height;
+		m_instance->handle_event(event);
+	}
 	//
 	// Load logo
 	GLuint texture;
 	unsigned logo_width, logo_height;
-	if( show_logo ) {
+	if( m_show_logo ) {
 		//
 		std::string image_path = filesystem::find_resource_path("ui","SHKZ_Logo.png");
-		if( image_io && image_io->read(image_path) ) {
+		if( m_image_io && m_image_io->read(image_path) ) {
 			std::vector<unsigned char> data;
-			image_io->get_image( logo_width, logo_height, data );
+			m_image_io->get_image( logo_width, logo_height, data );
 			if( ! data.empty() ) {
 				::glPixelStorei(GL_UNPACK_ALIGNMENT,1);
 				::glGenTextures(1,&texture);
@@ -354,61 +366,56 @@ void ui::run () {
 				::glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,logo_width,logo_height,0,GL_RGBA,GL_UNSIGNED_BYTE,data.data());
 				::glBindTexture(GL_TEXTURE_2D,0);
 			} else {
-				show_logo = false;
+				m_show_logo = false;
 			}
 		}
 	}
 	//
+	m_instance->set_running(! m_paused);
+	//
 	// Loop until the user closes the window
-	frame = 0;	step = 0;
+	m_frame = 0; m_step = 0;
+	UI_interface::CURSOR_TYPE current_cursor_type = UI_interface::ARROW_CURSOR;
+	GLFWcursor* cursor (nullptr);
 	while (! ::glfwWindowShouldClose(window)) {
 		//
+		// Change cursor if requested
+		UI_interface::CURSOR_TYPE cursor_type = m_instance->get_current_cursor();
+		if( cursor_type != current_cursor_type ) {
+			current_cursor_type = cursor_type;
+			::glfwDestroyCursor(cursor);
+			if( cursor_type == UI_interface::CURSOR_TYPE::ARROW_CURSOR ) {
+				cursor = nullptr;
+			} else if( cursor_type == UI_interface::HAND_CURSOR ) {
+				cursor = ::glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+			} else if( cursor_type == UI_interface::IBEAM_CURSOR ) {
+				cursor = ::glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+			} else if( cursor_type == UI_interface::CROSSHAIR_CURSOR ) {
+				cursor = ::glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+			} else if( cursor_type == UI_interface::HRESIZE_CURSOR ) {
+				cursor = ::glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+			} else if( cursor_type == UI_interface::VRESIZE_CURSOR ) {
+				cursor = ::glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
+			}
+			glfwSetCursor(window,cursor);
+		}
+		//
 		// Run idle
-		bool running = instance->is_running();
-		if( strong_pause_step && strong_pause_step == step ) {
-			running = false;
-		}
+		bool running = m_instance->is_running();
 		if( running ) {
-			instance->idle();
-		}
-		//
-		// Call view change if that is the case
-		bool refresh (false);
-		double speed = rotate_speed * 0.05;
-		if( keyup_pressed ) {
-			camera_angle_y += 0.5 * speed;
-			refresh = true;
-		} else if ( keydown_pressed ) {
-			camera_angle_y -= 0.5 * speed;
-			refresh = true;
-		} else if( space_pressed ) {
-			camera_angle_xz += speed;
-			refresh = true;
-		}
-		//
-		if( refresh ) {
-			set_camera_pos(instance->get_view_scale());
-			ge.set_camera(camera_target.v,camera_position.v);
-			instance->view_change(ge,width,height);
+			m_instance->idle();
 		}
 		//
 		// Call draw
-		ge.clear();
-		instance->draw(ge,width,height);
-		//
-		// Draw an arrow if mouse dragging
-		if( mouse_accumulation ) {
-			ge.color4(1.0,1.0,1.0,1.0);
-			ge.line_width(2.0);
-			double k = 10.0;
-			push_screen_coord(width,height);
-			graphics_utility::draw_arrow(ge,mouse_p.v,(mouse_p+k*force_accumulation/mouse_accumulation).v);
-			pop_screen_coord();
-			ge.line_width(1.0);
-		}
+		ge.clear(nullptr);
+		::glfwGetFramebufferSize(window,&width,&height);
+		UI_interface::event_structure event;
+		event.type = UI_interface::event_structure::DRAW;
+		event.g = &ge;
+		m_instance->handle_event(event);
 		//
 		// Draw logo
-		if( show_logo ) {
+		if( m_show_logo ) {
 			//
 			vec2d sub_pos, sub_window, position;
 			if( dpi_scaling == 1.0 ) {
@@ -449,31 +456,25 @@ void ui::run () {
 			pop_screen_coord();
 		}
 		//
-		if( ! running ) {
-			//
-			ge.color4(1.0,1.0,1.0,1.0);
-			push_screen_coord(width,height);
-			if( strong_pause_step && strong_pause_step == step ) {
-				ge.draw_string(vec2d(10,height-10).v, "Not running. Press [space] to resume.");
-			} else {
-				ge.draw_string(vec2d(10,height-10).v, "Not running");
-			}
-			pop_screen_coord();
-			//
-		} else {
+		if( running ) {
 			//
 			// Export screenshot if requested
-			++ step;
-			if( screenshot_path.size() && image_io ) {
-				if( instance->should_screenshot()) {
-					std::string path = screenshot_path + "/screenshot_" + std::to_string(frame++) + ".png";
-					write_image(image_io.get(),path,width,height);
+			++ m_step;
+			if( m_screenshot_path.size() && m_image_io ) {
+				if( m_instance->should_screenshot()) {
+					std::string path = m_screenshot_path + "/screenshot_" + std::to_string(m_frame++) + ".png";
+					write_image(m_image_io.get(),path,width,height);
 				}
-				if( until && step >= until ) {
+				if( m_until && m_step >= m_until ) {
 					console::dump("run \"avconv -r 60 -i screenshot_%d.png -pix_fmt yuv420p -b:v 12000k video.mp4\" to compile the video.\n");
 					break;
 				}
 			}
+		} else {
+			ge.color4(1.0,1.0,1.0,1.0);
+			push_screen_coord(width,height);
+			ge.draw_string(vec2d(10,height-10).v, "Not running");
+			pop_screen_coord();
 		}
 		//
 		// Swap front and back buffers
@@ -483,7 +484,7 @@ void ui::run () {
 		::glfwPollEvents();
 		//
 		// Exit loop if requested
-		if( instance->should_quit()) break;
+		if( m_instance->should_quit()) break;
 	}
 	//
 	::glfwTerminate();
@@ -585,11 +586,11 @@ int ui::run ( int argc, const char* argv[] ) {
 	console::dump( "   Git version = %s-%s\n", get_current_branch_name.c_str(),git_version.c_str());
 	//
 	// Set whether we use OpenGL engine
-	bool useOpenGL;
+	bool use_OpenGL;
 #ifdef USE_OPENGL
-	useOpenGL = true;
+	use_OpenGL = true;
 #else
-	useOpenGL = false;
+	use_OpenGL = false;
 #endif
 	//
 	configuration::print_bar("Loading Simulation");
@@ -603,19 +604,17 @@ int ui::run ( int argc, const char* argv[] ) {
 		drawable_instance = dynamic_cast<drawable *>(instance);
 	}
 	//
-	bool paused (false);
+	//bool paused (false);
 #ifdef USE_OPENGL
 	if( drawable_instance ) {
-		config.get_bool("OpenGL",useOpenGL,"Whether to use OpenGL visualizer");
-		config.get_bool("Paused",paused,"Should pause on start");
+		config.get_bool("OpenGL",use_OpenGL,"Whether to use OpenGL visualizer");
 	}
 #endif
 	//
 	sysstats_ptr stats = sysstats_interface::quick_load_module(config,"sysstats");
 	config.pop_group();
-	instance->set_running( ! paused );
 	//
-	if( useOpenGL && drawable_instance ) {
+	if( use_OpenGL && drawable_instance ) {
 		//
 		ui userinterface(drawable_instance);
 		userinterface.load(config);

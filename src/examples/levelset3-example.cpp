@@ -24,7 +24,6 @@
 //
 #include <shiokaze/ui/drawable.h>
 #include <shiokaze/array/array3.h>
-#include <shiokaze/graphics/graphics_utility.h>
 #include <shiokaze/visualizer/gridvisualizer3_interface.h>
 //
 SHKZ_USING_NAMESPACE
@@ -49,7 +48,6 @@ private:
 		//
 		m_shape *= resolution_scale;
 		m_dx = view_scale * m_shape.dx();
-		set_view_scale(view_scale);
 		//
 		set_environment("shape",&m_shape);
 		set_environment("dx",&m_dx);
@@ -79,6 +77,7 @@ private:
 		m_array.set_as_levelset(2.0*m_dx);
 		m_time = 0.0;
 		fill(m_time);
+		m_camera->set_bounding_box(vec3d().v,m_shape.box(m_dx).v,true);
 	}
 	//
 	virtual void idle() override {
@@ -87,19 +86,16 @@ private:
 		fill(m_time);
 	}
 	//
-	virtual bool keyboard ( char key ) override {
+	virtual bool keyboard( int key, int action, int mods ) override {
 		//
-		if( key == 'M' ) {
+		if( action == UI_interface::PRESS && key == 'M' ) {
 			m_mode = ! m_mode;
 			return true;
 		}
-		return drawable::keyboard(key);
+		return drawable::keyboard(key,action,mods);
 	}
 	//
-	virtual void draw( graphics_engine &g, int width, int height ) const override {
-		//
-		g.color4(1.0,1.0,1.0,0.5);
-		graphics_utility::draw_wired_box(g,get_view_scale());
+	virtual void draw( graphics_engine &g ) const override {
 		//
 		m_gridvisualizer->draw_grid(g);
 		g.color4(0.5,0.6,1.0,0.5);

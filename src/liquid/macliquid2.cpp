@@ -68,7 +68,6 @@ void macliquid2::configure( configuration &config ) {
 	//
 	m_shape *= resolution_scale;
 	m_dx = view_scale * m_shape.dx();
-	set_view_scale(view_scale);
 }
 //
 void macliquid2::setup_window( std::string &name, int &width, int &height ) const {
@@ -94,8 +93,7 @@ void macliquid2::post_initialize () {
 	m_macutility->assign_initial_variables(m_dylib,m_velocity,&m_solid,&m_fluid);
 	m_velocity.set_touch_only_actives(true);
 	//
-	// Assign to surface tracker
-	m_macsurfacetracker->assign(m_solid,m_fluid);
+	// Compute the initial volume
 	m_initial_volume = m_gridutility->get_area(m_solid,m_fluid);
 	//
 	shared_macarray2<float> velocity_actives(m_velocity.type());
@@ -113,11 +111,13 @@ void macliquid2::post_initialize () {
 		m_macproject->project(CFL*m_dx/max_u,m_velocity,m_solid,m_fluid);
 	}
 	//
+	m_camera->set_bounding_box(vec2d().v,m_shape.box(m_dx).v,true);
 }
 //
-void macliquid2::drag( int width, int height, double x, double y, double u, double v ) {
+void macliquid2::drag( double x, double y, double z, double u, double v, double w ) {
 	//
-	m_macutility->add_force(vec2d(x,y),vec2d(u,v),m_external_force);
+	double scale (1e3);
+	m_macutility->add_force(vec2d(x,y),scale*vec2d(u,v),m_external_force);
 	m_force_exist = true;
 }
 //
@@ -166,9 +166,7 @@ void macliquid2::idle() {
 	extend_both();
 	//
 	// Advect surface
-	m_macsurfacetracker->assign(m_solid,m_fluid);
-	m_macsurfacetracker->advect(m_velocity,dt);
-	m_macsurfacetracker->get(m_fluid);
+	m_macsurfacetracker->advect(m_fluid,m_solid,m_velocity,dt);
 	//
 	// Advect velocity
 	shared_macarray2<float> velocity_save(m_velocity);
@@ -187,16 +185,16 @@ void macliquid2::idle() {
 	m_macstats->dump_stats(m_solid,m_fluid,m_velocity,m_timestepper.get());
 }
 //
-void macliquid2::draw( graphics_engine &g, int width, int height ) const {
+void macliquid2::draw( graphics_engine &g ) const {
 	//
 	// Draw grid lines
 	m_gridvisualizer->draw_grid(g);
 	//
-	// Draw surface tracker
-	m_macsurfacetracker->draw(g);
-	//
 	// Draw projection component
 	m_macproject->draw(g);
+	//
+	// Draw fluid
+	m_gridvisualizer->draw_fluid(g,m_solid,m_fluid);
 	//
 	// Draw levelset
 	m_gridvisualizer->draw_solid(g,m_solid);

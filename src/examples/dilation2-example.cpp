@@ -48,7 +48,6 @@ private:
 		//
 		m_shape *= resolution_scale;
 		m_dx = view_scale * m_shape.dx();
-		set_view_scale(view_scale);
 		//
 		set_environment("shape",&m_shape);
 		set_environment("dx",&m_dx);
@@ -56,39 +55,44 @@ private:
 	//
 	virtual void post_initialize() override {
 		m_array.initialize(m_shape);
+		m_camera->set_bounding_box(vec2d().v,m_shape.box(m_dx).v,true);
 	}
 	//
-	virtual bool keyboard ( char key ) override {
+	virtual bool keyboard( int key, int action, int mods ) override {
 		// Dump keyboard event
-		console::dump( "Keyboard %c\n", key );
-		if ( key == 'R' ) {
-			reinitialize();
-		} else if( key == 'C' ) {
-			console::dump( "Count = %d\n", m_array.count());
-		} else if( key == 'P') {
-			auto &config = configurable::get_global_configuration();
-			config.print_variables();
+		if( action == UI_interface::PRESS ) {
+			console::dump( "Keyboard %c\n", key );
+			if ( key == UI_interface::KEY_R ) {
+				reinitialize();
+			} else if( key == UI_interface::KEY_C ) {
+				console::dump( "Count = %d\n", m_array.count());
+			} else if( key == UI_interface::KEY_P ) {
+				auto &config = configurable::get_global_configuration();
+				config.print_variables();
+			}
 		}
 		return true;
 	}
 	void fill( double x, double y ) {
 		int i = m_shape[0] * x;
-		int j = m_shape[0] * y;
+		int j = m_shape[1] * y;
 		m_array.set(m_shape.clamp(i,j),1.0);
 	}
-	virtual void drag( int width, int height, double x, double y, double u, double v ) override {
+	virtual void drag( double x, double y, double z, double u, double v, double w ) override {
 		m_array.dilate( [&](int i, int j, auto& it) {
 			it.set(1.0);
 		});
 	}
-	virtual void mouse( int width, int height, double x, double y, int button, int action ) override {
-		fill(x,y);
+	virtual void mouse( double x, double y, double z, int button, int action, int mods ) override {
+		if( action == UI_interface::PRESS ) {
+			fill(x,y);
+		}
 	}
 	virtual void setup_window( std::string &name, int &width, int &height ) const override {
 		double ratio = m_shape[1] / (double) m_shape[0];
 		height = ratio * width;
 	}
-	virtual void draw( graphics_engine &g, int width, int height ) const override {
+	virtual void draw( graphics_engine &g ) const override {
 		//
 		// Draw things
 		m_gridvisualizer->draw_grid(g);

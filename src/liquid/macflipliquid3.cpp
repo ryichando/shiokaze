@@ -97,9 +97,7 @@ void macflipliquid3::idle() {
 	m_flip->update([&](const vec3d &p){ return interpolate_solid(p); },m_fluid);
 	//
 	// Advect fluid levelset
-	m_macsurfacetracker->assign(m_solid,m_fluid);
-	m_macsurfacetracker->advect(m_velocity,dt);
-	m_macsurfacetracker->get(m_fluid);
+	m_macsurfacetracker->advect(m_fluid,m_solid,m_velocity,dt);
 	//
 	// Advect FLIP particles
 	m_flip->advect(
@@ -227,14 +225,11 @@ void macflipliquid3::do_export_mesh( unsigned frame ) const {
 	//
 	console::dump( "Done. Took %s\n", timer.stock("generate_highres_mesh").c_str());
 	//
-	macsurfacetracker3_driver &highres_macsurfacetracker = const_cast<macsurfacetracker3_driver &>(m_highres_macsurfacetracker);
-	highres_macsurfacetracker->assign(doubled_solid(),doubled_fluid());
-	//
 	auto vertex_color_func = [&](const vec3d &p) { return p; };
 	auto uv_coordinate_func = [&](const vec3d &p) { return vec2d(p[0],0.0); };
 	//
 	timer.tick(); console::dump( "Generating mesh..." );
-	highres_macsurfacetracker->export_fluid_mesh(m_export_path,frame,vertex_color_func,uv_coordinate_func);
+	m_highres_macsurfacetracker->export_fluid_mesh(m_export_path,frame,doubled_solid(),doubled_fluid(),vertex_color_func,uv_coordinate_func);
 	console::dump( "Done. Took %s\n", timer.stock("export_highres_mesh").c_str());
 	//
 	std::string particle_path = console::format_str("%s/%d_particles.dat",m_export_path.c_str(),frame);
@@ -314,10 +309,7 @@ vec3d macflipliquid3::interpolate_velocity( const vec3d &p ) const {
 	return macarray_interpolator3::interpolate(m_velocity,vec3d(),m_dx,p);
 }
 //
-void macflipliquid3::draw( graphics_engine &g, int width, int height ) const {
-	//
-	g.color4(1.0,1.0,1.0,0.5);
-	graphics_utility::draw_wired_box(g,get_view_scale());
+void macflipliquid3::draw( graphics_engine &g ) const {
 	//
 	// Draw velocity
 	m_macvisualizer->draw_velocity(g,m_velocity);
@@ -334,7 +326,7 @@ void macflipliquid3::draw( graphics_engine &g, int width, int height ) const {
 	if( array_utility3::levelset_exist(solid_to_visualize())) m_gridvisualizer->draw_solid(g,solid_to_visualize());
 	//
 	// Visualize levelset
-	m_macsurfacetracker->draw(g);
+	m_gridvisualizer->draw_fluid(g,m_solid,m_fluid);
 }
 //
 extern "C" module * create_instance() {

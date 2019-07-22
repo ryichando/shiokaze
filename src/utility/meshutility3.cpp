@@ -30,7 +30,7 @@
 SHKZ_USING_NAMESPACE
 //
 class meshutility3 : public meshutility3_interface {
-private:
+protected:
 	//
 	AUTHOR_NAME("Christopher Batty")
 	MODULE_NAME("meshutility3")

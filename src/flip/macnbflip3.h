@@ -34,13 +34,13 @@
 #include <shiokaze/particlerasterizer/particlerasterizer3_interface.h>
 #include <shiokaze/advection/macadvection3_interface.h>
 #include <shiokaze/redistancer/redistancer3_interface.h>
-#include <shiokaze/surfacetracker/macsurfacetracker3_interface.h>
+#include <shiokaze/surfacetracker/maclevelsetsurfacetracker3_interface.h>
 #include <shiokaze/pointgridhash/pointgridhash3_interface.h>
 //
 SHKZ_BEGIN_NAMESPACE
 //
 class macnbflip3 : public macflip3_interface {
-public:
+protected:
 	//
 	LONG_NAME("MAC Narrowband FLIP 3D")
 	MODULE_NAME("macnbflip3")
@@ -86,8 +86,6 @@ public:
 	//
 	// Get all the FLIP particles.
 	virtual std::vector<macflip3_interface::particle3> get_particles() const override;
-	//
-protected:
 	//
 	virtual void initialize( const shape3 &shape, double dx ) override;
 	virtual void post_initialize() override;

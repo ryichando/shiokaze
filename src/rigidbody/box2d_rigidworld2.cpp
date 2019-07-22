@@ -54,7 +54,7 @@ public:
 };
 //
 class box2d_rigidworld2 : public rigidworld2_interface {
-private:
+protected:
 	//
 	LONG_NAME("Box2D Rigidbody Engine")
 	MODULE_NAME("box2d_rigidworld2")

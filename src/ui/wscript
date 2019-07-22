@@ -35,3 +35,11 @@ def build(bld):
 			use = bld.get_target_name(bld,'core'),
 			lib = bld.LIB_OPENGL+['boost_date_time'],
 			framework = bld.FRAMEWORK_OPENGL)
+	#
+	bld.shlib(source = 'camera3.cpp',
+			target = bld.get_target_name(bld,'camera3'),
+			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'camera2.cpp',
+			target = bld.get_target_name(bld,'camera2'),
+			use = bld.get_target_name(bld,'core'))

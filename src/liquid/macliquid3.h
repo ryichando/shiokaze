@@ -36,7 +36,7 @@
 #include <shiokaze/visualizer/gridvisualizer3_interface.h>
 #include <shiokaze/visualizer/macvisualizer3_interface.h>
 #include <shiokaze/projection/macproject3_interface.h>
-#include <shiokaze/surfacetracker/macsurfacetracker3_interface.h>
+#include <shiokaze/surfacetracker/maclevelsetsurfacetracker3_interface.h>
 #include <shiokaze/ui/drawable.h>
 #include <shiokaze/timestepper/timestepper_interface.h>
 #include <shiokaze/core/dylibloader.h>
@@ -52,13 +52,14 @@ public:
 	//
 	macliquid3();
 	//
+protected:
+	//
+	virtual void drag( double x, double y, double z, double u, double v, double w ) override;
 	virtual void setup_window( std::string &name, int &width, int &height ) const override;
 	virtual void idle() override;
-	virtual void draw( graphics_engine &g, int width, int height ) const override;
+	virtual void draw( graphics_engine &g ) const override;
 	virtual bool should_quit() const override { return m_timestepper->should_quit(); }
 	virtual bool should_screenshot() const override { return m_timestepper->should_export_frame(); }
-	//
-protected:
 	//
 	virtual void load( configuration &config ) override;
 	virtual void configure( configuration &config ) override;
@@ -99,6 +100,7 @@ protected:
 	//
 	struct Parameters {
 		vec3d gravity {0.0,-9.8,0.0};
+		bool mouse_interaction {false};
 		bool volume_correction {true};
 		double volume_change_tol_ratio {0.03};
 		bool render_mesh {false};

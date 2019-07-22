@@ -209,6 +209,17 @@ struct shape2 {
 		gn[1] = h;
 	}
 	/**
+	 \~english @brief Get the world coordinate size of the shape.
+	 @param[in] Grid cell size.
+	 @return Maximal corner position.
+	 \~japanese @brief 物理空間の形状の大きさを得る。
+	 @param[in] グリッドセルの大きさ。
+	 @return コーナーの位置。
+	 */
+	vec2d box( double dx ) const {
+		return vec2d(dx*w,dx*h);
+	}
+	/**
 	 \~english @brief Compare the hash from the input shape.
 	 @param[in] rhs Shape to compare the hash.
 	 \~japanese @brief 入力の形状とハッシュを調べる。
@@ -641,12 +652,23 @@ struct shape3 {
 		gn[2] = d;
 	}
 	/**
+	 \~english @brief Get the world coordinate size of the shape.
+	 @param[in] Grid cell size.
+	 @return Maximal corner position.
+	 \~japanese @brief 物理空間の形状の大きさを得る。
+	 @param[in] グリッドセルの大きさ。
+	 @return コーナーの位置。
+	 */
+	vec3d box( double dx ) const {
+		return vec3d(dx*w,dx*h,dx*d);
+	}
+	/**
 	 \~english @brief Compare the hash from the input shape.
 	 @param[in] rhs Shape to compare the hash.
 	 \~japanese @brief 入力の形状とハッシュを調べる。
 	 @param[in] rhs ハッシュを比較する形状。
 	 */
-	bool operator < (const shape2& rhs) const { 
+	bool operator<(const shape2& rhs) const { 
 		return hash() < rhs.hash();
 	}
 	/**

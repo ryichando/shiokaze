@@ -36,7 +36,7 @@
 SHKZ_USING_NAMESPACE
 //
 class macstreamfuncsolver2 : public macproject2_interface {
-private:
+protected:
 	//
 	LONG_NAME("MAC Streamfunction Solver 2D")
 	MODULE_NAME("macstreamfuncsolver2")

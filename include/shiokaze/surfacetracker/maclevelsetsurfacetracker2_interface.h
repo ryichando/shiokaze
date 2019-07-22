@@ -1,5 +1,5 @@
 /*
-**	macsurfacetracker2_interface.h
+**	maclevelsetsurfacetracker2_interface.h
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
 **	Created by Ryoichi Ando <rand@nii.ac.jp> on April 28, 2017. 
@@ -22,8 +22,8 @@
 **	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 //
-#ifndef SHKZ_MACSURFACETRACKER2_INTERFACE_H
-#define SHKZ_MACSURFACETRACKER2_INTERFACE_H
+#ifndef SHKZ_MACLEVELSETSURFACETRACKER2_INTERFACE_H
+#define SHKZ_MACLEVELSETSURFACETRACKER2_INTERFACE_H
 //
 #include <shiokaze/graphics/graphics_engine.h>
 #include <shiokaze/core/recursive_configurable_module.h>
@@ -35,40 +35,23 @@ SHKZ_BEGIN_NAMESPACE
 /** @file */
 /// \~english @brief Interface for advecting level set surfaces. "maclevelsetsurfacetracker2" is provided as implementation.
 /// \~japanese @brief レベルセット界面を移流するインターフェース。"maclevelsetsurfacetracker2" が実装として提供される。
-class macsurfacetracker2_interface : public recursive_configurable_module {
+class maclevelsetsurfacetracker2_interface : public recursive_configurable_module {
 public:
 	//
-	DEFINE_MODULE(macsurfacetracker2_interface,"MAC Surface Tracker 2D","SurfaceTracker","Moving level set tracking module")
-	/**
-	 \~english @brief Assign fluid and solid level set.
-	 @param[in] solid Solid level set.
-	 @param[in] fluid Fluid level set.
-	 \~japanese @brief 流体と壁のレベルセットをセットする。
-	 */
-	virtual void assign( const array2<float> &solid, const array2<float> &fluid ) = 0;
+	DEFINE_MODULE(maclevelsetsurfacetracker2_interface,"MAC Levelset Surface Tracker 2D","LevelsetSurfaceTracker","Moving level set tracking module")
 	/**
 	 \~english @brief Advect level set.
+	 @param[in] fluid Cell centered fluid level set.
+	 @param[in] solid Nodal solid level set.
 	 @param[in] u Velocity with which to advect.
 	 @param[in] dt Time step size.
 	 \~japanese @brief レベルセットを移流する。
+	 @param[in] fluid セルセンターのレベルセット。
+	 @param[in] solid 節点ベースの壁のレベルセット。
 	 @param[in] u 移流に使用する速度場。
 	 @param[in] dt タイムステップサイズ。
 	 */
-	virtual void advect( const macarray2<float> &u, double dt ) = 0;
-	/**
-	 \~english @brief Get the level set.
-	 @param[out] fluid Output level set.
-	 \~japanese @brief レベルセットを取得する。
-	 @param[out] fluid 出力のレベルセット。
-	 */
-	virtual void get( array2<float> &fluid ) = 0;
-	/**
-	 \~english @brief Draw level set surface.
-	 @param[in] g Graphics engine.
-	 \~japanese @brief レベルセットサーフェスを描画する。
-	 @param[int] g グラフィックスエンジン。
-	 */
-	virtual void draw( graphics_engine &g ) const = 0;
+	virtual void advect( array2<float> &fluid, const array2<float> &solid, const macarray2<float> &u, double dt ) = 0;
 	//
 private:
 	virtual void initialize( const shape2 &shape, double dx ) = 0;
@@ -82,8 +65,8 @@ private:
 	}
 };
 //
-using macsurfacetracker2_ptr = std::unique_ptr<macsurfacetracker2_interface>;
-using macsurfacetracker2_driver = recursive_configurable_driver<macsurfacetracker2_interface>;
+using macsurfacetracker2_ptr = std::unique_ptr<maclevelsetsurfacetracker2_interface>;
+using macsurfacetracker2_driver = recursive_configurable_driver<maclevelsetsurfacetracker2_interface>;
 //
 SHKZ_END_NAMESPACE
 //

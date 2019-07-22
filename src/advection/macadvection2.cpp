@@ -31,7 +31,7 @@
 SHKZ_USING_NAMESPACE
 //
 class macadvection2 : public macadvection2_interface {
-private:
+protected:
 	//
 	MODULE_NAME("macadvection2")
 	//

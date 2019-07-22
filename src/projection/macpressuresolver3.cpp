@@ -37,7 +37,7 @@
 SHKZ_USING_NAMESPACE
 //
 class macpressuresolver3 : public macproject3_interface {
-private:
+protected:
 	//
 	LONG_NAME("MAC Pressure Solver 3D")
 	MODULE_NAME("macpressuresolver3")

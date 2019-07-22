@@ -32,18 +32,15 @@ SHKZ_BEGIN_NAMESPACE
 //
 class macbackwardflipsmoke2 : public macsmoke2 {
 public:
+	macbackwardflipsmoke2();
+	virtual ~macbackwardflipsmoke2() {}
+protected:
 	//
 	LONG_NAME("MAC Backward FLIP Smoke 2D")
 	MODULE_NAME("macbackwardflipsmoke2")
 	//
-	macbackwardflipsmoke2();
-	virtual ~macbackwardflipsmoke2() {}
-	//
 	virtual void idle() override;
-	virtual void draw( graphics_engine &g, int width, int height ) const override;
-	//
-protected:
-	//
+	virtual void draw( graphics_engine &g ) const override;
 	virtual void configure( configuration &config ) override;
 	//
 	bool m_use_regular_velocity_advection;

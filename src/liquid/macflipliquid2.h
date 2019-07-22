@@ -38,10 +38,10 @@ public:
 	LONG_NAME("MAC FLIP Liquid 2D")
 	MODULE_NAME("macflipliquid2")
 	//
-	virtual void idle() override;
-	virtual void draw( graphics_engine &g, int width, int height ) const override;
-	//
 protected:
+	//
+	virtual void idle() override;
+	virtual void draw( graphics_engine &g ) const override;
 	//
 	virtual void configure( configuration &config ) override;
 	virtual void post_initialize() override;
@@ -55,7 +55,7 @@ protected:
 	double m_half_dx;
 	//
 	macflip2_driver m_flip{this,"macexnbflip2"};
-	macsurfacetracker2_driver m_highres_macsurfacetracker{this,"maclevelsetsurfacetracker2"};
+	gridvisualizer2_driver m_highres_gridvisualizer{this,"gridvisualizer2"};
 	particlerasterizer2_driver m_highres_particlerasterizer{this,"flatrasterizer2"};
 	//
 	double interpolate_fluid( const vec2d &p ) const;
@@ -64,7 +64,7 @@ protected:
 	//
 private:
 	//
-	void draw_highresolution( graphics_engine &g, int width, int height ) const;
+	void draw_highresolution( graphics_engine &g ) const;
 };
 //
 SHKZ_END_NAMESPACE

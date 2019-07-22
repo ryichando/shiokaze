@@ -22,70 +22,60 @@
 **	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 //
-#include <shiokaze/surfacetracker/macsurfacetracker3_interface.h>
+#include <shiokaze/surfacetracker/maclevelsetsurfacetracker3_interface.h>
 #include <shiokaze/utility/macutility3_interface.h>
 #include <shiokaze/advection/macadvection3_interface.h>
 #include <shiokaze/utility/gridutility3_interface.h>
-#include <shiokaze/visualizer/gridvisualizer3_interface.h>
 #include <shiokaze/cellmesher/cellmesher3_interface.h>
 #include <shiokaze/meshexporter/meshexporter3_interface.h>
 #include <shiokaze/redistancer/redistancer3_interface.h>
 #include <shiokaze/core/console.h>
 #include <shiokaze/core/scoped_timer.h>
-#include <shiokaze/parallel/parallel_driver.h>
 #include <shiokaze/array/shared_array3.h>
 #include <shiokaze/array/array_interpolator3.h>
+#include <shiokaze/parallel/parallel_driver.h>
 #include <cstdio>
 //
 SHKZ_USING_NAMESPACE
 //
-class maclevelsetsurfacetracker3 : public macsurfacetracker3_interface {
-private:
+class maclevelsetsurfacetracker3 : public maclevelsetsurfacetracker3_interface {
+protected:
 	//
 	LONG_NAME("MAC Levelset Surface Tracker 3D")
 	MODULE_NAME("maclevelsetsurfacetracker3")
 	//
-	virtual void assign( const array3<float> &solid, const array3<float> &fluid ) override {
-		m_solid.copy(solid);
-		m_fluid.copy(fluid);
-	}
-	//
-	virtual void advect( const macarray3<float> &u, double dt ) override {
+	virtual void advect( array3<float> &fluid, const array3<float> &solid, const macarray3<float> &u, double dt ) override {
 		//
 		scoped_timer timer(this);
 		if( dt ) {
-			shared_array3<float> fluid_save(m_fluid);
-			m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt,"levelset");
+			shared_array3<float> fluid_save(fluid);
+			m_macadvection->advect_scalar(fluid,u,fluid_save(),dt,"levelset");
 		}
 		//
 		// Re-initialize
 		timer.tick(); console::dump( "Re-distancing fluid levelsets..." );
-		m_redistancer->redistance(m_fluid,m_param.levelset_half_bandwidth_count);
+		m_redistancer->redistance(fluid,m_param.levelset_half_bandwidth_count);
 		console::dump( "Done. Took %s\n", timer.stock("redistance_levelset").c_str());
 		//
 		// Extrapolation towards solid
 		timer.tick(); console::dump( "Extrapolating fluid levelsets towards solid walls...");
-		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
+		m_gridutility->extrapolate_levelset(solid,fluid);
 		console::dump( "Done. Took %s\n", timer.stock("exprapolate_levelset").c_str());
 	}
 	//
-	virtual void get( array3<float> &fluid ) override { fluid.copy(m_fluid); }
-	virtual void draw( graphics_engine &g ) const override {
-		m_gridvisualizer->draw_fluid(g,m_solid,m_fluid);
-	}
-	//
 	virtual void export_fluid_mesh( std::string path_to_directory, unsigned frame,
+							  const array3<float> &solid, const array3<float> &fluid,
 							  std::function<vec3d(const vec3d &)> vertex_color_func=nullptr,
 							  std::function<vec2d(const vec3d &)> uv_coordinate_func=nullptr ) const override {
 		//
 		std::string path_wo_suffix = console::format_str("%s/%u_mesh", path_to_directory.c_str(), frame );
-		export_fluid_mesh(path_wo_suffix,m_fluid,true,vertex_color_func,uv_coordinate_func);
+		export_fluid_mesh(path_wo_suffix,solid,fluid,true,vertex_color_func,uv_coordinate_func);
 		//
 		shared_array3<float> fluid_closed(m_shape);
 		if( m_param.enclose_solid ) {
-			m_gridutility->combine_levelset(m_solid,m_fluid,fluid_closed());
+			m_gridutility->combine_levelset(solid,fluid,fluid_closed());
 		} else {
-			fluid_closed->copy(m_fluid);
+			fluid_closed->copy(fluid);
 		}
 		const double eps (0.01*m_dx);
 		//
@@ -132,12 +122,14 @@ private:
 			}
 		}
 		//
-		export_fluid_mesh(path_wo_suffix+"_enclosed",fluid_closed(), ! m_param.enclose_solid, vertex_color_func,uv_coordinate_func);
+		export_fluid_mesh(path_wo_suffix+"_enclosed",solid,fluid_closed(), ! m_param.enclose_solid, vertex_color_func,uv_coordinate_func);
 	}
 	//
-	virtual void export_fluid_mesh( std::string path_wo_suffix, const array3<float> &fluid, bool delete_solid_embedded,
-							  std::function<vec3d(const vec3d &)> vertex_color_func=nullptr,
-							  std::function<vec2d(const vec3d &)> uv_coordinate_func=nullptr ) const {
+	void export_fluid_mesh( std::string path_wo_suffix, 
+							const array3<float> &solid, const array3<float> &fluid,
+							bool delete_solid_embedded,
+							std::function<vec3d(const vec3d &)> vertex_color_func=nullptr,
+							std::function<vec2d(const vec3d &)> uv_coordinate_func=nullptr ) const {
 		//
 		std::vector<vec3d> vertices;
 		std::vector<std::vector<size_t> > original_faces, faces;
@@ -147,7 +139,7 @@ private:
 			for( size_t n=0; n<original_faces.size(); ++n ) {
 				bool has_outside (false);
 				for( unsigned i=0; i<original_faces[n].size(); ++i ) {
-					if( array_interpolator3::interpolate(m_solid,vertices[original_faces[n][i]]/m_dx) > 0.0 ) {
+					if( array_interpolator3::interpolate(solid,vertices[original_faces[n][i]]/m_dx) > 0.0 ) {
 						has_outside = true;
 						break;
 					}
@@ -194,19 +186,14 @@ private:
 		//
 		m_shape = shape;
 		m_dx = dx;
-		//
-		m_fluid.initialize(shape.cell());
-		m_solid.initialize(shape.nodal());
 	}
 	//
-	array3<float> m_solid{this}, m_fluid{this};
 	macadvection3_driver m_macadvection{this,"macadvection3"};
 	redistancer3_driver m_redistancer{this,"pderedistancer3"};
 	cellmesher3_driver m_mesher{this,"marchingcubes"};
 	meshexporter3_driver m_mesh_exporter{this,"meshexporter3"};
 	gridutility3_driver m_gridutility{this,"gridutility3"};
 	macutility3_driver m_macutility{this,"macutility3"};
-	gridvisualizer3_driver m_gridvisualizer{this,"gridvisualizer3"};
 	parallel_driver m_parallel{this};
 	//
 	shape3 m_shape;

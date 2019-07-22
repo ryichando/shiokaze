@@ -104,9 +104,11 @@ public:
 	/**
 	 \~english @brief Draw level set of fluid.
 	 @param[in] g Graphics engine.
+	 @param[in] solid Solid level set.
 	 @param[in] fluid Level set of fluid.
 	 \~japanese @brief 流体のレベルセットグリッドを描く。
 	 @param[in] g グラフィックスエンジン。
+	 @param[in] solid 壁のレベルセット。
 	 @param[in] fluid 流体のレベルセットグリッド。
 	 */
 	virtual void draw_fluid( graphics_engine &g, const array2<float> &solid, const array2<float> &fluid ) const = 0;

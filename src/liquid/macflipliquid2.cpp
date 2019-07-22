@@ -55,8 +55,8 @@ void macflipliquid2::configure( configuration &config ) {
 	m_highres_particlerasterizer->set_environment("shape",&m_double_shape);
 	m_highres_particlerasterizer->set_environment("dx",&m_half_dx);
 	//
-	m_highres_macsurfacetracker->set_environment("shape",&m_double_shape);
-	m_highres_macsurfacetracker->set_environment("dx",&m_half_dx);
+	m_highres_gridvisualizer->set_environment("shape",&m_double_shape);
+	m_highres_gridvisualizer->set_environment("dx",&m_half_dx);
 }
 //
 void macflipliquid2::post_initialize () {
@@ -81,9 +81,7 @@ void macflipliquid2::idle() {
 	m_flip->update([&](const vec2d &p){ return interpolate_solid(p); },m_fluid);
 	//
 	// Advect fluid levelset
-	m_macsurfacetracker->assign(m_solid,m_fluid);
-	m_macsurfacetracker->advect(m_velocity,dt);
-	m_macsurfacetracker->get(m_fluid);
+	m_macsurfacetracker->advect(m_fluid,m_solid,m_velocity,dt);
 	//
 	// Advect FLIP particles
 	m_flip->advect(
@@ -164,7 +162,7 @@ vec2d macflipliquid2::interpolate_velocity( const vec2d &p ) const {
 	return macarray_interpolator2::interpolate(m_velocity,vec2d(),m_dx,p);
 }
 //
-void macflipliquid2::draw_highresolution( graphics_engine &g, int width, int height ) const {
+void macflipliquid2::draw_highresolution( graphics_engine &g ) const {
 	//
 	shared_array2<float> doubled_fluid(m_double_shape.cell(),1.0);
 	shared_array2<float> doubled_solid(m_double_shape.nodal(),1.0);
@@ -207,23 +205,20 @@ void macflipliquid2::draw_highresolution( graphics_engine &g, int width, int hei
 		it.set( rate * std::min(f,p) + (1.0-rate) * f );
 	});
 	//
-	macsurfacetracker2_driver &highres_macsurfacetracker = const_cast<macsurfacetracker2_driver &>(m_highres_macsurfacetracker);
-	highres_macsurfacetracker->assign(doubled_solid(),doubled_fluid());
-	//
 	// Draw high resolution level set
-	highres_macsurfacetracker->draw(g);
+	m_highres_gridvisualizer->draw_fluid(g,doubled_solid(),doubled_fluid());
 	//
 	// Draw FLIP
 	m_flip->draw(g,m_timestepper->get_current_time());
 }
 //
-void macflipliquid2::draw( graphics_engine &g, int width, int height ) const {
+void macflipliquid2::draw( graphics_engine &g ) const {
 	//
 	// Draw grid lines
 	m_gridvisualizer->draw_grid(g);
 	//
 	// Draw simulation
-	draw_highresolution(g,width,height);
+	draw_highresolution(g);
 	//
 	// Draw projection component
 	m_macproject->draw(g);

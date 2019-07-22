@@ -113,9 +113,9 @@ void macbackwardflipsmoke2::idle() {
 	m_macstats->dump_stats(m_solid,m_fluid,m_velocity,m_timestepper.get());
 }
 //
-void macbackwardflipsmoke2::draw( graphics_engine &g, int width, int height ) const {
+void macbackwardflipsmoke2::draw( graphics_engine &g ) const {
 	//
-	macsmoke2::draw(g,width,height);
+	macsmoke2::draw(g);
 	m_backwardflip->draw(g);
 }
 //

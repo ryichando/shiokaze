@@ -71,7 +71,7 @@ private:
 		console::dump( "%s\n", msg );
 	}
 	//
-	virtual bool keyboard ( char key ) override {
+	virtual bool keyboard( int key, int action, int mods ) override {
 		if( key == 'N' ) {
 			m_focus_cluster = (m_focus_cluster+1) % m_num_clusters;
 			return true;
@@ -191,7 +191,7 @@ private:
 		console::dump( "<<< Done.\n");
 	}
 	//
-	virtual void draw( graphics_engine &g, int width, int height ) const override {
+	virtual void draw( graphics_engine &g ) const override {
 		//
 		g.color4(1.0,1.0,1.0,0.5);
 		graphics_utility::draw_wired_box(g);

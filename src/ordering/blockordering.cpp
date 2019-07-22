@@ -34,11 +34,14 @@ class blockordering : public ordering_core {
 public:
 	//
 	LONG_NAME("Block Ordering Encoder/Decoder")
+	MODULE_NAME("blockordering")
 	//
 	blockordering() {
 		block_size = 8;
 		use_zordering = true;
 	}
+	//
+protected:
 	//
 	static inline bool is_power_of_two( unsigned n ) {
 		// http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2

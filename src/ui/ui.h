@@ -44,10 +44,10 @@ public:
 	static int run ( int argc, const char* argv[] );
 	//
 	// Get a pointer to the drawable instance
-	drawable *getInstance() const { return instance; }
+	drawable *get_instance() const { return m_instance; }
 	//
 	// Get a pointer to the graphics enegine
-	graphics_engine *getGraphicsEngine() const { return graphics_instance; }
+	graphics_engine *get_graphics_engine() const { return m_graphics_instance; }
 	//
 private:
 	//
@@ -58,20 +58,21 @@ private:
 	void configure( configuration &config );
 	void run ();
 	//
-	drawable *instance;
-	graphics_engine *graphics_instance;
-	image_io_ptr image_io;
+	drawable *m_instance;
+	graphics_engine *m_graphics_instance;
+	image_io_ptr m_image_io;
 	//
-	std::string screenshot_path;
-	int until, frame;
-	double w_scale;
-	bool show_logo;
+	std::string m_screenshot_path;
+	int m_until, m_frame, m_step;
+	double m_window_scale;
+	bool m_show_logo;
+	bool m_paused {false};
 	//
 public:
-	vec2d mouse_p, prev_mouse_p, force, force_accumulation;
-	int w_width, w_height, width, height, mouse_accumulation, step, strong_pause_step;
-	bool mouse_pressed;
-	double rotate_speed;
+	//
+	int m_accumulation {0};
+	vec2d m_pos0;
+	vec2d m_mouse_pos;
 };
 //
 SHKZ_END_NAMESPACE

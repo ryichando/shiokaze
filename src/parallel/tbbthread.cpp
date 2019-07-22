@@ -33,7 +33,7 @@
 SHKZ_BEGIN_NAMESPACE
 //
 class tbbthread : public parallel_core {
-public:
+protected:
 	//
 	LONG_NAME("TBB Thread")
 	MODULE_NAME("tbbthread")

@@ -48,15 +48,14 @@ public:
 	MODULE_NAME("macsmoke2")
 	ARGUMENT_NAME("Smoke")
 	//
-	virtual void drag( int width, int height, double x, double y, double u, double v ) override;
-	virtual void idle() override;
-	virtual void setup_window( std::string &name, int &width, int &height ) const override;
-	virtual void draw( graphics_engine &g, int width, int height ) const override;
-	virtual bool should_quit() const override { return m_timestepper->should_quit(); }
-	virtual bool should_screenshot() const override { return m_timestepper->should_export_frame(); }
-	//
 protected:
 	//
+	virtual void drag( double x, double y, double z, double u, double v, double w ) override;
+	virtual void idle() override;
+	virtual void setup_window( std::string &name, int &width, int &height ) const override;
+	virtual void draw( graphics_engine &g ) const override;
+	virtual bool should_quit() const override { return m_timestepper->should_quit(); }
+	virtual bool should_screenshot() const override { return m_timestepper->should_export_frame(); }
 	virtual void load( configuration &config ) override;
 	virtual void configure( configuration &config ) override;
 	virtual void post_initialize() override;

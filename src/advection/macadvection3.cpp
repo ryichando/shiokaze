@@ -33,7 +33,7 @@
 SHKZ_USING_NAMESPACE
 //
 class macadvection3 : public macadvection3_interface {
-private:
+protected:
 	//
 	MODULE_NAME("macadvection3")
 	//

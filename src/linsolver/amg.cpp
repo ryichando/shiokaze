@@ -36,11 +36,12 @@
 SHKZ_USING_NAMESPACE
 //
 template <class N, class T> class amg_solver : public RCMatrix_solver_interface<N,T> {
-private:
+protected:
 	//
 	LONG_NAME("Algebraic Multigrid Solver")
 	AUTHOR_NAME("Denis Demidov")
 	ARGUMENT_NAME("AMG")
+	MODULE_NAME("amg_solver")
 	//
 	typedef amgcl::amg<
 		amgcl::backend::builtin<T>,

@@ -28,9 +28,10 @@
 SHKZ_USING_NAMESPACE
 //
 class convexhullrasterizer2 : public particlerasterizer2_interface {
-public:
+protected:
 	//
 	LONG_NAME("Convex Hull Rasterizer 2D")
+	MODULE_NAME("convexhullrasterizer2")
 	ARGUMENT_NAME("ConvexHullRasterizer")
 	//
 	virtual void build_levelset( array2<float> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const override {
@@ -126,8 +127,6 @@ public:
 			it.set(getConvexhullLevelset(m_dx*vec2i(i,j).cell(),neighbors));
 		});
 	}
-	//
-protected:
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_double("SurfaceMargin",m_param.surface_margin,"Margin for surface sphere");

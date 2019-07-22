@@ -80,7 +80,7 @@ static int face_cb(p_ply_argument argument) {
 }
 //
 class polygon3 : public polygon3_interface {
-public:
+protected:
 	//
 	MODULE_NAME("polygon3")
 	//
@@ -138,8 +138,6 @@ public:
 		vertices = m_vertices;
 		faces = m_faces;
 	}
-	//
-protected:
 	//
 	std::vector<vec3d> m_vertices;
 	std::vector<std::vector<size_t> > m_faces;

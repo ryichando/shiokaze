@@ -35,7 +35,7 @@
 #include <shiokaze/visualizer/macvisualizer2_interface.h>
 #include <shiokaze/visualizer/gridvisualizer2_interface.h>
 #include <shiokaze/projection/macproject2_interface.h>
-#include <shiokaze/surfacetracker/macsurfacetracker2_interface.h>
+#include <shiokaze/surfacetracker/maclevelsetsurfacetracker2_interface.h>
 #include <shiokaze/timestepper/timestepper_interface.h>
 #include <shiokaze/core/dylibloader.h>
 //
@@ -47,15 +47,16 @@ public:
 	macliquid2();
 	LONG_NAME("MAC Liquid 2D")
 	ARGUMENT_NAME("Liquid")
-	//
-	virtual void drag( int width, int height, double x, double y, double u, double v ) override;
-	virtual void idle() override;
-	virtual void setup_window( std::string &name, int &width, int &height ) const override;
-	virtual void draw( graphics_engine &g, int width, int height ) const override;
-	virtual bool should_quit() const override { return m_timestepper->should_quit(); }
-	virtual bool should_screenshot() const override { return m_timestepper->should_export_frame(); }
+	MODULE_NAME("macliquid2")
 	//
 protected:
+	//
+	virtual void drag( double x, double y, double z, double u, double v, double w ) override;
+	virtual void idle() override;
+	virtual void setup_window( std::string &name, int &width, int &height ) const override;
+	virtual void draw( graphics_engine &g ) const override;
+	virtual bool should_quit() const override { return m_timestepper->should_quit(); }
+	virtual bool should_screenshot() const override { return m_timestepper->should_export_frame(); }
 	//
 	virtual void load( configuration &config ) override;
 	virtual void configure( configuration &config ) override;

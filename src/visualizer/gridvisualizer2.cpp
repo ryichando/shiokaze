@@ -33,7 +33,7 @@
 SHKZ_USING_NAMESPACE
 //
 class gridvisualizer2 : public gridvisualizer2_interface {
-private:
+protected:
 	//
 	virtual void draw_active( graphics_engine &g, const array2<float> &q ) const override {
 		if( m_param.draw_active ) {
@@ -163,11 +163,18 @@ private:
 	virtual void draw_fluid( graphics_engine &g, const array2<float> &solid, const array2<float> &fluid ) const override {
 		if( m_param.draw_fluid ) {
 			//
-			shared_array2<float> combined(fluid.type());
-			m_gridutility->combine_levelset(solid,fluid,*combined.get());
-			//
 			g.color4(0.5,0.6,1.0,0.5);
-			draw_levelset(g,*combined.get());
+			if( m_param.enclose_fluid ) {
+				shared_array2<float> combined(fluid.type());
+				m_gridutility->combine_levelset(solid,fluid,*combined.get());
+				draw_levelset(g,*combined.get());
+			} else {
+				draw_levelset(g,fluid);
+			}
+			//
+			if( m_param.draw_active_levelset ) {
+				draw_active(g,fluid);
+			}
 		}
 	}
 	virtual void visualize_cell_scalar( graphics_engine &g, const array2<float> &q ) const override {
@@ -245,6 +252,8 @@ private:
 		config.get_bool("DrawSolid",m_param.draw_solid,"Should draw solid");
 		config.get_bool("DrawDensity",m_param.draw_density,"Should draw density");
 		config.get_bool("DrawVelocity",m_param.draw_velocity,"Should draw velocity");
+		config.get_bool("DrawActiveFluid",m_param.draw_active_levelset,"Should draw active fluid");
+		config.get_bool("EncloseFluid",m_param.enclose_fluid,"Should enclose liquid");
 	}
 	virtual void initialize( const shape2 &shape, double dx ) override {
 		m_shape = shape;
@@ -262,6 +271,8 @@ private:
 		bool draw_fluid {true};
 		bool draw_density {true};
 		bool draw_velocity {true};
+		bool draw_active_levelset {true};
+		bool enclose_fluid {false};
 	};
 	//
 	Parameters m_param;

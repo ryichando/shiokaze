@@ -39,7 +39,7 @@ SHKZ_BEGIN_NAMESPACE
 class lineararray3 : public array_core3 {
 public:
 	lineararray3 () = default;
-private:
+protected:
 	//
 	LONG_NAME("Linear Array 3D")
 	ARGUMENT_NAME("LinArray")

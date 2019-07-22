@@ -75,6 +75,10 @@ static void compress_memory( void *in_data, size_t in_data_size, std::vector<uin
 class meshexporter3 : public meshexporter3_interface {
 public:
 	//
+	MODULE_NAME("meshexporter3")
+	//
+protected:
+	//
 	virtual void set_mesh( const std::vector<vec3d> &vertices, const std::vector<std::vector<size_t> > &faces) override {
 		this->vertices = vertices;
 		this->faces = faces;
@@ -251,8 +255,6 @@ public:
 		global_timer::resume();
 		return true;
 	}
-	//
-protected:
 	//
 	std::vector<vec3d> vertices;
 	std::vector<vec3d> vertex_colors;

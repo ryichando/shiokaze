@@ -28,7 +28,7 @@
 SHKZ_USING_NAMESPACE
 //
 class macvisualizer3 : public macvisualizer3_interface {
-private:
+protected:
 	//
 	MODULE_NAME("macvisualizer3")
 	//

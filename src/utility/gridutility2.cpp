@@ -38,7 +38,7 @@
 SHKZ_USING_NAMESPACE
 //
 class gridutility2 : public gridutility2_interface {
-private:
+protected:
 	//
 	MODULE_NAME("gridutility2")
 	//

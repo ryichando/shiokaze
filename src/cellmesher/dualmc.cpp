@@ -29,7 +29,7 @@ SHKZ_USING_NAMESPACE
 using namespace dualmc;
 //
 class dualmc_wrapper : public cellmesher3_interface {
-private:
+protected:
 	//
 	LONG_NAME("Dual Marching Cubes Mesh Generator 3D")
 	AUTHOR_NAME("Dominik Wodniok")

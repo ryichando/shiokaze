@@ -35,7 +35,7 @@
 SHKZ_USING_NAMESPACE
 //
 class fastmarch3 : public redistancer3_interface {
-private:
+protected:
 	//
 	LONG_NAME("FastMarch 3D")
 	MODULE_NAME("fastmarch3")

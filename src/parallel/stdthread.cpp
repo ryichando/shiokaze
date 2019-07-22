@@ -32,7 +32,7 @@
 SHKZ_BEGIN_NAMESPACE
 //
 class stdthread : public parallel_core {
-public:
+protected:
 	//
 	LONG_NAME("STD Thread")
 	MODULE_NAME("stdthread")

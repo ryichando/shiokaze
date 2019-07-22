@@ -19,7 +19,7 @@
 SHKZ_USING_NAMESPACE
 //
 class marchingcubes : public cellmesher3_interface {
-private:
+protected:
 	//
 	LONG_NAME("Marching Cubes Mesh Generator 3D")
 	MODULE_NAME("marchingcubes")

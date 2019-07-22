@@ -27,6 +27,7 @@
 //
 #include <shiokaze/core/common.h>
 #include <string>
+#include <functional>
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -41,34 +42,52 @@ public:
 	 */
 	virtual ~graphics_engine() = default;
 	/**
-	 \~english @brief Initialize graphics engine with a background color.
-	 @param[in] r Red channel.
-	 @param[in] g Green channel.
-	 @param[in] b Blue channel.
-	 @param[in] a Alpha channel.
-	 \~japanese @brief 背景色を指定して、グラフィックスエンジンを初期化する。
-	 @param[in] r 赤色成分。
-	 @param[in] g 緑色成分。
-	 @param[in] b 青色成分。
-	 @param[in] a アルファ成分。
+	 \~english @brief Initialize graphics engine.
+	 \~japanese @brief グラフィックスエンジンを初期化する。
 	 */
-	virtual void setup_graphics ( double r=0.0, double g=0.0, double b=0.0, double a=0.0 ) = 0;
+	virtual void setup_graphics () = 0;
 	/**
-	 \~english @brief Configure the perspective view.
-	 @param[in] width Pixel coordinate width.
-	 @param[in] height Pixel coordinate height.
-	 @param[in] dim View dimension number.
-	 \~japanese @brief パースペクティブの描画設定を行う。
-	 @param[in] width ピクセル単位の横幅。
-	 @param[in] height ピクセル単位の縦幅。
-	 @param[in] dim 描画する空間の次元数。
+	 \~english @brief Set view port.
+	 \~japanese @brief ビューポートを設定する。
+	**/
+	virtual void set_viewport( unsigned x, unsigned y, unsigned width, unsigned height ) = 0;
+	/**
+	 \~english @brief Configure 2D coordinate view.
+	 @param[in] left Left edge x coordinate.
+	 @param[in] right Right edge x coordinate.
+	 @param[in] bottom Bottom edge y coordinate.
+	 @param[in] top Top edge y coordinate.
+	 \~japanese @brief 2次元座標系を設定する。
+	 @param[in] left 左端の X 軸の座標。
+	 @param[in] right 右端の X 軸の座標。
+	 @param[in] bottom 下端の Y 軸の座標。
+	 @param[in] top 上端の Y 軸の座標。
 	 */
-	virtual void configure_view( unsigned width, unsigned height, unsigned dim, double scale=1.0 ) = 0;
+	virtual void set_2D_coordinate( double left, double right, double bottom, double top ) = 0;
+	/**
+	 \~english @brief Set up a camera with a target position, origin position and fov.
+	 @param[in] target Target position.
+	 @param[in] position Camera position.
+	 @param[in] top Top unit vector.
+	 @param[in] fov Field of view.
+	 @param[in] near Near clipping.
+	 @param[in] far Far clipping.
+	 \~japanese @brief 視野角、カメラの位置、ターゲット位置を指定してカメラを向ける。
+	 @param[in] target ターゲット位置。
+	 @param[in] position カメラの位置。
+	 @param[in] top 上方向のユニットベクトル。
+	 @param[in] fov 視野角。
+	 @param[in] near ニアクリッピング。
+	 @param[in] far ファークリッピング。
+	 */
+	virtual void look_at( const double target[3], const double position[3], const double up[3], double fov, double near, double far ) = 0;
 	/**
 	 \~english @brief Clear out the canvas.
+	 @param[in] v Clear color (4 channels).
 	 \~japanese @brief キャンバスをクリアする。
+	 @param[in] v クリアカラー (4チャンネル)。
 	 */
-	virtual void clear() = 0;
+	virtual void clear( const double *v ) = 0;
 	/**
 	 \~english @brief Equivalebt to glColor. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml
 	 \~japanese @brief glColor と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml を参照。

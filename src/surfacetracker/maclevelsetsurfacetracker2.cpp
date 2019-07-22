@@ -22,49 +22,37 @@
 **	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 //
-#include <shiokaze/surfacetracker/macsurfacetracker2_interface.h>
+#include <shiokaze/surfacetracker/maclevelsetsurfacetracker2_interface.h>
 #include <shiokaze/advection/macadvection2_interface.h>
 #include <shiokaze/utility/macutility2_interface.h>
 #include <shiokaze/utility/gridutility2_interface.h>
-#include <shiokaze/visualizer/gridvisualizer2_interface.h>
 #include <shiokaze/redistancer/redistancer2_interface.h>
-#include <shiokaze/parallel/parallel_driver.h>
 #include <shiokaze/array/shared_array2.h>
 #include <cstdio>
 //
 SHKZ_USING_NAMESPACE
 //
-class maclevelsetsurfacetracker2 : public macsurfacetracker2_interface {
-private:
+class maclevelsetsurfacetracker2 : public maclevelsetsurfacetracker2_interface {
+protected:
 	//
 	LONG_NAME("MAC Levelset Surface Tracker 2D")
 	MODULE_NAME("maclevelsetsurfacetracker2")
 	//
-	virtual void assign( const array2<float> &solid, const array2<float> &fluid ) override {
-		m_solid.copy(solid);
-		m_fluid.copy(fluid);
-	}
-	virtual void advect( const macarray2<float> &u, double dt ) override {
+	virtual void advect( array2<float> &fluid, const array2<float> &solid, const macarray2<float> &u, double dt ) override {
 		//
 		if( dt ) {
-			shared_array2<float> fluid_save(m_fluid);
-			m_macadvection->advect_scalar(m_fluid,u,fluid_save(),dt);
+			shared_array2<float> fluid_save(fluid);
+			m_macadvection->advect_scalar(fluid,u,fluid_save(),dt);
 		}
-		m_redistancer->redistance(m_fluid,m_param.levelset_half_bandwidth_count);
-		m_gridutility->extrapolate_levelset(m_solid,m_fluid);
-	}
-	virtual void get( array2<float> &fluid ) override { fluid.copy(m_fluid); }
-	virtual void draw( graphics_engine &g ) const override {
-		g.color4(0.5,0.6,1.0,0.5);
-		m_gridvisualizer->draw_levelset(g,m_fluid);
-		if( m_param.draw_actives ) m_gridvisualizer->draw_active(g,m_fluid);
+		m_redistancer->redistance(fluid,m_param.levelset_half_bandwidth_count);
+		m_gridutility->extrapolate_levelset(solid,fluid);
 	}
 	//
 	virtual void load( configuration &config ) override {
 		m_macadvection.set_name("Levelset Advection 2D","LevelsetAdvection");
 	}
+	//
 	virtual void configure( configuration &config ) override {
-		config.get_bool("DrawActives",m_param.draw_actives,"Whether to draw active narrow band");
 		config.get_unsigned("LevelsetHalfWidth",m_param.levelset_half_bandwidth_count,"Level set half bandwidth");
 	}
 	//
@@ -72,21 +60,13 @@ private:
 		//
 		m_shape = shape;
 		m_dx = dx;
-		//
-		m_fluid.initialize(shape.cell());
-		m_solid.initialize(shape.nodal());
 	}
 	//
-	array2<float> m_solid{this}, m_fluid{this};
 	macadvection2_driver m_macadvection{this,"macadvection2"};
 	redistancer2_driver m_redistancer{this,"pderedistancer2"};
 	gridutility2_driver m_gridutility{this,"gridutility2"};
-	macutility2_driver m_macutility{this,"macutility2"};
-	gridvisualizer2_driver m_gridvisualizer{this,"gridvisualizer2"};
-	parallel_driver m_parallel{this};
 	//
 	struct Parameters {
-		bool draw_actives {true};
 		unsigned levelset_half_bandwidth_count {3};
 	};
 	//

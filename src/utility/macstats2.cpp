@@ -35,7 +35,7 @@ using namespace array_utility2;
 using namespace array_interpolator2;
 //
 class macstats2 : public macstats2_interface {
-private:
+protected:
 	//
 	MODULE_NAME("macstats2")
 	//
