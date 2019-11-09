@@ -483,6 +483,15 @@ public:
 		for( int dim : DIMS3 ) (*this)[dim] *= v;
 	}
 	/**
+	 \~english @brief Divide all the grid values with an input value.
+	 @param[in] v Value to divide.
+	 \~japanese @brief グリッドの全てのセルの値を入力値で乗算する。
+	 @param[in] v 乗算する値。
+	 */
+	void operator/=(const T &v) {
+		for( int dim : DIMS3 ) (*this)[dim] /= v;
+	}
+	/**
 	 \~english @brief Get the read-only reference to the staggered array of a specified dimension.
 	 @param[in] dim Dimensiton of the grid.
 	 \~japanese @brief 指定した次元の読み込み処理だけ可能なスタッガード格子の参照を得る。

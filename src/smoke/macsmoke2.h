@@ -37,6 +37,7 @@
 #include <shiokaze/visualizer/macvisualizer2_interface.h>
 #include <shiokaze/projection/macproject2_interface.h>
 #include <shiokaze/timestepper/timestepper_interface.h>
+#include <shiokaze/utility/graphplotter_interface.h>
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -74,11 +75,13 @@ protected:
 	shape2 m_shape;
 	double m_dx;
 	bool m_force_exist;
+	unsigned m_graph_id;
 	//
 	struct Parameters {
 		bool use_dust {false};
 		double minimal_density {0.01};
 		unsigned r_sample {4};
+		bool show_graph {false};
 		unsigned extrapolated_width {3};
 		double buoyancy_factor {2.0};
 	};
@@ -93,6 +96,7 @@ protected:
 	gridvisualizer2_driver m_gridvisualizer{this,"gridvisualizer2"};
 	macstats2_driver m_macstats{this,"macstats2"};
 	macvisualizer2_driver m_macvisualizer{this,"macvisualizer2"};
+	graphplotter_driver m_graphplotter{this,"graphplotter"};
 	timestepper_driver m_timestepper{this,"timestepper"};
 	macutility2_driver m_macutility{this,"macutility2"};
 	//
@@ -105,6 +109,7 @@ protected:
 	virtual void add_source ( macarray2<float> &velocity, array2<float> &density, double time, double dt );
 	virtual void rasterize_dust_particles( array2<float> &rasterized_density );
 	virtual void draw_dust_particles( graphics_engine &g ) const;
+	virtual void add_to_graph();
 };
 //
 SHKZ_END_NAMESPACE

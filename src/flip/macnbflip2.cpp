@@ -69,6 +69,7 @@ void macnbflip2::configure( configuration &config ) {
 	config.get_unsigned("MaxParticlesPerCell",m_param.max_particles_per_cell,"Maximal target number of particles per cell");
 	config.get_unsigned("MiminalLiveCount",m_param.minimal_live_count,"Minimal step of particles to stay alive");
 	config.get_double("CorrectStiff",m_param.stiff,"Position correction strength");
+	config.get_bool("VelocityCorrection",m_param.velocity_correction,"Should do velocity correction");
 	config.get_double("BulletMaximalTime",m_param.bullet_maximal_time,"Maximal time for bullet particles to survive");
 	config.get_bool("DrawFLIPParticles",m_param.draw_particles,"Whether to draw FLIP particles.");
 	config.get_double("DecayRate",m_param.decay_rate,"Decay rate for tracer particles");
@@ -149,16 +150,11 @@ size_t macnbflip2::remove_bullet( double time ) {
 	return removed_total;
 }
 //
-typedef struct {
-	float mass;
-	float momentum;
-} mass_momentum2;
-//
-void macnbflip2::splat( macarray2<float> &momentum, macarray2<float> &mass ) const {
+void macnbflip2::splat( macarray2<macflip2_interface::mass_momentum2> &mass_and_momentum ) const {
 	//
 	if( m_particles.size()) {
 		//
-		shared_macarray2<mass_momentum2> mass_and_momentum(momentum.shape());
+		mass_and_momentum.clear();
 		shared_bitarray2 cell_mask(m_shape);
 		for( size_t n=0; n<m_particles.size(); ++n ) {
 			cell_mask().set(m_shape.clamp(m_particles[n].p/m_dx));
@@ -166,12 +162,12 @@ void macnbflip2::splat( macarray2<float> &momentum, macarray2<float> &mass ) con
 		cell_mask->const_serial_actives([&]( int i, int j, auto &it ) {
 			const vec2i pi(i,j);
 			for( int dim : DIMS2 ) {
-				mass_and_momentum()[dim].set(pi,{0.,0.});
-				mass_and_momentum()[dim].set(pi+vec2i(dim==0,dim==1),{0.,0.});
+				mass_and_momentum[dim].set(pi,{0.,0.});
+				mass_and_momentum[dim].set(pi+vec2i(dim==0,dim==1),{0.,0.});
 			}
 		});
-		mass_and_momentum().dilate();
-		mass_and_momentum->parallel_actives([&]( int dim, int i, int j, auto &it, int tn ) {
+		mass_and_momentum.dilate();
+		mass_and_momentum.parallel_actives([&]( int dim, int i, int j, auto &it, int tn ) {
 			//
 			float mom (0.0), m (0.0);
 			vec2d pos = m_dx*vec2i(i,j).face(dim);
@@ -188,23 +184,10 @@ void macnbflip2::splat( macarray2<float> &momentum, macarray2<float> &mass ) con
 			else it.set_off();
 		});
 		//
-		mass.clear(0.0);
-		mass.activate_as(mass_and_momentum());
-		mass.parallel_actives([&]( int dim, int i, int j, auto &it, int tn ) {
-			it.set(mass_and_momentum()[dim](i,j).mass);
-		});
-		//
-		momentum.clear(0.0);
-		momentum.activate_as(mass_and_momentum());
-		momentum.parallel_actives([&]( int dim, int i, int j, auto &it, int tn ) {
-			it.set(mass_and_momentum()[dim](i,j).momentum);
-		});
-		//
-		if( m_param.use_apic ) additionally_apply_velocity_derivative(momentum);
+		if( m_param.use_apic ) additionally_apply_velocity_derivative(mass_and_momentum);
 		//
 	} else {
-		momentum.clear();
-		mass.clear();
+		mass_and_momentum.clear();
 	}
 }
 //
@@ -341,11 +324,11 @@ void macnbflip2::collision( std::function<double(const vec2d &p)> solid ) {
 	sort_particles();
 }
 //
-void macnbflip2::correct( std::function<double(const vec2d &p)> fluid ) {
+void macnbflip2::correct( std::function<double(const vec2d &p)> fluid, const macarray2<float> &velocity ) {
 	//
-	// Compute correction displacement
 	if( m_particles.size()) {
 		//
+		// Compute the displacements
 		std::vector<vec2d> displacements(m_particles.size());
 		m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
 			const Particle &pi = m_particles[n];
@@ -378,10 +361,19 @@ void macnbflip2::correct( std::function<double(const vec2d &p)> fluid ) {
 			}
 		});
 		//
+		// Apply velocity correction
+		if( m_param.velocity_correction ) {
+			m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
+				vec2d mid_p = 0.5 * (m_particles[n].p+displacements[n]);
+				for( int dim : DIMS2 ) {
+					vec2d gradient = array_derivative2::derivative(velocity[dim],m_dx*vec2i().face(dim),m_dx,mid_p);
+					m_particles[n].velocity[dim] += gradient * displacements[n];
+				}
+			});
+		}
+		//
 		// Apply displacement
-		m_parallel.for_each(m_particles.size(),[&]( size_t n ) {
-			m_particles[n].p += displacements[n];
-		});
+		m_parallel.for_each(m_particles.size(),[&]( size_t n ) { m_particles[n].p += displacements[n]; });
 		//
 		// Update hash table
 		sort_particles();
@@ -678,10 +670,10 @@ void macnbflip2::update_velocity_derivative( Particle& particle, const macarray2
 	}
 }
 //
-void macnbflip2::additionally_apply_velocity_derivative( macarray2<float> &momentum ) const {
+void macnbflip2::additionally_apply_velocity_derivative( macarray2<macflip2_interface::mass_momentum2> &mass_and_momentum ) const {
 	//
 	// Written by Takahiro Sato
-	momentum.parallel_actives([&]( int dim, int i, int j, auto &it ) {
+	mass_and_momentum.parallel_actives([&]( int dim, int i, int j, auto &it ) {
 		vec2d pos = m_dx*vec2d(i+0.5*(dim!=0),j+0.5*(dim!=1));
 		std::vector<size_t> neighbors = m_pointgridhash->get_face_neighbors(vec2i(i,j),dim);
 		double mom (0.0);
@@ -694,7 +686,8 @@ void macnbflip2::additionally_apply_velocity_derivative( macarray2<float> &momen
 				mom += w*p.mass*(c*r);
 			}
 		}
-		it.increment(mom);
+		const auto value = it();
+		it.set({value.mass,(float)(value.momentum+mom)});
 	});
 }
 //

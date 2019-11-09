@@ -58,9 +58,10 @@ protected:
 	}
 	//
 	virtual void project( double dt,
-				  macarray3<float> &velocity,
-				  const array3<float> &solid,
-				  const array3<float> &fluid) override {
+				macarray3<float> &velocity,
+				const array3<float> &solid,
+				const array3<float> &fluid,
+				const std::vector<signed_rigidbody3_interface *> *rigidbodies) override {
 		//
 		scoped_timer timer(this);
 		//
@@ -673,9 +674,9 @@ protected:
 			//
 			timer.tick(); console::dump( "Solving the linear system...");
 			std::vector<double> compressed_result;
-			unsigned count = m_solver->solve(compressed_Lhs.get(),compressed_rhs,compressed_result);
-			console::write(get_argument_name()+"_number_projection_iteration", count);
-			console::dump( "Done. Took %d iterations. Took %s\n", count, timer.stock("linsolve").c_str());
+			auto status = m_solver->solve(compressed_Lhs.get(),compressed_rhs,compressed_result);
+			console::write(get_argument_name()+"_number_projection_iteration", status.count);
+			console::dump( "Done. Took %d iterations. Resid=%e. Took %s\n", status.count, status.residual, timer.stock("linsolve").c_str());
 			//
 			if( m_param.diff_solve ) {
 				m_parallel.for_each(Lhs->rows(),[&]( size_t row ) {
@@ -841,9 +842,9 @@ protected:
 		// Solve the linear system
 		timer.tick(); console::dump( "Solving the linear system...");
 		auto result = m_factory->allocate_vector();
-		unsigned count = m_solver->solve(Lhs.get(),rhs.get(),result.get());
-		console::write(get_argument_name()+"_number_volume_correction_projection_iteration", count);
-		console::dump( "Done. Took %d iterations. Took %s\n", count, timer.stock("linsolve").c_str());
+		auto status = m_solver->solve(Lhs.get(),rhs.get(),result.get());
+		console::write(get_argument_name()+"_number_volume_correction_projection_iteration", status.count);
+		console::dump( "Done. Took %d iterations. Took %s\n", status.count, timer.stock("linsolve").c_str());
 		//
 		// Re-arrange to the array
 		pressure->clear();
@@ -893,6 +894,10 @@ protected:
 		//
 		m_C = nullptr;
 		m_target_volume = m_current_volume = m_y_prev = 0.0;
+	}
+	//
+	virtual const array3<float> * get_pressure() const override {
+		return nullptr;
 	}
 	//
 	struct Parameters {

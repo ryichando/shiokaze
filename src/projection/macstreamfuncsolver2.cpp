@@ -49,7 +49,8 @@ protected:
 	virtual void project(double dt,
 						macarray2<float> &velocity,
 						const array2<float> &solid,
-						const array2<float> &fluid) override {
+						const array2<float> &fluid,
+						const std::vector<signed_rigidbody2_interface *> *rigidbodies ) override {
 		//
 		shared_macarray2<float> areas(m_shape);
 		shared_macarray2<float> rhos(m_shape);
@@ -583,6 +584,10 @@ protected:
 				}
 			}
 		});
+	}
+	//
+	virtual const array2<float> * get_pressure() const override {
+		return nullptr;
 	}
 	//
 	virtual void draw( graphics_engine &g ) const override {

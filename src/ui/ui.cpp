@@ -78,6 +78,8 @@ static void key_callback(::GLFWwindow* window, int key, int scancode, int action
 		instance->set_running( ! instance->is_running());
 	} else if( action == GLFW_PRESS && key == GLFW_KEY_R ) {
 		instance->reinitialize();
+	} else if( action == GLFW_PRESS && key == GLFW_KEY_PERIOD ) {
+		instance->idle();
 	} else {
 		int a;
 		if( action == GLFW_PRESS ) a = UI_interface::ACTION::PRESS;

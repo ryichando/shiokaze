@@ -82,6 +82,9 @@ void macflipliquid3::idle() {
 	//
 	scoped_timer timer(this);
 	//
+	// Add to graph
+	add_to_graph();
+	//
 	// Compute the timestep size
 	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	double CFL = m_timestepper->get_current_CFL();
@@ -90,8 +93,7 @@ void macflipliquid3::idle() {
 	//
 	shared_macarray3<float> face_density(m_shape);
 	shared_macarray3<float> save_velocity(m_shape);
-	shared_macarray3<float> momentum(m_shape);
-	shared_macarray3<float> mass(m_shape);
+	shared_macarray3<macflip3_interface::mass_momentum3> mass_and_momentum(m_shape);
 	//
 	// Update fluid levelset
 	m_flip->update([&](const vec3d &p){ return interpolate_solid(p); },m_fluid);
@@ -116,7 +118,7 @@ void macflipliquid3::idle() {
 	);
 	//
 	// Correct positions
-	m_flip->correct([&](const vec3d &p){ return interpolate_fluid(p); });
+	m_flip->correct([&](const vec3d &p){ return interpolate_fluid(p); },m_velocity);
 	//
 	// Reseed particles
 	m_flip->seed(m_fluid,
@@ -125,7 +127,7 @@ void macflipliquid3::idle() {
 	);
 	//
 	// Splat momentum and mass of FLIP particles onto grids
-	m_flip->splat(momentum(),mass());
+	m_flip->splat(mass_and_momentum());
 	//
 	// Compute face mass
 	timer.tick(); console::dump( "Computing face mass..." );
@@ -136,11 +138,11 @@ void macflipliquid3::idle() {
 	timer.tick(); console::dump( "Computing combined grid velocity..." );
 	//
 	shared_macarray3<float> overwritten_velocity(m_shape);
-	overwritten_velocity->activate_as(mass());
+	overwritten_velocity->activate_as(mass_and_momentum());
 	overwritten_velocity->parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn ) {
-		double m = mass()[dim](i,j,k);
-		double grid_mass = std::max(0.0,face_density()[dim](i,j,k)-m);
-		it.set((grid_mass*m_velocity[dim](i,j,k)+momentum()[dim](i,j,k)) / (grid_mass+m));
+		const auto value = mass_and_momentum()[dim](i,j,k);
+		float grid_mass = std::max(0.0f,face_density()[dim](i,j,k)-value.mass);
+		it.set((grid_mass*m_velocity[dim](i,j,k)+value.momentum)/(grid_mass+value.mass));
 	});
 	//
 	// Velocity overwrite
@@ -327,6 +329,9 @@ void macflipliquid3::draw( graphics_engine &g ) const {
 	//
 	// Visualize levelset
 	m_gridvisualizer->draw_fluid(g,m_solid,m_fluid);
+	//
+	// Draw graph
+	m_graphplotter->draw(g);
 }
 //
 extern "C" module * create_instance() {

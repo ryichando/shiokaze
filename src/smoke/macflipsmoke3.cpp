@@ -42,7 +42,6 @@ macflipsmoke3::macflipsmoke3 () {
 void macflipsmoke3::configure( configuration &config ) {
 	//
 	config.get_double("GridMass",m_param.gridmass,"Mass of grid cell");
-	config.set_bool("LooseInterior",false);
 	config.get_double("PICFLIP",m_param.PICFLIP,"PICFLIP blending factor");
 	assert( m_param.PICFLIP >= 0.0 && m_param.PICFLIP <= 1.0 );
 	//
@@ -67,6 +66,9 @@ void macflipsmoke3::idle() {
 	//
 	scoped_timer timer(this);
 	//
+	// Add to graph
+	add_to_graph();
+	//
 	// Compute the timestep size
 	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	double CFL = m_timestepper->get_current_CFL();
@@ -80,7 +82,7 @@ void macflipsmoke3::idle() {
 		m_timestepper->get_current_time(),dt);
 	//
 	// Correct positions
-	m_flip->correct([&](const vec3d &p){ return -1.0; });
+	m_flip->correct([&](const vec3d &p){ return -1.0; },m_velocity);
 	//
 	// Reseed particles
 	shared_array3<float> fluid(m_shape);
@@ -102,14 +104,13 @@ void macflipsmoke3::idle() {
 	}
 	//
 	// Splat momentum and mass of FLIP particles onto grids
-	shared_macarray3<float> mass(m_shape);
-	shared_macarray3<float> momentum(m_shape);
-	m_flip->splat(momentum(),mass());
+	shared_macarray3<macflip3_interface::mass_momentum3> mass_and_momentum(m_shape);
+	m_flip->splat(mass_and_momentum());
 	//
 	// Overwrite grid velocity
 	m_velocity.parallel_actives([&]( int dim, int i, int j, int k, auto &it, int tn) {
-		double m = mass()[dim](i,j,k);
-		if( m ) it.set(momentum()[dim](i,j,k) / m);
+		const auto value = mass_and_momentum()[dim](i,j,k);
+		if( value.mass ) it.set(value.momentum / value.mass);
 	});
 	//
 	// Save the current velocity
@@ -164,6 +165,9 @@ void macflipsmoke3::draw( graphics_engine &g ) const {
 	//
 	// Draw FLIP particles
 	m_flip->draw(g,m_timestepper->get_current_time());
+	//
+	// Draw graph
+	m_graphplotter->draw(g);
 }
 //
 extern "C" module * create_instance() {

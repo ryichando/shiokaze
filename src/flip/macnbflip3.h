@@ -51,7 +51,7 @@ protected:
 						 const macarray3<float> &velocity ) override;
 	//
 	// Map FLIP momentum from particles to grid
-	virtual void splat( macarray3<float> &momentum, macarray3<float> &mass ) const override;
+	virtual void splat( macarray3<macflip3_interface::mass_momentum3> &mass_and_momentum ) const override;
 	//
 	// Advcect particles through the velocity field
 	virtual void advect( std::function<double(const vec3d &p)> solid,
@@ -62,7 +62,7 @@ protected:
 	virtual void mark_bullet( std::function<double(const vec3d &p)> fluid, std::function<vec3d(const vec3d &p)> velocity, double time ) override;
 	//
 	// Correct particle position
-	virtual void correct( std::function<double(const vec3d &p)> fluid ) override;
+	virtual void correct( std::function<double(const vec3d &p)> fluid, const macarray3<float> &velocity ) override;
 	//
 	// Update fluid level set
 	virtual void update( std::function<double(const vec3d &p)> solid, array3<float> &fluid ) override;
@@ -103,6 +103,7 @@ protected:
 		unsigned max_particles_per_cell {6};
 		unsigned minimal_live_count {5};
 		double stiff {1.0};
+		bool velocity_correction {true};
 		double bullet_maximal_time {0.5};
 		bool draw_particles {true};
 		double decay_rate {10.0};
@@ -135,7 +136,7 @@ protected:
 	//
 	virtual void sort_particles();
 	virtual void update_velocity_derivative( Particle& particle, const macarray3<float> &velocity );
-	virtual void additionally_apply_velocity_derivative( macarray3<float> &momentum ) const;
+	virtual void additionally_apply_velocity_derivative( macarray3<macflip3_interface::mass_momentum3> &mass_and_momentum ) const;
 	//
 	static double grid_kernel( const vec3d &r, double dx );
 	static vec3d grid_gradient_kernel( const vec3d &r, double dx );

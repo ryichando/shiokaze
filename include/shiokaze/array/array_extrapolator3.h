@@ -64,7 +64,10 @@ namespace array_extrapolator3 {
 						}
 					}
 				}
-				if( weight ) it.set(sum / weight );
+				if( weight ) {
+					counters[tn] ++;
+					it.set(sum / weight);
+				}
 			}
 		},count);
 		//

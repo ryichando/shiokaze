@@ -156,7 +156,6 @@ public:
 			}
 		}
 	}
-	//
 };
 //
 SHKZ_END_NAMESPACE

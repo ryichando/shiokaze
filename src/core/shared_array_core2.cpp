@@ -24,7 +24,7 @@
 //
 #include <shiokaze/array/shared_array_core2.h>
 #include <map>
-#include <mutex>
+#include <thread>
 #include <vector>
 //
 SHKZ_USING_NAMESPACE
@@ -55,13 +55,23 @@ struct shared_array_data2 {
 	int being_borrowed {0};
 };
 //
-static std::mutex shared_array2_mutex;
-static std::map<array_table2,shared_array_data2> array_map;
-static std::map<void *,shared_array_data2 *> pointer_map;
+static std::thread::id g_main_thread_id = std::this_thread::get_id();
+static std::map<array_table2,shared_array_data2> g_array_map;
+static std::map<void *,shared_array_data2 *> g_pointer_map;
+//
+static void thread_check () {
+	if( g_main_thread_id != std::this_thread::get_id() ) {
+		printf( "shared_array_core2: Calling from a multithread is not allowed.\n");
+		exit(0);
+	}
+}
 //
 size_t shared_array_core2::get_total_grid_count () {
+	//
+	thread_check();
+	//
 	size_t count (0);
-	for( auto &it : array_map ) {
+	for( auto &it : g_array_map ) {
 		count += it.second.arrays.size();
 	}
 	return count;
@@ -69,13 +79,14 @@ size_t shared_array_core2::get_total_grid_count () {
 //
 void * shared_array_core2::borrow_shared( const shape2 &shape, size_t class_hash, std::string core_name, std::function<void *(const shape2 &shape, std::string core_name)> alloc_func, std::function<void( void *ptr )> dealloc_func ) {
 	//
-	std::lock_guard<std::mutex> guard(shared_array2_mutex);
+	thread_check();
+	//
 	const auto key = array_table2(shape,class_hash,core_name);
-	const auto it = array_map.find(key);
+	const auto it = g_array_map.find(key);
 	shared_array_data2 *container (nullptr);
-	if( it == array_map.end()) {
-		array_map[key] = shared_array_data2(dealloc_func,key);
-		container = &array_map[key];
+	if( it == g_array_map.end()) {
+		g_array_map[key] = shared_array_data2(dealloc_func,key);
+		container = &g_array_map[key];
 	} else {
 		container = &it->second;
 	}
@@ -83,39 +94,43 @@ void * shared_array_core2::borrow_shared( const shape2 &shape, size_t class_hash
 	if( container->arrays.size()) {
 		result = container->arrays.back();
 		container->arrays.pop_back();
-		assert( pointer_map.find(result) == pointer_map.end());
-		pointer_map[result] = container;
+		assert( g_pointer_map.find(result) == g_pointer_map.end());
+		g_pointer_map[result] = container;
 	} else {
 		result = alloc_func(shape,core_name);
-		pointer_map[result] = container;
+		g_pointer_map[result] = container;
 	}
 	container->being_borrowed ++;
 	return result;
 }
 //
 void shared_array_core2::return_shared( void *array ) {
-	std::lock_guard<std::mutex> guard(shared_array2_mutex);
-	const auto it = pointer_map.find(array);
-	if( it == pointer_map.end()) {
+	//
+	thread_check();
+	//
+	const auto it = g_pointer_map.find(array);
+	if( it == g_pointer_map.end()) {
 		throw;
 	} else {
 		it->second->arrays.push_back(array);
 		it->second->being_borrowed --;
-		pointer_map.erase(it);
+		g_pointer_map.erase(it);
 	}
 }
 //
 size_t shared_array_core2::clear() {
-	std::lock_guard<std::mutex> guard(shared_array2_mutex);
+	//
+	thread_check();
+	//
 	size_t count (0);
-	for( auto it=array_map.begin(); it!=array_map.end(); ) {
+	for( auto it=g_array_map.begin(); it!=g_array_map.end(); ) {
 		size_t size = it->second.arrays.size();
 		for( auto &e : it->second.arrays ) {
 			it->second.dealloc_func(e);
 		}
 		it->second.arrays.clear();
 		if( ! it->second.being_borrowed ) {
-			it = array_map.erase(it);
+			it = g_array_map.erase(it);
 			count += size;
 		} else {
 			++ it;

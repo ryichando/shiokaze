@@ -40,6 +40,8 @@
 #include <shiokaze/ui/drawable.h>
 #include <shiokaze/timestepper/timestepper_interface.h>
 #include <shiokaze/core/dylibloader.h>
+#include <shiokaze/rigidbody/rigidworld3_interface.h>
+#include <shiokaze/utility/graphplotter_interface.h>
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -78,6 +80,8 @@ protected:
 	//
 	bool m_force_exist;
 	double m_initial_volume;
+	unsigned m_prev_frame;
+	unsigned m_graph_lists[4];
 	//
 	environment_setter arg_shape{this,"shape",&m_shape};
 	environment_setter arg_dx{this,"dx",&m_dx};
@@ -94,12 +98,15 @@ protected:
 	macstats3_driver m_macstats{this,"macstats3"};
 	gridvisualizer3_driver m_gridvisualizer{this,"gridvisualizer3"};
 	macvisualizer3_driver m_macvisualizer{this,"macvisualizer3"};
+	graphplotter_driver m_graphplotter{this,"graphplotter"};
 	dylibloader m_dylib;
 	//
 	std::string m_export_path;
 	//
 	struct Parameters {
 		vec3d gravity {0.0,-9.8,0.0};
+		double surftens_k {0.0};
+		bool show_graph {false};
 		bool mouse_interaction {false};
 		bool volume_correction {true};
 		double volume_change_tol_ratio {0.03};
@@ -115,11 +122,13 @@ protected:
 	//
 	virtual void inject_external_force( macarray3<float> &velocity, double dt );
 	virtual void set_volume_correction( macproject3_interface *macproject );
-	virtual void extend_both();
+	virtual void extend_both( int w=2 );
 	virtual void export_mesh() const;
 	virtual void do_export_mesh( unsigned frame ) const;
 	virtual void do_export_solid_mesh() const;
 	virtual void render_mesh( unsigned frame ) const;
+	virtual void add_to_graph();
+	//
 };
 //
 SHKZ_END_NAMESPACE

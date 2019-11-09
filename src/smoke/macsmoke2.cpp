@@ -64,6 +64,7 @@ void macsmoke2::configure( configuration &config ) {
 	} else {
 		config.get_double("MinimalActiveDensity",m_param.minimal_density,"Minimal density to trim active cells");
 	}
+	config.get_bool("ShowGraph",m_param.show_graph,"Show graph");
 	config.get_double("BuoyancyFactor",m_param.buoyancy_factor,"Buoyancy force rate");
 	config.get_unsigned("SolidExtrapolationDepth",m_param.extrapolated_width,"Solid extrapolation depth");
 	config.get_unsigned("ResolutionX",m_shape[0],"Resolution towards X axis");
@@ -134,6 +135,11 @@ void macsmoke2::post_initialize () {
 	}
 	//
 	m_camera->set_bounding_box(vec2d().v,m_shape.box(m_dx).v,true);
+	//
+	if( m_param.show_graph ) {
+		m_graphplotter->clear();
+		m_graph_id = m_graphplotter->create_entry("Kinetic Energy");
+	}
 }
 //
 void macsmoke2::drag( double x, double y, double z, double u, double v, double w ) {
@@ -228,6 +234,9 @@ void macsmoke2::add_buoyancy_force( macarray2<float> &velocity, const array2<flo
 //
 void macsmoke2::idle() {
 	//
+	// Add to graph
+	add_to_graph();
+	//
 	// Compute the timestep size
 	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	//
@@ -299,6 +308,19 @@ void macsmoke2::draw_dust_particles( graphics_engine &g ) const {
 	}
 }
 //
+void macsmoke2::add_to_graph() {
+	//
+	if( m_param.show_graph ) {
+		//
+		// Compute total energy
+		const double time = m_timestepper->get_current_time();
+		const double total_energy = m_macutility->get_kinetic_energy(m_solid,m_fluid,m_velocity);
+		//
+		// Add to graph
+		m_graphplotter->add_point(m_graph_id,time,total_energy);
+	}
+}
+//
 void macsmoke2::draw( graphics_engine &g ) const {
 	//
 	// Draw density
@@ -316,6 +338,9 @@ void macsmoke2::draw( graphics_engine &g ) const {
 	//
 	// Draw velocity
 	m_macvisualizer->draw_velocity(g,m_velocity);
+	//
+	// Draw graph
+	m_graphplotter->draw(g);
 }
 //
 extern "C" module * create_instance() {

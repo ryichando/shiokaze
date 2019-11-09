@@ -46,6 +46,7 @@ public:
 	//
 	virtual void setup_graphics () override;
 	virtual void set_viewport( unsigned x, unsigned y, unsigned width, unsigned height ) override;
+	virtual void get_viewport( unsigned &x, unsigned &y, unsigned &width, unsigned &height ) const override;
 	virtual void set_2D_coordinate( double left, double right, double bottom, double top ) override;
 	virtual void look_at( const double target[3], const double position[3], const double up[3], double fov, double near, double far ) override;
 	virtual void clear( const double *v ) override;
@@ -68,6 +69,7 @@ private:
 	//
 	double m_HiDPI_factor;
 	double m_ratio;
+	unsigned m_x, m_y, m_width, m_height;
 };
 //
 SHKZ_END_NAMESPACE

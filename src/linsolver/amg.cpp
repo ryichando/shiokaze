@@ -53,7 +53,7 @@ protected:
 		config.get_double("Residual",m_param.residual,"Tolerable residual");
 		config.get_unsigned("MaxIterations",m_param.max_iterations,"Maximal iteration count");
 	}
-	virtual unsigned solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
+	virtual typename RCMatrix_solver_interface<N,T>::Result solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
 		//
 		std::vector<N> rowstart;
 		std::vector<N> index;
@@ -93,7 +93,7 @@ protected:
 		std::tie(iteration_count,error) = solve(amg,rhs,result);
 		//
 		x->convert_from(result);
-		return iteration_count;
+		return {(N)iteration_count,(T)error};
 	}
 	//
 	struct Parameters {

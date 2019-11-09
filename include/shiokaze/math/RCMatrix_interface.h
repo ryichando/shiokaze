@@ -127,6 +127,24 @@ public:
 	 */
 	virtual void add( N index, T value ) = 0;
 	/**
+	 \~english @brief Add a vector.
+	 @param[in] value Vector to add.
+	 \~japanese @brief ベクトルを加算する。
+	 @param[in] value 加算するベクトル。
+	 */
+	virtual void add( const RCMatrix_vector_interface<N,T> *x ) {
+		add_scaled(1.0,x);
+	}
+	/**
+	 \~english @brief Subtract a vector.
+	 @param[in] value Vector to subtract.
+	 \~japanese @brief ベクトルを減算する。
+	 @param[in] value 減算するベクトル。
+	 */
+	virtual void subtract( const RCMatrix_vector_interface<N,T> *x ) {
+		add_scaled(-1.0,x);
+	}
+	/**
 	 \~english @brief Subtract an element value at an input index position.
 	 @param[in] index Index position.
 	 @param[in] value Value to subtract.

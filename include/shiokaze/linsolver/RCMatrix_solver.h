@@ -38,33 +38,49 @@ public:
 	//
 	DEFINE_MODULE(RCMatrix_solver_interface,"Linear System Solver","LinSolver","Linear system solver engine")
 	/**
+	 \~english @brief Solver result
+	 \~japanese @brief ソルバーの結果
+	 */
+	struct Result {
+		/// \~english @brief Iteration count.
+		/// \~japanese @brief 反復回数。
+		N count;
+		/// \~english @brief Relative residual.
+		/// \~japanese @brief 比例誤差。
+		T residual;
+	};
+	/**
 	 \~english @brief Solve a linear system of the form: Ax = b.
 	 @param[in] A Sparse Row Compressed Matrix.
 	 @param[in] b Right hand side vector.
 	 @param[in] x Solution vector.
+	 @return result status.
 	 \~japanese @brief Ax = b で表される線形一次方程式を解く。
 	 @param[in] A 行圧縮の疎行列。
 	 @param[in] b 右側のベクトル。
 	 @param[in] x 解となるベクトル。
+	 @return 結果のステート。
 	 */
-	virtual unsigned solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const = 0;
+	virtual Result solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const = 0;
 	/**
 	 \~english @brief Solve a linear system of the form: Ax = b. Provided to preserve std::vector compatibility.
 	 @param[in] A Sparse Row Compressed Matrix.
 	 @param[in] b Right hand side vector.
 	 @param[in] x Solution vector.
+	 @return result status.
 	 \~japanese @brief Ax = b で表される線形一次方程式を解く。std::vector の互換性のため用意される。
 	 @param[in] A 行圧縮の疎行列。
 	 @param[in] b 右側のベクトル。
 	 @param[in] x 解となるベクトル。
+	 @return 結果のステート。
 	 */
-	inline unsigned solve( const RCMatrix_interface<N,T> *A, const std::vector<T> &b, std::vector<T> &x ) const {
+	inline Result solve( const RCMatrix_interface<N,T> *A, const std::vector<T> &b, std::vector<T> &x ) const {
 		//
 		auto _b = A->allocate_vector(); _b->convert_from(b);
 		auto _x = A->allocate_vector(b.size());
-		unsigned count = solve(A,_b.get(),_x.get());
+		Result res = solve(A,_b.get(),_x.get());
 		_x->convert_to(x);
-		return count;
+		return res;
 	}
 };
 //

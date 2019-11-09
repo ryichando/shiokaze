@@ -68,14 +68,16 @@ void macflipliquid2::post_initialize () {
 //
 void macflipliquid2::idle() {
 	//
+	// Add to graph
+	add_to_graph();
+	//
 	// Compute the timestep size
 	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	unsigned step = m_timestepper->get_step_count();
 	//
 	shared_macarray2<float> face_density(m_shape);
 	shared_macarray2<float> save_velocity(m_shape);
-	shared_macarray2<float> momentum(m_shape);
-	shared_macarray2<float> mass(m_shape);
+	shared_macarray2<macflip2_interface::mass_momentum2> mass_and_momentum(m_shape);
 	//
 	// Update fluid levelset
 	m_flip->update([&](const vec2d &p){ return interpolate_solid(p); },m_fluid);
@@ -100,7 +102,7 @@ void macflipliquid2::idle() {
 	);
 	//
 	// Correct positions
-	m_flip->correct([&](const vec2d &p){ return interpolate_fluid(p); });
+	m_flip->correct([&](const vec2d &p){ return interpolate_fluid(p); },m_velocity);
 	//
 	// Reseed particles
 	m_flip->seed(m_fluid,
@@ -109,18 +111,18 @@ void macflipliquid2::idle() {
 	);
 	//
 	// Splat momentum and mass of FLIP particles onto grids
-	m_flip->splat(momentum(),mass());
+	m_flip->splat(mass_and_momentum());
 	//
 	// Compute face mass
 	m_macutility->compute_face_density(m_solid,m_fluid,face_density());
 	//
 	// Compute the combined grid velocity
 	shared_macarray2<float> overwritten_velocity(m_shape);
-	overwritten_velocity->activate_as(mass());
+	overwritten_velocity->activate_as(mass_and_momentum());
 	overwritten_velocity->parallel_actives([&](int dim, int i, int j, auto &it, int tn ) {
-		double m = mass()[dim](i,j);
-		double grid_mass = std::max(0.0,face_density()[dim](i,j)-m);
-		it.set((grid_mass*m_velocity[dim](i,j)+momentum()[dim](i,j)) / (grid_mass+m));
+		const auto value = mass_and_momentum()[dim](i,j);
+		float grid_mass = std::max(0.0f,face_density()[dim](i,j)-value.mass);
+		it.set((grid_mass*m_velocity[dim](i,j)+value.momentum)/(grid_mass+value.mass));
 	});
 	//
 	// Velocity overwrite
@@ -228,6 +230,9 @@ void macflipliquid2::draw( graphics_engine &g ) const {
 	//
 	// Draw velocity
 	m_macvisualizer->draw_velocity(g,m_velocity);
+	//
+	// Draw graph
+	m_graphplotter->draw(g);
 }
 //
 extern "C" module * create_instance() {

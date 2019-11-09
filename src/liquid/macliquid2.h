@@ -37,7 +37,10 @@
 #include <shiokaze/projection/macproject2_interface.h>
 #include <shiokaze/surfacetracker/maclevelsetsurfacetracker2_interface.h>
 #include <shiokaze/timestepper/timestepper_interface.h>
+#include <shiokaze/utility/graphplotter_interface.h>
 #include <shiokaze/core/dylibloader.h>
+#include <shiokaze/rigidbody/rigidworld2_interface.h>
+#include <shiokaze/utility/graphplotter_interface.h>
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -79,16 +82,20 @@ protected:
 	macstats2_driver m_macstats{this,"macstats2"};
 	gridvisualizer2_driver m_gridvisualizer{this,"gridvisualizer2"};
 	macvisualizer2_driver m_macvisualizer{this,"macvisualizer2"};
+	graphplotter_driver m_graphplotter{this,"graphplotter"};
 	dylibloader m_dylib;
 	//
 	shape2 m_shape;
 	double m_dx;
 	double m_initial_volume;
 	bool m_force_exist;
+	unsigned m_graph_lists[4];
 	//
 	struct Parameters {
 		vec2d gravity;
+		double surftens_k;
 		bool volume_correction;
+		bool show_graph;
 		double volume_change_tol_ratio;
 	};
 	//
@@ -96,7 +103,8 @@ protected:
 	//
 	virtual void inject_external_force( macarray2<float> &velocity, double dt );
 	virtual void set_volume_correction( macproject2_interface *macproject );
-	virtual void extend_both();
+	virtual void extend_both( int w=2 );
+	virtual void add_to_graph();
 };
 //
 SHKZ_END_NAMESPACE

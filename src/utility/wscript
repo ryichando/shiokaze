@@ -55,3 +55,7 @@ def build(bld):
 	bld.shlib(source = 'meshutility3.cpp',
 			target = bld.get_target_name(bld,'meshutility3'),
 			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'graphplotter.cpp',
+			target = bld.get_target_name(bld,'graphplotter'),
+			use = bld.get_target_name(bld,'core'))

@@ -25,6 +25,7 @@
 #include <shiokaze/ui/drawable.h>
 #include <shiokaze/core/console.h>
 #include <shiokaze/rigidbody/rigidworld2_interface.h>
+#include <shiokaze/rigidbody/rigidworld2_utility.h>
 //
 SHKZ_USING_NAMESPACE
 //
@@ -44,26 +45,20 @@ private:
 		config.get_double("ViewScale",m_view_scale,"View scale");
 	}
 	//
+	virtual void setup_window( std::string &name, int &width, int &height ) const override {
+		height = width;
+	}
+	//
 	virtual void post_initialize() override {
 		//
 		m_world->clear();
 		//
 		const double vs (m_view_scale);
-		const double hw = vs * 0.5;
-		const double gap (0.1);
+		const double gap (0.05);
+		m_camera->set_bounding_box(vec2d().v,vec2d(vs,vs).v,true);
 		//
 		rg2::attribution2 wall_attribute = { "wall", 0.0, 1.0, 0.5, true, nullptr };
-		//
-		rg2::velocity2 wall_velocity = { {0.0,0.0}, 0.0 };
-		rg2::position2 wall_position = { {hw,hw}, 0.0 };
-		//
-		std::vector<vec2d> bottom = {{-hw+gap,-hw+gap},{hw-gap,-hw+gap}};
-		std::vector<vec2d> left = {{-hw+gap,-hw+gap},{-hw+gap,hw-gap}};
-		std::vector<vec2d> right = {{hw-gap,-hw+gap},{hw-gap,hw-gap}};
-		std::vector<vec2d> top = {{-hw+gap,hw-gap},{hw-gap,hw-gap}};
-		std::vector<rg2::polyshape2> wall_polyshaps = { {left,rg2::EDGE}, {bottom,rg2::EDGE}, {right,rg2::EDGE}, {top,rg2::EDGE} };
-		//
-		m_world->add_rigidbody(wall_polyshaps,wall_attribute,wall_position,wall_velocity);
+		rigidworld2_utility::add_container_wall(m_world.get(),wall_attribute,vec2d(gap,gap),vec2d(vs-gap,vs-gap));
 		//
 		rg2::attribution2 square_attribute = { "square", 1.0, 1.0, 0.5, true, nullptr };
 		rg2::velocity2 square_velocity = { {0.0,0.0}, 0.0 };

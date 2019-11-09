@@ -56,22 +56,20 @@ protected:
 		double dt;
 		if( m_fixed_timestep ) {
 			//
-			if( m_accumulated_time >= 1.0 / m_FPS ) {
-				while( m_accumulated_time >= 1.0 / m_FPS ) {
-					//
-					m_accumulated_time = std::max(0.0, m_accumulated_time - 1.0 / m_FPS );
-					m_should_export_video = true;
-					++ m_frame;
-					m_simulation_time_one_video_frame_prev = m_simulation_time_one_video_frame;
-					m_simulation_time_one_video_frame = global_timer::get_milliseconds();
-					//
-					console::write("timestepper_time_per_video_frame",get_simulation_time_per_video_frame());
-					console::write("timestepper_frame_step",m_step+1);
-				}
-			}
-			//
 			dt = m_fixed_timestep;
 			m_accumulated_time += dt;
+			//
+			while( m_accumulated_time >= 1.0 / m_FPS ) {
+				//
+				m_accumulated_time = std::max(0.0, m_accumulated_time - 1.0 / m_FPS );
+				m_should_export_video = true;
+				++ m_frame;
+				m_simulation_time_one_video_frame_prev = m_simulation_time_one_video_frame;
+				m_simulation_time_one_video_frame = global_timer::get_milliseconds();
+				//
+				console::write("timestepper_time_per_video_frame",get_simulation_time_per_video_frame());
+				console::write("timestepper_frame_step",m_step+1);
+			}
 			//
 		} else {
 			if( max_unit_u ) {
@@ -182,7 +180,7 @@ protected:
 		console::set_time(0.0);
 	}
 	//
-	double m_time, m_FPS {120.0}, m_CFL {3.0}, m_min_dt {0.1/120.0};
+	double m_time, m_FPS {60.0}, m_CFL {3.0}, m_min_dt {0.1/60.0};
 	double m_accumulated_time;
 	double m_simulation_time0;
 	double m_simulation_time_one_video_frame_prev;

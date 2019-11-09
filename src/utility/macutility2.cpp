@@ -30,6 +30,7 @@
 #include <shiokaze/array/macarray_interpolator2.h>
 #include <shiokaze/array/macarray_extrapolator2.h>
 #include <shiokaze/array/shared_array2.h>
+#include <shiokaze/cellmesher/cellmesher2_interface.h>
 #include <shiokaze/math/WENO2.h>
 #include <shiokaze/utility/utility.h>
 #include <algorithm>
@@ -165,19 +166,13 @@ protected:
 			});
 		}
 	}
-	virtual double get_kinetic_energy( const array2<float> &solid, const array2<float> &fluid, const macarray2<float> &velocity ) const override {
-		//
-		shared_macarray2<float> tmp_areas(velocity.type());
-		shared_macarray2<float> tmp_rhos(velocity.type());
-		//
-		compute_area_fraction(solid,tmp_areas());
-		compute_fluid_fraction(fluid,tmp_rhos());
+	double get_kinetic_energy( const macarray2<float> &areas, const macarray2<float> &rhos, const macarray2<float> &velocity ) const {
 		//
 		std::vector<double> results (velocity.get_thread_num(),0.0);
 		velocity.const_parallel_actives([&]( int dim, int i, int j, const auto &it, int tn ) {
-			double area = tmp_areas()[dim](i,j);
+			double area = areas[dim](i,j);
 			if( area ) {
-				double rho = tmp_rhos()[dim](i,j);
+				double rho = rhos[dim](i,j);
 				if( rho ) {
 					double u = velocity[dim](i,j);
 					double dA = (m_dx*m_dx) * (area*rho);
@@ -190,13 +185,89 @@ protected:
 		for( const auto &e : results ) result += e;
 		return result;
 	}
+	virtual double get_kinetic_energy( const array2<float> &solid, const array2<float> &fluid, const macarray2<float> &velocity ) const override {
+		//
+		shared_macarray2<float> tmp_areas(velocity.type());
+		shared_macarray2<float> tmp_rhos(velocity.type());
+		//
+		compute_area_fraction(solid,tmp_areas());
+		compute_fluid_fraction(fluid,tmp_rhos());
+		//
+		return get_kinetic_energy(tmp_areas(),tmp_rhos(),velocity);
+	}
+	double get_gravitational_potential_energy( const macarray2<float> &areas, const macarray2<float> &rhos, vec2d gravity ) const {
+		//
+		double sum (0.0);
+		rhos.const_serial_actives([&]( int dim, int i, int j, const auto &it ) {
+			const float area = areas[dim](i,j);
+			if( area ) {
+				vec2d p = m_dx*vec2d(i,j).face(dim);
+				sum += area * p[1] * it();
+			}
+		});
+		for( int dim : DIMS2 ) {
+			rhos[dim].const_serial_inside([&]( int i, int j, const auto &it ) {
+				if( ! it.active()) {
+					const float area = areas[dim](i,j);
+					if( area ) {
+						vec2d p = m_dx*vec2d(i,j).face(dim);
+						sum += area * p[1] * it();
+					}
+				}
+			});
+		}
+		return -sum * gravity[1] * (m_dx*m_dx) / 2.0;
+	}
+	virtual double get_gravitational_potential_energy( const array2<float> &solid, const array2<float> &fluid, vec2d gravity ) const override {
+		//
+		shared_macarray2<float> tmp_areas(fluid.shape());
+		shared_macarray2<float> tmp_rhos(fluid.shape());
+		//
+		compute_area_fraction(solid,tmp_areas());
+		compute_fluid_fraction(fluid,tmp_rhos());
+		//
+		return get_gravitational_potential_energy(tmp_areas(),tmp_rhos(),gravity);
+	}
+	virtual double get_surfacetension_potential_energy( const array2<float> &solid, const array2<float> &fluid, double tension_coeff ) const override {
+		//
+		if( tension_coeff ) {
+			std::vector<vec2d> vertices;
+			std::vector<std::vector<size_t> > faces;
+			m_mesher->generate_contour(fluid,vertices,faces);
+			//
+			return tension_coeff * utility::compute_length(vertices,faces,[&]( const vec2d &p ) {
+				return interpolate<float>(solid,m_dx*p) > 0.0;
+			});
+		} else {
+			return 0.0;
+		}
+	}
+	virtual double get_total_energy( const array2<float> &solid, const array2<float> &fluid, const macarray2<float> &velocity, vec2d gravity, double tension_coeff ) const override {
+		//
+		const auto energy_list = get_all_kinds_of_energy(solid,fluid,velocity,gravity,tension_coeff);
+		return std::get<0>(energy_list)+std::get<1>(energy_list)+std::get<2>(energy_list);
+	}
+	virtual std::tuple<double,double,double> get_all_kinds_of_energy( const array2<float> &solid, const array2<float> &fluid, const macarray2<float> &velocity, vec2d gravity, double tension_coeff ) const override {
+		//
+		shared_macarray2<float> tmp_areas(velocity.type());
+		shared_macarray2<float> tmp_rhos(velocity.type());
+		//
+		compute_area_fraction(solid,tmp_areas());
+		compute_fluid_fraction(fluid,tmp_rhos());
+		//
+		return {
+			get_gravitational_potential_energy(tmp_areas(),tmp_rhos(),gravity),
+			get_kinetic_energy(tmp_areas(),tmp_rhos(),velocity),
+			get_surfacetension_potential_energy(solid,fluid,tension_coeff)
+		};
+	}
 	virtual void get_velocity_jacobian( const vec2d &p, const macarray2<float> &velocity, vec2f jacobian[DIM2] ) const override {
 		for( unsigned dim : DIMS2 ) {
 			array_derivative2::derivative(velocity[dim],vec2d(p[0]/m_dx-0.5*(dim!=0),p[1]/m_dx-0.5*(dim!=1)),jacobian[dim].v);
 			jacobian[dim] /= m_dx;
 		}
 	}
-	virtual void assign_initial_variables(	const dylibloader &dylib, macarray2<float> &velocity,
+	virtual void assign_initial_variables( const dylibloader &dylib, macarray2<float> &velocity,
 									array2<float> *solid=nullptr, array2<float> *fluid=nullptr, array2<float> *density=nullptr ) const override {
 		//
 		// Assign initial velocity
@@ -291,6 +362,7 @@ protected:
 	double m_dx;
 	shape2 m_shape;
 	parallel_driver m_parallel{this};
+	cellmesher2_driver m_mesher{this,"marchingsquare"};
 };
 //
 extern "C" module * create_instance() {

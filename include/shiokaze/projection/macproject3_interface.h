@@ -28,6 +28,7 @@
 #include <shiokaze/graphics/graphics_engine.h>
 #include <shiokaze/core/recursive_configurable_module.h>
 #include <shiokaze/array/macarray3.h>
+#include "signed_rigidbody3_interface.h"
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -53,16 +54,26 @@ public:
 	 @param[in-out] velocity Velocity field.
 	 @param[in] solid Solid level set.
 	 @param[in] fluid Fluid level set.
+	 @param[in] rigidbodies Rigidbody list.
 	 \~japanese @brief ベクトル場を非圧縮に投影する。
 	 @param[in] dt タイムステップサイズ。
 	 @param[in-out] velocity ベクトル場。
 	 @param[in] solid 壁のレベルセット。
 	 @param[in] fluid 水のレベルセット。
+	 @param[in] rigidbodies 剛体リスト。
 	 */
 	virtual void project (
 			double dt, macarray3<float> &velocity,
-			const array3<float> &solid, const array3<float> &fluid
+			const array3<float> &solid, const array3<float> &fluid,
+			const std::vector<signed_rigidbody3_interface *> *rigidbodies=nullptr
 	) = 0;
+	/**
+	 \~english @brief Get pressure field if available.
+	 @return Pressure field.
+	 \~japanese @brief 圧力場を得る。
+	 @return 圧力場。
+	*/
+	virtual const array3<float>* get_pressure() const = 0;
 	/**
 	 \~english @brief Draw internal information.
 	 @param[in] g Graphics engine.

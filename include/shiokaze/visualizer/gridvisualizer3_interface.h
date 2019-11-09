@@ -27,7 +27,7 @@
 //
 #include <shiokaze/graphics/graphics_engine.h>
 #include <shiokaze/core/recursive_configurable_module.h>
-#include <shiokaze/cellmesher/cellmesher3_interface.h>
+#include <shiokaze/array/array3.h>
 //
 SHKZ_BEGIN_NAMESPACE
 //

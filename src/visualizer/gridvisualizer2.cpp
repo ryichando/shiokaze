@@ -25,6 +25,7 @@
 #include <shiokaze/utility/gridutility2_interface.h>
 #include <shiokaze/visualizer/gridvisualizer2_interface.h>
 #include <shiokaze/utility/meshutility2_interface.h>
+#include <shiokaze/cellmesher/cellmesher2_interface.h>
 #include <shiokaze/array/shared_array2.h>
 #include <shiokaze/graphics/graphics_utility.h>
 #include <shiokaze/core/console.h>
@@ -128,6 +129,7 @@ protected:
 				g.end();
 			}
 		});
+#if 0
 		//
 		// Draw contour
 		(levelset.shape()-shape2(1,1)).for_each([&](int i, int j) {
@@ -153,6 +155,18 @@ protected:
 				g.end();
 			}
 		});
+#else
+		std::vector<vec2d> vertices;
+		std::vector<std::vector<size_t> > faces;
+		m_mesher->generate_contour(levelset,vertices,faces);
+		//
+		for( size_t i=0; i<faces.size(); i++ ) {
+			g.color4(1.0,1.0,1.0,1.0);
+			g.begin(graphics_engine::MODE::LINES);
+			for( unsigned j=0; j<faces[i].size(); j++ ) g.vertex2v(vertices[faces[i][j]].v);
+			g.end();
+		}
+#endif
 	}
 	virtual void draw_solid( graphics_engine &g, const array2<float> &solid ) const override {
 		if( m_param.draw_solid ) {
@@ -279,7 +293,7 @@ protected:
 	//
 	gridutility2_driver m_gridutility{this,"gridutility2"};
 	meshutility2_driver m_meshutility{this,"meshutility2"};
-	//
+	cellmesher2_driver m_mesher{this,"marchingsquare"};
 };
 //
 extern "C" module * create_instance() {

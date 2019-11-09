@@ -35,8 +35,10 @@ SHKZ_USING_NAMESPACE
 macliquid2::macliquid2 () {
 	//
 	m_param.gravity = vec2d(0.0,-9.8);
+	m_param.surftens_k = 0.0;
 	m_param.volume_correction = true;
 	m_param.volume_change_tol_ratio = 0.03;
+	m_param.show_graph = false;
 	//
 	m_shape = shape2{64,32};
 }
@@ -56,6 +58,8 @@ void macliquid2::configure( configuration &config ) {
 	config.get_vec2d("Gravity",m_param.gravity.v,"Gravity vector");
 	config.get_bool("VolumeCorrection", m_param.volume_correction,"Should perform volume correction");
 	config.get_double("VolumeChangeTolRatio",m_param.volume_change_tol_ratio,"Volume change tolerance ratio");
+	config.get_double("SurfaceTension",m_param.surftens_k,"Surface tenstion coefficient");
+	config.get_bool("ShowGraph",m_param.show_graph,"Show graph");
 	//
 	config.get_unsigned("ResolutionX",m_shape[0],"Resolution towards X axis");
 	config.get_unsigned("ResolutionY",m_shape[1],"Resolution towards Y axis");
@@ -112,6 +116,14 @@ void macliquid2::post_initialize () {
 	}
 	//
 	m_camera->set_bounding_box(vec2d().v,m_shape.box(m_dx).v,true);
+	//
+	if( m_param.show_graph ) {
+		m_graphplotter->clear();
+		m_graph_lists[0] = m_graphplotter->create_entry("Gravitational Energy");
+		m_graph_lists[1] = m_graphplotter->create_entry("Kinetic Energy");
+		if( m_param.surftens_k ) m_graph_lists[2] = m_graphplotter->create_entry("Surface Area Energy");
+		m_graph_lists[3] = m_graphplotter->create_entry("Total Energy");
+	}
 }
 //
 void macliquid2::drag( double x, double y, double z, double u, double v, double w ) {
@@ -149,9 +161,9 @@ void macliquid2::set_volume_correction( macproject2_interface *macproject ) {
 	}
 }
 //
-void macliquid2::extend_both() {
+void macliquid2::extend_both( int w ) {
 	//
-	unsigned width = 2+m_timestepper->get_current_CFL();
+	unsigned width = w+m_timestepper->get_current_CFL();
 	macarray_extrapolator2::extrapolate<float>(m_velocity,width);
 	m_macutility->constrain_velocity(m_solid,m_velocity);
 	m_fluid.dilate(width);
@@ -159,8 +171,11 @@ void macliquid2::extend_both() {
 //
 void macliquid2::idle() {
 	//
+	// Add to graph
+	add_to_graph();
+	//
 	// Compute the timestep size
-	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
+	const double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	//
 	// Extend both the velocity field and the level set
 	extend_both();
@@ -185,6 +200,23 @@ void macliquid2::idle() {
 	m_macstats->dump_stats(m_solid,m_fluid,m_velocity,m_timestepper.get());
 }
 //
+void macliquid2::add_to_graph() {
+	//
+	if( m_param.show_graph ) {
+		//
+		// Compute total energy
+		const double time = m_timestepper->get_current_time();
+		const auto energy_list = m_macutility->get_all_kinds_of_energy(m_solid,m_fluid,m_velocity,m_param.gravity,m_param.surftens_k);
+		const double total_energy = std::get<0>(energy_list)+std::get<1>(energy_list)+std::get<2>(energy_list);
+		//
+		// Add to graph
+		m_graphplotter->add_point(m_graph_lists[0],time,std::get<0>(energy_list));
+		m_graphplotter->add_point(m_graph_lists[1],time,std::get<1>(energy_list));
+		if( m_param.surftens_k ) m_graphplotter->add_point(m_graph_lists[2],time,std::get<2>(energy_list));
+		m_graphplotter->add_point(m_graph_lists[3],time,total_energy);
+	}
+}
+//
 void macliquid2::draw( graphics_engine &g ) const {
 	//
 	// Draw grid lines
@@ -201,6 +233,9 @@ void macliquid2::draw( graphics_engine &g ) const {
 	//
 	// Draw velocity
 	m_macvisualizer->draw_velocity(g,m_velocity);
+	//
+	// Draw graph
+	m_graphplotter->draw(g);
 }
 //
 extern "C" module * create_instance() {

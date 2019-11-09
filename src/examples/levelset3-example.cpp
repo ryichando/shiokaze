@@ -88,7 +88,7 @@ private:
 	//
 	virtual bool keyboard( int key, int action, int mods ) override {
 		//
-		if( action == UI_interface::PRESS && key == 'M' ) {
+		if( action == UI_interface::PRESS && key == KEY_M ) {
 			m_mode = ! m_mode;
 			return true;
 		}

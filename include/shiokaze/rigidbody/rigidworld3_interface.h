@@ -159,20 +159,6 @@ public:
 	 @param[out] m OpenGL フォーマットの行列。
 	 */
 	virtual void getOpenGLMatrix( float m[16] ) const = 0;
-	/**
-	 \~english @brief Get the veloicty at a specific position.
-	 @param[in] p Position to get the velocity.
-	 @return Velocity.
-	 \~japanese @brief 特定の位置での速度情報を得る。
-	 @param[in] p 速度を求めたい位置。
-	 @return 速度。
-	 */
-	vec3d get_velocity( const vec3d &p ) const {
-		vec3d r = p-get_position().center;
-		velocity3 u = get_velocity();
-		vec3d a = u.angular_velocity;
-		return a ^ r;
-	}
 };
 //
 /// \~english @brief 3D Rigidody world interface.

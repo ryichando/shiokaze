@@ -233,8 +233,10 @@ struct shape2 {
 	 \~japanese @brief この形状のハッシュの数字を取得する。
 	 */
 	size_t hash() const {
+		size_t _w (w);
+		size_t _h (h);
 		unsigned log2h = (unsigned)log2(h)+1;
-		return w ^ (h << log2h);
+		return _w ^ (_h << log2h);
 	}
 	/**
 	 \~english @brief Get the shape for the cell-centered grid from this shape.
@@ -381,7 +383,9 @@ struct shape2 {
 	 @return 全要素の数。
 	 */
 	size_t count() const {
-		return w*h;
+		size_t _w(w);
+		size_t _h(h);
+		return _w*_h;
 	}
 	/**
 	 \~english @brief Get if all the lengthes of this shape is zero.
@@ -403,7 +407,8 @@ struct shape2 {
 	 @return 変換された整数値。
 	 */
 	size_t encode( int i, int j ) const {
-		return w*j+i;
+		size_t _w(w);
+		return _w*j+i;
 	}
 	/**
 	 \~english @brief Encode an index position to an integer.
@@ -676,9 +681,12 @@ struct shape3 {
 	 \~japanese @brief この形状のハッシュの数字を取得する。
 	 */
 	size_t hash() const {
+		size_t _w (w);
+		size_t _h (h);
+		size_t _d (h);
 		unsigned log2h = (unsigned)log2(h)+1;
 		unsigned log2d = (unsigned)log2(d)+1;
-		return w ^ (h << log2h) ^ (d << (log2h+log2d));
+		return _w ^ (_h << log2h) ^ (_d << (log2h+log2d));
 	}
 	/**
 	 \~english @brief Get the shape for the cell-centered grid from this shape.
@@ -847,7 +855,10 @@ struct shape3 {
 	 @return 全要素の数。
 	 */
 	size_t count() const {
-		return w*h*d;
+		size_t _w (w);
+		size_t _h (h);
+		size_t _d (d);
+		return _w*_h*_d;
 	}
 	/**
 	 \~english @brief Get if all the lengthes of this shape is zero.
@@ -870,7 +881,10 @@ struct shape3 {
 	 @return 変換された整数値。
 	 */
 	size_t encode( int i, int j, int k ) const {
-		return (w*h)*k+w*j+i;
+		size_t _w (w);
+		size_t _h (h);
+		size_t _d (d);
+		return (_w*_h)*k+_w*j+i;
 	}
 	/**
 	 \~english @brief Encode an index position to an integer.

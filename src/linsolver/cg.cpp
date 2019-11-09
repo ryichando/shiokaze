@@ -38,7 +38,7 @@ protected:
 		config.get_double("Residual",m_param.residual,"Tolerable residual");
 		config.get_unsigned("MaxIterations",m_param.max_iterations,"Maximal iteration count");
 	}
-	virtual unsigned solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
+	virtual typename RCMatrix_solver_interface<N,T>::Result solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
 		//
 		size_t n (b->size()), iterations_out(0);
 		T residual_0, residual_1, delta;
@@ -48,9 +48,10 @@ protected:
 		r->copy(b);
 		residual_0 = r->abs_max();
 		z->copy(r.get()); p->copy(z.get()); delta = r->dot(z.get());
-		if(delta < std::numeric_limits<T>::epsilon()) return N();
+		if(delta < std::numeric_limits<T>::epsilon()) return {N(),0.0};
 		//
 		N iteration (0);
+		T relative_residual_out;
 		for( ; iteration<m_param.max_iterations; ++iteration ) {
 			//
 			A_fixed->multiply(p.get(),z.get()); // z = A * p
@@ -58,7 +59,7 @@ protected:
 			x->add_scaled(alpha,p.get()); // x += alpha * p;
 			r->add_scaled(-alpha,z.get()); // r -= alpha * z;
 			residual_1 = r->abs_max();
-			T relative_residual_out = residual_1 / residual_0;
+			relative_residual_out = residual_1 / residual_0;
 			if( relative_residual_out <= m_param.residual ) {
 				iterations_out = iteration+1;
 				break;
@@ -68,7 +69,7 @@ protected:
 			z->add_scaled(beta/delta,p.get()); p.swap(z); // p = z + ( beta / delta ) * p;
 			delta = beta;
 		}
-		return iteration;
+		return {(N)iteration,(T)relative_residual_out};
 	}
 	//
 	struct Parameters {

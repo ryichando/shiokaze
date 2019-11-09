@@ -36,6 +36,7 @@
 #include <shiokaze/visualizer/macvisualizer3_interface.h>
 #include <shiokaze/projection/macproject3_interface.h>
 #include <shiokaze/timestepper/timestepper_interface.h>
+#include <shiokaze/utility/graphplotter_interface.h>
 #include <shiokaze/core/dylibloader.h>
 //
 SHKZ_BEGIN_NAMESPACE
@@ -73,12 +74,14 @@ protected:
 	shape3 m_shape;
 	double m_dx;
 	bool m_force_exist;
+	unsigned m_graph_id;
 	//
 	struct Parameters {
 		bool mouse_interaction {false};
 		bool use_dust {false};
 		double minimal_density {0.01};
 		unsigned r_sample {4};
+		bool show_graph {false};
 		unsigned extrapolated_width {3};
 		double buoyancy_factor {2.0};
 		bool render_density {false};
@@ -94,6 +97,7 @@ protected:
 	macproject3_driver m_macproject{this,"macpressuresolver3"};
 	macadvection3_driver m_macadvection{this,"macadvection3"};
 	gridvisualizer3_driver m_gridvisualizer{this,"gridvisualizer3"};
+	graphplotter_driver m_graphplotter{this,"graphplotter"};
 	macstats3_driver m_macstats{this,"macstats3"};
 	macvisualizer3_driver m_macvisualizer{this,"macvisualizer3"};
 	timestepper_driver m_timestepper{this,"timestepper"};
@@ -110,6 +114,7 @@ protected:
 	virtual void draw_dust_particles( graphics_engine &g ) const;
 	virtual void export_density () const;
 	virtual void do_export_density( int frame ) const;
+	virtual void add_to_graph();
 	virtual void render_density( int frame ) const;
 	//
 };

@@ -157,20 +157,6 @@ public:
 		m[1] = sin(position.angle); m[4] = cos(position.angle); m[7] = position.center[1];
 		m[2] = 0.0; m[5] = 0.0; m[8] = 1.0;
 	}
-	/**
-	 \~english @brief Get the veloicty at a specific position.
-	 @param[in] p Position to get the velocity.
-	 @return Velocity.
-	 \~japanese @brief 特定の位置での速度情報を得る。
-	 @param[in] p 速度を求めたい位置。
-	 @return 速度。
-	 */
-	vec2d get_velocity( const vec2d &p ) const {
-		vec2d r = p-get_position().center;
-		velocity2 u = get_velocity();
-		double a = u.angular_velocity;
-		return u.center_velocity+a*vec2d(-r[1],r[0]);
-	}
 };
 //
 /// \~english @brief 2D Rigidody world interface.

@@ -247,6 +247,7 @@ struct PCGSolver
       zero(result);
       r=rhs;
       residual_out=BLAS::abs_max(r);
+      T residual0 = residual_out;
       if(residual_out==0) {
          iterations_out=0;
          return true;
@@ -256,11 +257,15 @@ struct PCGSolver
       form_preconditioner(matrix);
       apply_preconditioner(r, z);
       double rho=BLAS::dot(z, r);
-      if(rho==0 || rho!=rho) {
+      if(rho==0) {
          iterations_out=0;
          return false;
       }
-
+      if(rho!=rho) {
+         printf( "NaN Error !!\n");
+         iterations_out=0;
+         return false;
+      }
       s=z;
       fixed_matrix.construct_from_matrix(matrix);
       int iteration;
@@ -272,6 +277,7 @@ struct PCGSolver
          residual_out=BLAS::abs_max(r);
          if(residual_out<=tol) {
             iterations_out=iteration+1;
+            residual_out /= residual0;
             return true; 
          }
          apply_preconditioner(r, z);
@@ -281,6 +287,7 @@ struct PCGSolver
          rho=rho_new;
       }
       iterations_out=iteration;
+      residual_out /= residual0;
       return false;
    }
 

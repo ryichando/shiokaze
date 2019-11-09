@@ -41,8 +41,6 @@ protected:
 	//
 	virtual void redistance( array2<float> &phi_array, unsigned width ) override {
 		//
-		std::vector<vec2f> positions;
-		std::vector<std::vector<size_t> > connections;
 		std::vector<float> levelset;
 		//
 		// Generate contours
@@ -112,29 +110,32 @@ protected:
 			indices().set(i,j,maximal_index++);
 		});
 		//
-		positions.resize(maximal_index);
-		connections.resize(maximal_index);
 		levelset.resize(maximal_index);
 		std::vector<char> fixed(maximal_index);
+		std::vector<vec2i> index_vector(maximal_index);
 		//
 		phi_array.const_parallel_actives([&](int i, int j, const auto &it, int tn) {
 			//
 			size_t index = indices()(i,j);
-			for( int ii=-1; ii<=1; ++ii ) for( int jj=-1; jj<=1; ++jj ) {
-				vec2i q = vec2i(i+ii,j+jj);
-				if( ii==0 && jj==0 ) continue;
-				if( ! indices().shape().out_of_bounds(q) && indices().active(q)) {
-					connections[index].push_back(indices()(q));
-				}
-				//
-				levelset[index] = fixed_dists->active(i,j) ? fixed_dists()(i,j) : it();
-				positions[index] = m_dx * vec2i(i,j).cell();
-				fixed[index] = fixed_dists->active(i,j);
-			}
+			index_vector[index] = vec2i(i,j);
+			//
+			levelset[index] = fixed_dists->active(i,j) ? fixed_dists()(i,j) : it();
+			fixed[index] = fixed_dists->active(i,j);
 		});
 		//
 		// Perform fast march
-		unstructured_fastmarch2::fastmarch(positions,connections,levelset,fixed,1.0,m_parallel,m_meshutility.get());
+		unstructured_fastmarch2::fastmarch(
+			[&]( size_t index ) {
+				return m_dx * index_vector[index].cell();
+			},[&]( size_t index, std::function<void( size_t j )> func ) {
+			vec2i pi(index_vector[index]);
+			for( int ii=-1; ii<=1; ++ii ) for( int jj=-1; jj<=1; ++jj ) {
+				vec2i q = pi+vec2i(ii,jj);
+				if( ! indices().shape().out_of_bounds(q) && indices().active(q)) {
+					func(indices()(q));
+				}
+			}
+		},levelset,fixed,1.0,m_parallel,m_meshutility.get());
 		//
 		phi_array.parallel_actives([&](int i, int j, auto &it, int tn) {
 			double value = levelset[indices()(i,j)];

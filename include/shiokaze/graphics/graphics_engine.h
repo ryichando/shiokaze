@@ -52,6 +52,11 @@ public:
 	**/
 	virtual void set_viewport( unsigned x, unsigned y, unsigned width, unsigned height ) = 0;
 	/**
+	 \~english @brief Get view port.
+	 \~japanese @brief ビューポートを得る。
+	**/
+	virtual void get_viewport( unsigned &x, unsigned &y, unsigned &width, unsigned &height ) const = 0;
+	/**
 	 \~english @brief Configure 2D coordinate view.
 	 @param[in] left Left edge x coordinate.
 	 @param[in] right Right edge x coordinate.

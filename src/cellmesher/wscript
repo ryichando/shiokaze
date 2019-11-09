@@ -31,3 +31,7 @@ def build(bld):
 	bld.shlib(source = 'dualmc.cpp',
 			target = bld.get_target_name(bld,'dualmc'),
 			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'marchingsquare.cpp',
+			target = bld.get_target_name(bld,'marchingsquare'),
+			use = bld.get_target_name(bld,'core'))

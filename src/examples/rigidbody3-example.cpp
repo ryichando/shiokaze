@@ -29,6 +29,7 @@
 #include <shiokaze/polygon/polygon3_interface.h>
 #include <shiokaze/polygon/polygon3_utility.h>
 #include <shiokaze/core/filesystem.h>
+#include <shiokaze/rigidbody/rigidworld3_utility.h>
 #include <shiokaze/rigidbody/hacd_io.h>
 //
 SHKZ_USING_NAMESPACE
@@ -72,44 +73,10 @@ private:
 		m_world->clear();
 		//
 		const double vs (m_view_scale);
-		const double hw = vs * 0.5;
+		m_camera->set_bounding_box(vec3d().v,vec3d(vs,vs,vs).v,true);
 		//
-		rg3::attribution3 wall_attribute = { "wall", 0.0, 0.5, 0.75, false, nullptr };
-		//
-		rg3::velocity3 wall_velocity = { vec3d(), vec3d() };
-		rg3::position3 wall_position = { {hw,hw,hw}, vec3d(), 0.0 };
-		//
-		rg3::polyshape3 bottom;
-		bottom.vertices = {vec3d(-hw,-hw,-hw),vec3d(hw,-hw,-hw),vec3d(hw,-hw,hw),vec3d(-hw,-hw,hw)};
-		bottom.faces = {{0,1,2},{0,2,3}};
-		bottom.type = rg3::MESH;
-		//
-		rg3::polyshape3 top;
-		top.vertices = {vec3d(-hw,hw,-hw),vec3d(hw,hw,-hw),vec3d(hw,hw,hw),vec3d(-hw,hw,hw)};
-		top.faces = {{0,1,2},{0,2,3}};
-		top.type = rg3::MESH;
-		//
-		rg3::polyshape3 right;
-		right.vertices = {vec3d(hw,-hw,-hw),vec3d(hw,-hw,hw),vec3d(hw,hw,hw),vec3d(hw,hw,-hw)};
-		right.faces = {{0,1,2},{0,2,3}};
-		right.type = rg3::MESH;
-		//
-		rg3::polyshape3 left;
-		left.vertices = {vec3d(-hw,-hw,-hw),vec3d(-hw,-hw,hw),vec3d(-hw,hw,hw),vec3d(-hw,hw,-hw)};
-		left.faces = {{0,1,2},{0,2,3}};
-		left.type = rg3::MESH;
-		//
-		rg3::polyshape3 front;
-		front.vertices = {vec3d(-hw,-hw,-hw),vec3d(hw,-hw,-hw),vec3d(hw,hw,-hw),vec3d(-hw,hw,-hw)};
-		front.faces = {{0,1,2},{0,2,3}};
-		front.type = rg3::MESH;
-		//
-		rg3::polyshape3 back;
-		back.vertices = {vec3d(-hw,-hw,hw),vec3d(hw,-hw,hw),vec3d(hw,hw,hw),vec3d(-hw,hw,hw)};
-		back.faces = {{0,1,2},{0,2,3}};
-		back.type = rg3::MESH;
-		//
-		m_world->add_rigidbody({bottom,top,right,left,front,back},wall_attribute,wall_position,wall_velocity);
+		rg3::attribution3 wall_attribute = { "wall", 0.0, 1.0, 0.5, true, nullptr };
+		rigidworld3_utility::add_container_wall(m_world.get(),wall_attribute,vec3d(),vec3d(vs,vs,vs));
 		//
 		rg3::attribution3 dynamic_attribute = { "convex", 1.0, 0.5, 0.25, true, nullptr };
 		rg3::velocity3 dynamic_velocity = { vec3d(), vec3d() };

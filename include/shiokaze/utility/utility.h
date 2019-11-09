@@ -33,6 +33,7 @@
 #include <sys/resource.h>
 #include <unistd.h>
 #include <vector>
+#include <functional>
 //
 #include <shiokaze/math/vec.h>
 #include <shiokaze/math/vec.h>
@@ -204,6 +205,61 @@ public:
 			sum += p[m][0]*p[(m+1)%pnum][1]-p[m][1]*p[(m+1)%pnum][0];
 		}
 		return 0.5 * sum;
+	}
+	/**
+	 \~english @brief Compute the area of a mesh.
+	 @param[in] vertices Vertices.
+	 @param[in] faces Faces.
+	 @param[in] test_func function.
+	 \~japanese @brief 3次元メッシュの表面積を計算する。
+	 @param[in] vertices 頂点列。
+	 @param[in] faces 面列。
+	 @param[in] test_func テスト関数。
+	 */
+	template <class N> static double compute_area( const std::vector<vec3d> &vertices, const std::vector<std::vector<N> > &faces, std::function<bool(const vec3d &p)> test_func ) {
+		//
+		double area (0.0);
+		for( const auto &f : faces ) {
+			vec3d avg;
+			for( const auto &i : f ) { avg += vertices[i]; }
+			avg /= f.size();
+			if( test_func(avg)) {
+				const vec3d &v0 = vertices[f[0]];
+				for( int n=1; n<f.size()-1; ++n ) {
+					const vec3d &v1 = vertices[f[n]];
+					const vec3d &v2 = vertices[f[n+1]];
+					area += 0.5 * ((v1-v0)^(v2-v0)).len();
+				}
+			}
+		}
+		return area;
+	}
+	/**
+	 \~english @brief Compute the length of a contour.
+	 @param[in] vertices Vertices.
+	 @param[in] faces Faces.
+	 @param[in] test_func function.
+	 \~japanese @brief 2次元メッシュの長さを計算する。
+	 @param[in] vertices 頂点列。
+	 @param[in] faces 面列。
+	 @param[in] test_func テスト関数。
+	 */
+	template <class N> static double compute_length( const std::vector<vec2d> &vertices, const std::vector<std::vector<N> > &faces, std::function<bool(const vec2d &p)> test_func ) {
+		//
+		double length (0.0);
+		for( const auto &f : faces ) {
+			vec2d avg;
+			for( const auto &i : f ) { avg += vertices[i]; }
+			avg /= f.size();
+			if( test_func(avg)) {
+				for( int n=1; n<f.size(); ++n ) {
+					const vec2d &v0 = vertices[f[n-1]];
+					const vec2d &v1 = vertices[f[n]];
+					length += (v1-v0).len();
+				}
+			}
+		}
+		return length;
 	}
 //
 };

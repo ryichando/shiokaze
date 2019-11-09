@@ -53,15 +53,24 @@ public:
 	virtual size_t seed( const array2<float> &fluid,
 						 std::function<double(const vec2d &p)> solid,
 						 const macarray2<float> &velocity ) = 0;
+	//
+	/// \~english @brief Structure for mass and momentum.
+	/// \~japanese @brief 質量と運動量の構造体。
+	struct mass_momentum2 {
+		/// \~english @brief Mass.
+		/// \~japanese @brief 質量。
+		float mass;
+		/// \~english @brief Momentum.
+		/// \~japanese @brief 運動量。
+		float momentum;
+	};
 	/**
 	 \~english @brief Splat FLIP momentum and mass onto the grids.
-	 @param[out] momentum Grid of momentum to be mapped.
-	 @param[out] mass Grid of mass to be mapped.
+	 @param[out] mass_and_momentum Grid of mass and momentum to be mapped.
 	 \~japanese @brief FLIP 粒子の運動量と質量をグリッドに転写する。
-	 @param[out] momentum 転写される運動量のグリッド。
-	 @param[out] mass 転写される質量のグリッド。
+	 @param[out] mass_and_momentum 転写される質量と運動量のグリッド。
 	 */
-	virtual void splat( macarray2<float> &momentum, macarray2<float> &mass ) const = 0;
+	virtual void splat( macarray2<mass_momentum2> &mass_and_momentum ) const = 0;
 	/**
 	 \~english @brief Advect FLIP particles along the input velocity field.
 	 @param[in] solid Solid level set function.
@@ -91,10 +100,12 @@ public:
 	/**
 	 \~english @brief Correct particle position.
 	 @param[in] fluid Fluid level set function.
+	 @param[in] velocity Velocity field.
 	 \~japanese @brief 粒子の位置を修正する。
 	 @param[in] fluid 液体のレベルセット関数。
+	 @param[in] velocity 速度場。
 	 */
-	virtual void correct( std::function<double(const vec2d &p)> fluid ) = 0;
+	virtual void correct( std::function<double(const vec2d &p)> fluid, const macarray2<float> &velocity ) = 0;
 	/**
 	 \~english @brief Update fluid level set.
 	 @param[in] fluid Liquid level set.
@@ -169,7 +180,7 @@ public:
 		 \~english @brief Value of sizing function.
 		 \~japanese @brief サイズ関数の値。
 		 */
-		double sizing_value;
+		float sizing_value;
 		/**
 		 \~english @brief Whether the particle is ballistic.
 		 \~japanese @brief 弾丸粒子か。
@@ -179,7 +190,7 @@ public:
 		 \~english @brief Time when bullet is marked.
 		 \~japanese @brief 弾丸粒子にマーキングされた時の時間
 		 */
-		double bullet_time;
+		float bullet_time;
 	};
 	/**
 	 \~english @brief Get all the FLIP particles.

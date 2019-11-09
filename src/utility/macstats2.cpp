@@ -42,6 +42,8 @@ protected:
 	virtual void dump_stats( const array2<float> &solid, const array2<float> &fluid, const macarray2<float> &velocity, const timestepper_interface *tmstepper ) const override {
 		//
 		unsigned num_active_fluid (0);
+		unsigned step_count = tmstepper->get_step_count();
+		//
 		if( levelset_exist(solid)) {
 			fluid.const_serial_actives([&](int i, int j, const auto &it) {
 				if( it() < 0.0 && interpolate<float>(solid,vec2i(i,j).cell()) > 0.0 ) num_active_fluid ++;
@@ -63,8 +65,8 @@ protected:
 		if( m_param.report_kinetic_energy ) {
 			double kinetic_energy = m_macutility->get_kinetic_energy(solid,fluid,velocity);
 			if( m_param.report_console ) {
-				if( has_fluid ) console::dump( "Report: active fluid cells = %d, kinetic energy = %.3e\n", num_active_fluid, kinetic_energy );
-				else console::dump( "Report: kinetic energy = %.3e\n", kinetic_energy );
+				if( has_fluid ) console::dump( "Step: %u - Report: active fluid cells = %d, kinetic energy = %.3e\n", step_count, num_active_fluid, kinetic_energy );
+				else console::dump( "Step: %u - Report: kinetic energy = %.3e\n", step_count, kinetic_energy );
 			}
 			if( m_param.export_path.size()) {
 				FILE *fp = fopen((m_param.export_path+"/kinetic_enegy.out").c_str(),"a");

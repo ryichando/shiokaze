@@ -447,6 +447,35 @@ public:
 	 */
 	void set_default_vec3d( std::string name, const double value[3] );
 	/**
+	 \~english @brief Get the parameter of vec4d type.
+	 @param[in] name Name of the parameter.
+	 @param[out] value Output value.
+	 @param[in] description Description of the parameter.
+	 \~japanese @brief vec4d 型のパラメータを得る。
+	 @param[in] name パラメータの名前。
+	 @param[out] value 出力値。
+	 @param[in] description パラメータの説明。
+	 */
+	bool get_vec4d( std::string name, double value[4], std::string description=std::string());
+	/**
+	 \~english @brief Set the parameter of vec4d type.
+	 @param[in] name Name of the parameter.
+	 @param[in] value Value to set.
+	 \~japanese @brief vec4d 型のパラメータを設定する。
+	 @param[in] name パラメータの名前。
+	 @param[in] value 設定する値。
+	 */
+	void set_vec4d( std::string name, const double value[4] );
+	/**
+	 \~english @brief Set default parameter of vec4d type.
+	 @param[in] name Name of the parameter.
+	 @param[in] value Value to set.
+	 \~japanese @brief vec4d 型の初期パラメータを設定する。
+	 @param[in] name パラメータの名前。
+	 @param[in] value 設定する値。
+	 */
+	void set_default_vec4d( std::string name, const double value[4] );
+	/**
 	 \~english @brief Get the string parameter.
 	 @param[in] name Name of the parameter.
 	 @param[out] value Output value.
@@ -496,6 +525,7 @@ private:
 	//
 	struct double2 { double v[2]; };
 	struct double3 { double v[3]; };
+	struct double4 { double v[4]; };
 	struct int2 { int v[2]; };
 	struct int3 { int v[3]; };
 	//
@@ -506,6 +536,7 @@ private:
 	std::map<std::string,float> default_float;
 	std::map<std::string,double2> default_vec2d;
 	std::map<std::string,double3> default_vec3d;
+	std::map<std::string,double4> default_vec4d;
 	std::map<std::string,int2> default_vec2i;
 	std::map<std::string,int3> default_vec3i;
 	std::map<std::string,std::string> default_string;

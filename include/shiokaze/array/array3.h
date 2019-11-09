@@ -888,6 +888,17 @@ public:
 		},m_touch_only_actives);
 	}
 	/**
+	 \~english @brief Divide all the grid values with an input value.
+	 @param[in] v Value to divide.
+	 \~japanese @brief グリッドの全てのセルの値を入力値で乗算する。
+	 @param[in] v 乗算する値。
+	 */
+	void operator/=(const T &v) {
+		parallel_op([&](iterator& it) {
+			it.divide(v);
+		},m_touch_only_actives);
+	}
+	/**
 	 \~english @brief Set the number of threads for parallel processing on this grid.
 	 @param[in] number Number of threads.
 	 \~japanese @brief 並列処理をするためのスレッドの数を設定する。

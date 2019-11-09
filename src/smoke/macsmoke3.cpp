@@ -69,6 +69,7 @@ void macsmoke3::configure( configuration &config ) {
 		config.get_double("MinimalActiveDensity",m_param.minimal_density,"Minimal density to trim active cells");
 	}
 	config.get_bool("MouseInteration",m_param.mouse_interaction, "Enable mouse interaction");
+	config.get_bool("ShowGraph",m_param.show_graph,"Show graph");
 	config.get_double("BuoyancyFactor",m_param.buoyancy_factor,"Buoyancy force rate");
 	config.get_unsigned("SolidExtrapolationDepth",m_param.extrapolated_width,"Solid extrapolation depth");
 	config.get_unsigned("ResolutionX",m_shape[0],"Resolution towards X axis");
@@ -145,6 +146,11 @@ void macsmoke3::post_initialize () {
 	//
 	m_camera->set_bounding_box(vec3d().v,m_shape.box(m_dx).v,true);
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
+	//
+	if( m_param.show_graph ) {
+		m_graphplotter->clear();
+		m_graph_id = m_graphplotter->create_entry("Kinetic Energy");
+	}
 }
 //
 void macsmoke3::drag( double x, double y, double z, double u, double v, double w ) {
@@ -252,6 +258,9 @@ void macsmoke3::idle() {
 	//
 	scoped_timer timer(this);
 	//
+	// Add to graph
+	add_to_graph();
+	//
 	// Compute the timestep size
 	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	double CFL = m_timestepper->get_current_CFL();
@@ -319,6 +328,19 @@ void macsmoke3::advect_dust_particles( const macarray3<float> &velocity, double 
 	rasterize_dust_particles(m_density);
 }
 //
+void macsmoke3::add_to_graph() {
+	//
+	if( m_param.show_graph ) {
+		//
+		// Compute total energy
+		const double time = m_timestepper->get_current_time();
+		const double total_energy = m_macutility->get_kinetic_energy(m_solid,m_fluid,m_velocity);
+		//
+		// Add to graph
+		m_graphplotter->add_point(m_graph_id,time,total_energy);
+	}
+}
+//
 void macsmoke3::draw_dust_particles( graphics_engine &g ) const {
 	using ge = graphics_engine;
 	g.color4(1.0,1.0,1.0,1.0);
@@ -340,6 +362,9 @@ void macsmoke3::draw( graphics_engine &g ) const {
 	// Draw concentration
 	if( m_param.use_dust ) draw_dust_particles(g);
 	else m_gridvisualizer->draw_density(g,m_density);
+	//
+	// Draw graph
+	m_graphplotter->draw(g);
 }
 //
 void macsmoke3::export_density () const {

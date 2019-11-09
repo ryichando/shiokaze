@@ -711,6 +711,61 @@ void configuration::set_default_vec3d( std::string name, const double value[3] )
 	default_vec3d[name] = e;
 }
 //
+bool configuration::get_vec4d( std::string name, double value[4], std::string description) {
+	std::lock_guard<std::mutex> guard(config_mutex);
+	//
+	auto it = default_vec4d.find(concated_name(name));
+	if( it != default_vec4d.end() ) {
+		for( int i=0; i<4; ++i ) value[i] = it->second.v[i];
+	} else {
+		it = default_vec4d.find(name);
+		if( it != default_vec4d.end()) {
+			for( int i=0; i<4; ++i ) value[i] = it->second.v[i];
+		}
+	}
+	//
+	double original_value[4];
+	original_value[0] = value[0];
+	original_value[1] = value[1];
+	original_value[2] = value[2];
+	original_value[3] = value[3];
+	char buf[64];
+	auto get = [&]( std::string name ) {
+		if( m_dictionary.find(name) != m_dictionary.end()) {
+			std::sscanf(m_dictionary.at(name).c_str(),"%lf,%lf,%lf,%lf",&value[0],&value[1],&value[2],&value[3]);
+			std::snprintf(buf,64,"%g,%g,%g,%g",value[0],value[1],value[2],value[3]);
+			return true;
+		}
+		return false;
+	};
+	if( ! get(concated_name(name)) && ! get(name) ) {
+		std::snprintf(buf,64,"%g,%g,%g,%g",value[0],value[1],value[2],value[3]);
+		register_variables(name,true,"VEC4D",buf,description);
+		return false;
+	} else {
+		register_variables(name,
+				original_value[0] == value[0] &&
+				original_value[1] == value[1] &&
+				original_value[2] == value[2] &&
+				original_value[3] == value[3]
+				,"VEC4D",buf,description);
+		return true;
+	}
+}
+//
+void configuration::set_vec4d( std::string name, const double value[4] ) {
+	std::lock_guard<std::mutex> guard(config_mutex);
+	char buf[64];
+	std::snprintf(buf,64,"%g,%g,%g,%g",value[0],value[1],value[2],value[3]);
+	m_dictionary[name] = std::string(buf);
+}
+//
+void configuration::set_default_vec4d( std::string name, const double value[4] ) {
+	std::lock_guard<std::mutex> guard(config_mutex);
+	double4 e; for( int i=0; i<4; ++i ) e.v[i] = value[i];
+	default_vec4d[name] = e;
+}
+//
 bool configuration::get_string( std::string name, std::string &value, std::string description ) {
 	std::lock_guard<std::mutex> guard(config_mutex);
 	//

@@ -31,6 +31,7 @@ graphics_gl::graphics_gl () {
 	//
 	set_HiDPI_scaling_factor(1.0);
 	m_ratio = 1.0;
+	m_x = m_y = m_width = m_height = 0;
 }
 //
 void graphics_gl::set_HiDPI_scaling_factor( double factor ) {
@@ -52,6 +53,8 @@ void graphics_gl::setup_graphics () {
 }
 //
 void graphics_gl::set_2D_coordinate( double left, double right, double bottom, double top ) {
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glOrtho(left,right,bottom,top,-1.0,1.0);
@@ -59,7 +62,18 @@ void graphics_gl::set_2D_coordinate( double left, double right, double bottom, d
 //
 void graphics_gl::set_viewport( unsigned x, unsigned y, unsigned width, unsigned height ) {
 	glViewport(x,y,width,height);
+	m_x = x;
+	m_y = y;
+	m_width = width;
+	m_height = height;
 	m_ratio = width / (double) height;
+}
+//
+void graphics_gl::get_viewport( unsigned &x, unsigned &y, unsigned &width, unsigned &height ) const {
+	x = m_x;
+	y = m_y;
+	width = m_width;
+	height = m_height;
 }
 //
 void graphics_gl::look_at( const double target[3], const double position[3], const double up[3], double fov, double near, double far ) {

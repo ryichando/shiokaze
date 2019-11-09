@@ -43,7 +43,6 @@ protected:
 	//
 	virtual void redistance( array3<float> &phi_array, unsigned width ) override {
 		//
-		std::vector<vec3f> positions;
 		std::vector<std::vector<size_t> > connections;
 		std::vector<float> levelset;
 		//
@@ -115,29 +114,33 @@ protected:
 			indices().set(i,j,k,maximal_index++);
 		});
 		//
-		positions.resize(maximal_index);
 		connections.resize(maximal_index);
 		levelset.resize(maximal_index);
 		std::vector<char> fixed(maximal_index);
+		std::vector<vec3i> index_vector(maximal_index);
 		//
 		phi_array.const_parallel_actives([&](int i, int j, int k, const auto &it, int tn) {
 			//
 			size_t index = indices()(i,j,k);
-			for( int ii=-1; ii<=1; ++ii ) for( int jj=-1; jj<=1; ++jj ) for( int kk=-1; kk<=1; ++kk ) {
-				vec3i q = vec3i(i+ii,j+jj,k+kk);
-				if( ii==0 && jj==0 && kk==0 ) continue;
-				if( ! indices().shape().out_of_bounds(q) && indices().active(q)) {
-					connections[index].push_back(indices()(q));
-				}
-				//
-				levelset[index] = fixed_dists->active(i,j,k) ? fixed_dists()(i,j,k) : it();
-				positions[index] = m_dx * vec3i(i,j,k).cell();
-				fixed[index] = fixed_dists->active(i,j,k);
-			}
+			index_vector[index] = vec3i(i,j,k);
+			//
+			levelset[index] = fixed_dists->active(i,j,k) ? fixed_dists()(i,j,k) : it();
+			fixed[index] = fixed_dists->active(i,j,k);
 		});
 		//
 		// Perform fast march
-		unstructured_fastmarch3::fastmarch(positions,connections,levelset,fixed,1.0,m_parallel,m_meshutility.get());
+		unstructured_fastmarch3::fastmarch(
+			[&]( size_t index ) {
+				return m_dx * index_vector[index].cell();
+			},[&]( size_t index, std::function<void( size_t j )> func ) {
+			vec3i pi(index_vector[index]);
+			for( int ii=-1; ii<=1; ++ii ) for( int jj=-1; jj<=1; ++jj ) for( int kk=-1; kk<=1; ++kk ) {
+				vec3i q = pi+vec3i(ii,jj,kk);
+				if( ! indices().shape().out_of_bounds(q) && indices().active(q)) {
+					func(indices()(q));
+				}
+			}
+		},levelset,fixed,1.0,m_parallel,m_meshutility.get());
 		//
 		phi_array.parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			double value = levelset[indices()(i,j,k)];

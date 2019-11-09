@@ -82,6 +82,7 @@ public:
 		N active(0), max_row(0), min_row(std::numeric_limits<N>::max()), active_rows(0);
 		T avg_row(0.0), max_diag(0.0), min_diag(std::numeric_limits<T>::max());
 		T diag_ratio(0.0);
+		bool has_nan (false);
 		for( N i=0; i<matrix->rows(); i++ ) {
 			if( ! matrix->empty(i) ) {
 				N row_nonzero = matrix->non_zeros(i);
@@ -94,6 +95,7 @@ public:
 				matrix->const_for_each(i,[&]( N column, T value ) {
 					if( column == i ) diag = value;
 					else max_nondiag = std::max(max_nondiag,std::abs(value));
+					if( value!=value ) has_nan = true;
 				});
 				max_diag = std::max(max_diag,diag);
 				min_diag = std::min(min_diag,diag);
@@ -113,7 +115,11 @@ public:
 		console::dump( "Matrix min diag = %.2e\n", min_diag );
 		console::dump( "Matrix worst max(non_diag) / diag = %.2e\n", diag_ratio );
 		console::dump( "Matrix max(symmetricity error) = %.2e\n", symmetricity_error(matrix) );
+		console::dump( "Matrix has_NaN = %s\n", has_nan ? "Yes" : "No");
 		console::dump( "<<< =========================\n" );
+		if( min_diag < 0.0 ) {
+			console::dump( "WARNING: min_diag < 0.0\n");
+		}
 	}
 	//
 };

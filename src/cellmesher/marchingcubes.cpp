@@ -35,59 +35,60 @@ protected:
 		//
 		const shape3 s = levelset.shape();
 		levelset.const_parallel_actives([&]( int i, int j, int k, const auto &it, int tn ) {
-			vec3d local_origin = global_origin + m_dx*vec3d(i,j,k);
-			double value[8];
-			int flag (0);
-			//
-			for(int n=0; n<8; ++n ) {
-				vec3i pi ( i+a2fVertexOffset[n][0],
-						   j+a2fVertexOffset[n][1],
-						   k+a2fVertexOffset[n][2] );
-				if( s.out_of_bounds(pi) || ! levelset.active(pi)) return;
-				value[n] = levelset(pi);
-				if(value[n] < 0.0) flag |= 1 << n;
-			}
-			int edge_flag = aiCubeEdgeFlags[flag];
-			if( edge_flag ) {
-				size_t global_ids[12];
-				for( int n=0; n<12; ++n ) {
-					if(edge_flag & (1<<n)) {
-						//
-						size_t global_id = global_edge_id(n,i,j,k,s.w,s.h,s.d);
-						size_t edge0 = a2iEdgeConnection[n][0];
-						size_t edge1 = a2iEdgeConnection[n][1];
-						//
-						vec3d p1 = local_origin+m_dx*vec3d(
-							a2fVertexOffset[edge0][0],
-							a2fVertexOffset[edge0][1],
-							a2fVertexOffset[edge0][2]);
-						//
-						vec3d p2 = local_origin+m_dx*vec3d(
-							a2fVertexOffset[edge1][0],
-							a2fVertexOffset[edge1][1],
-							a2fVertexOffset[edge1][2]);
-						//
-						double v1 = value[edge0];
-						double v2 = value[edge1];
-						double fraction = utility::fraction(v1,v2);
-						//
-						vec3d p;
-						if( v1 < 0.0 ) {
-							p = fraction*p2+(1.0-fraction)*p1;
-						} else {
-							p = fraction*p1+(1.0-fraction)*p2;
-						}
-						global_edge_vertices[tn][global_id] = p;
-						global_ids[n] = global_id;
-					}
+			if( i < s[0]-1 && j < s[1]-1 && k < s[2]-1 ) {
+				vec3d local_origin = global_origin + m_dx*vec3d(i,j,k);
+				double value[8];
+				int flag (0);
+				//
+				for(int n=0; n<8; ++n ) {
+					vec3i pi ( i+a2fVertexOffset[n][0],
+							   j+a2fVertexOffset[n][1],
+							   k+a2fVertexOffset[n][2] );
+					value[n] = levelset(pi);
+					if(value[n] < 0.0) flag |= 1 << n;
 				}
-				for( int n=0; n<=5; ++n) {
-					if(a2iTriangleConnectionTable[flag][3*n] < 0) break;
-					std::vector<size_t> face(3);
-					for( int m=0; m<3; ++m) {
-						face[m] = global_ids[a2iTriangleConnectionTable[flag][3*n+m]];
+				int edge_flag = aiCubeEdgeFlags[flag];
+				if( edge_flag ) {
+					size_t global_ids[12];
+					for( int n=0; n<12; ++n ) {
+						if(edge_flag & (1<<n)) {
+							//
+							size_t global_id = global_edge_id(n,i,j,k,s.w,s.h,s.d);
+							size_t edge0 = a2iEdgeConnection[n][0];
+							size_t edge1 = a2iEdgeConnection[n][1];
+							//
+							vec3d p1 = local_origin+m_dx*vec3d(
+								a2fVertexOffset[edge0][0],
+								a2fVertexOffset[edge0][1],
+								a2fVertexOffset[edge0][2]);
+							//
+							vec3d p2 = local_origin+m_dx*vec3d(
+								a2fVertexOffset[edge1][0],
+								a2fVertexOffset[edge1][1],
+								a2fVertexOffset[edge1][2]);
+							//
+							double v1 = value[edge0];
+							double v2 = value[edge1];
+							double fraction = utility::fraction(v1,v2);
+							//
+							vec3d p;
+							if( v1 < 0.0 ) {
+								p = fraction*p2+(1.0-fraction)*p1;
+							} else {
+								p = fraction*p1+(1.0-fraction)*p2;
+							}
+							global_edge_vertices[tn][global_id] = p;
+							global_ids[n] = global_id;
+						}
 					}
-					global_faces[tn].push_back(face);
+					for( int n=0; n<=5; ++n) {
+						if(a2iTriangleConnectionTable[flag][3*n] < 0) break;
+						std::vector<size_t> face(3);
+						for( int m=0; m<3; ++m) {
+							face[m] = global_ids[a2iTriangleConnectionTable[flag][3*n+m]];
+						}
+						global_faces[tn].push_back(face);
+					}
 				}
 			}
 		});

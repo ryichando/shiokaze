@@ -24,6 +24,7 @@
 //
 #include <shiokaze/utility/gridutility3_interface.h>
 #include <shiokaze/visualizer/gridvisualizer3_interface.h>
+#include <shiokaze/cellmesher/cellmesher3_interface.h>
 #include <shiokaze/array/shared_array3.h>
 #include <algorithm>
 //
@@ -88,9 +89,9 @@ protected:
 	virtual void draw_levelset( graphics_engine &g, const array3<float> &levelset ) const override {
 		std::vector<vec3d> vertices;
 		std::vector<std::vector<size_t> > faces;
-		mesher->generate_mesh(levelset,vertices,faces);
+		m_mesher->generate_mesh(levelset,vertices,faces);
 		//
-		for( unsigned i=0; i<faces.size(); i++ ) {
+		for( size_t i=0; i<faces.size(); i++ ) {
 			g.begin(graphics_engine::MODE::LINE_LOOP);
 			for( unsigned j=0; j<faces[i].size(); j++ ) g.vertex3v(vertices[faces[i][j]].v);
 			g.end();
@@ -148,8 +149,7 @@ protected:
 	//
 	Parameters m_param;
 	gridutility3_driver m_gridutility{this,"gridutility3"};
-	cellmesher3_driver mesher{this,"marchingcubes"};
-	//
+	cellmesher3_driver m_mesher{this,"marchingcubes"};
 };
 //
 extern "C" module * create_instance() {

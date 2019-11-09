@@ -66,6 +66,8 @@ void macliquid3::configure( configuration &config ) {
 	config.get_bool("MouseInteration",m_param.mouse_interaction, "Enable mouse interaction");
 	config.get_bool("VolumeCorrection",m_param.volume_correction,"Should perform volume correction");
 	config.get_double("VolumeChangeTolRatio",m_param.volume_change_tol_ratio,"Volume change tolerance ratio");
+	config.get_double("SurfaceTension",m_param.surftens_k,"Surface tenstion coefficient");
+	config.get_bool("ShowGraph",m_param.show_graph,"Show graph");
 	config.get_string("MeshPath",m_export_path, "Path to the directory to export meshes");
 	config.get_bool("RenderMesh",m_param.render_mesh,"Whether to render mesh files");
 	config.get_bool("RenderTransparent",m_param.render_transparent,"Whether to render transparent view");
@@ -104,6 +106,7 @@ void macliquid3::post_initialize() {
 	}
 	//
 	// Initialize arrays
+	m_prev_frame = 1;
 	m_force_exist = false;
 	m_velocity.initialize(m_shape);
 	m_external_force.initialize(m_shape);
@@ -136,6 +139,15 @@ void macliquid3::post_initialize() {
 	}
 	//
 	m_camera->set_bounding_box(vec3d().v,m_shape.box(m_dx).v,true);
+	//
+	if( m_param.show_graph ) {
+		m_graphplotter->clear();
+		m_graph_lists[0] = m_graphplotter->create_entry("Gravitational Energy");
+		m_graph_lists[1] = m_graphplotter->create_entry("Kinetic Energy");
+		if( m_param.surftens_k ) m_graph_lists[2] = m_graphplotter->create_entry("Surface Area Energy");
+		m_graph_lists[3] = m_graphplotter->create_entry("Total Energy");
+	}
+	//
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
 }
 //
@@ -195,12 +207,12 @@ void macliquid3::set_volume_correction( macproject3_interface *m_macproject ) {
 	}
 }
 //
-void macliquid3::extend_both() {
+void macliquid3::extend_both( int w ) {
 	//
 	scoped_timer timer(this);
 	//
 	timer.tick(); console::dump( "Extending velocity field...");
-	unsigned width = 2+m_timestepper->get_current_CFL();
+	unsigned width = w+m_timestepper->get_current_CFL();
 	macarray_extrapolator3::extrapolate<float>(m_velocity,width);
 	m_macutility->constrain_velocity(m_solid,m_velocity);
 	m_fluid.dilate(width);
@@ -213,6 +225,9 @@ void macliquid3::idle() {
 	//
 	unsigned step = m_timestepper->get_step_count()+1;
 	timer.tick(); console::dump( ">>> %s step started...\n", console::nth(step).c_str());
+	//
+	// Add to graph
+	add_to_graph();
 	//
 	// Compute the timestep size
 	timer.tick(); console::dump( "Computing time step...");
@@ -254,12 +269,15 @@ void macliquid3::export_mesh() const {
 	if( m_export_path.size()) {
 		int frame = m_timestepper->should_export_frame();
 		if( frame ) {
-			timer.tick(); console::dump( ">>> Exporting %s mesh (time=%g secs)\n", console::nth(frame).c_str(),m_timestepper->get_current_time());
-			do_export_mesh(frame);
-			console::dump( "<<< Done. Took %s\n", timer.stock("export_mesh").c_str());
-			if( m_param.render_mesh ) {
-				render_mesh(frame);
+			for( unsigned n=m_prev_frame; n<=frame; ++n ) {
+				timer.tick(); console::dump( ">>> Exporting %s mesh (time=%g secs)\n", console::nth(n).c_str(),m_timestepper->get_current_time());
+				do_export_mesh(n);
+				console::dump( "<<< Done. Took %s\n", timer.stock("export_mesh").c_str());
+				if( m_param.render_mesh ) {
+					render_mesh(n);
+				}
 			}
+			const_cast<unsigned&>(m_prev_frame) = frame;
 		}
 	}
 }
@@ -358,6 +376,7 @@ void macliquid3::do_export_solid_mesh() const {
 			//
 			m_mesh_exporter->set_texture_coordinates(uv_coordinates);
 			m_mesh_exporter->export_ply(console::format_str("%s.ply",path_wo_suffix.c_str()));
+			m_mesh_exporter->export_mitsuba(console::format_str("%s.serialized",path_wo_suffix.c_str()));
 			//
 			console::dump("Done. Took %s.\n", timer.stock("export_solid_mesh").c_str());
 			//
@@ -374,7 +393,25 @@ void macliquid3::do_export_solid_mesh() const {
 			faces[0].push_back(2);
 			m_mesh_exporter->set_mesh(vertices,faces);
 			m_mesh_exporter->export_ply(console::format_str("%s.ply",path_wo_suffix.c_str()));
+			m_mesh_exporter->export_mitsuba(console::format_str("%s.serialized",path_wo_suffix.c_str()));
 		}
+	}
+}
+//
+void macliquid3::add_to_graph() {
+	//
+	if( m_param.show_graph ) {
+		//
+		// Compute total energy
+		const double time = m_timestepper->get_current_time();
+		const auto energy_list = m_macutility->get_all_kinds_of_energy(m_solid,m_fluid,m_velocity,m_param.gravity,m_param.surftens_k);
+		const double total_energy = std::get<0>(energy_list)+std::get<1>(energy_list)+std::get<2>(energy_list);
+		//
+		// Add to graph
+		m_graphplotter->add_point(m_graph_lists[0],time,std::get<0>(energy_list));
+		m_graphplotter->add_point(m_graph_lists[1],time,std::get<1>(energy_list));
+		if( m_param.surftens_k ) m_graphplotter->add_point(m_graph_lists[2],time,std::get<2>(energy_list));
+		m_graphplotter->add_point(m_graph_lists[3],time,total_energy);
 	}
 }
 //
@@ -393,6 +430,9 @@ void macliquid3::draw( graphics_engine &g ) const {
 	//
 	// Visualize levelset
 	m_gridvisualizer->draw_fluid(g,m_solid,m_fluid);
+	//
+	// Draw graph
+	m_graphplotter->draw(g);
 }
 //
 extern "C" module * create_instance() {

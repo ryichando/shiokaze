@@ -43,7 +43,7 @@ protected:
 		config.get_double("MinDiagRatio",m_param.min_diagonal_ratio,"Minimal diagonal ratio");
 		config.get_unsigned("MaxIterations",m_param.max_iterations,"Maximal iteration count");
 	}
-	virtual unsigned solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
+	virtual typename RCMatrix_solver_interface<N,T>::Result solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
 		//
 		SparseMatrix<T> matrix(A->rows());
 		for( N row=0; row<matrix.n; ++row ) {
@@ -70,7 +70,7 @@ protected:
 		solver.solve(matrix,rhs,result,residual_out,iterations_out);
 		x->convert_from(result);
 		//
-		return iterations_out;
+		return {(N)iterations_out,(T)residual_out};
 	}
 	//
 	struct Parameters {

@@ -64,8 +64,8 @@ namespace array_extrapolator2 {
 					}
 				}
 				if( weight ) {
-					it.set( sum / weight );
 					counters[tn] ++;
+					it.set( sum / weight );
 				}
 			}
 		},count);

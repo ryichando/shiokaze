@@ -26,6 +26,7 @@
 #include <shiokaze/math/vec.h>
 #include <list>
 #include <numeric>
+#include <functional>
 #include "matinv.h"
 #include <shiokaze/parallel/parallel_driver.h>
 #include <shiokaze/utility/meshutility2_interface.h>
@@ -36,167 +37,131 @@ class unstructured_fastmarch2 {
 public:
 	//
 	static void fastmarch(
-					const std::vector<vec2f> &positions,
-					const std::vector<std::vector<size_t> > &_connections,
+					std::function<vec2f( size_t i )> position_func,
+					std::function<void( size_t i, std::function<void( size_t j )> func )> iterate_connections,
 					std::vector<float> &levelset,
 					std::vector<char> &fixed,
 					double distance,
 					const parallel_driver &parallel,
 					const meshutility2_interface *meshutility ) {
 		//
-		// Copy the connection information
-		std::vector<std::vector<size_t> > connections = _connections;
-		//
-		// Find intersections
-		fixed.resize(positions.size());
-		parallel.for_each(fixed.size(),[&]( size_t n ) {
-			//
-			if( ! fixed[n] ) {
-				double levelset0 = levelset[n];
-				for( unsigned k=0; k<connections[n].size(); ++k ) {
-					size_t m = connections[n][k];
-					double levelset1 = levelset[m];
-					if( levelset0 * levelset1 < 0.0 ) {
-						fixed[n] = true;
-						break;
-					}
-				}
-			}
-		});
-		//
-		// Reset level set values
-		parallel.for_each(fixed.size(),[&]( size_t n ) {
+		// Initialize
+		parallel.for_each(fixed.size(),[&](size_t n) {
 			if( ! fixed[n] ) levelset[n] = std::copysign(distance,levelset[n]);
 		});
 		//
-		// Gather unfixed nodes
-		std::list<size_t> unfixed;
-		for( size_t n=0; n<positions.size(); n++ ) {
-			if( ! connections[n].empty() && ! fixed[n] ) unfixed.push_back(n);
-		}
-		//
-		// Now repeat the propagation...
+		// Propagate
+		size_t prev_count_unfixed (0);
 		while( true ) {
 			//
-			// Gather narrow band nodes
-			std::list<size_t> narrowlist;
-			for( typename std::list<size_t>::iterator it=unfixed.begin(); it!=unfixed.end(); it++ ) {
-				size_t n = *it;
-				if( ! connections[n].empty() && ! fixed[n] ) {
-					//
-					// Sort connection by distance
-					std::sort(connections[n].begin(), connections[n].end(), [&](size_t a, size_t b){ return std::abs(levelset[a]) < std::abs(levelset[b]); });
-					size_t min_index = connections[n][0];
-					//
-					// Collect narrow bands
-					if( fixed[min_index] ) {
-						if( std::abs(levelset[min_index]) < distance ) {
-							narrowlist.push_back(n);
+			// Set front distance
+			std::vector<double> min_dx_slot(parallel.get_thread_num(),distance);
+			parallel.for_each(fixed.size(),[&](size_t n, int tid) {
+				if( ! fixed[n] ) {
+					iterate_connections(n,[&]( size_t m ) {
+						if( fixed[m]) {
+							min_dx_slot[tid] = std::min(min_dx_slot[tid],
+								std::abs(levelset[m])+2.0*(position_func(m)-position_func(n)).len());
 						}
-					}
+					});
 				}
-			}
+			});
 			//
-			// If not found, just leave the loop
-			if( narrowlist.empty() ) break;
+			double front_distance (distance);
+			for( const auto &e : min_dx_slot ) front_distance = std::min(front_distance,e);
 			//
-			// Find the minimum edge length and min distance
-			double ds (1.0);
-			double dist (distance);
-			for( typename std::list<size_t>::iterator it=narrowlist.begin(); it!=narrowlist.end(); it++ ) {
-				size_t n = *it;
-				if( ! connections[n].empty() ) {
-					size_t k = connections[n][0];
-					if( fixed[k] ) {
-						ds = std::min(ds,(positions[n]-positions[k]).len());
-						dist = std::min(dist,(double)std::abs(levelset[k]));
-					}
-				}
-			}
-			//
-			// Cut out the narrow bands to regularize the propagation speed
-			for( typename std::list<size_t>::iterator it=narrowlist.begin(); it!=narrowlist.end(); ) {
-				size_t n = *it;
-				if( ! connections[n].empty() ) {
-					it ++;
-					continue;
-				}
-				size_t k = connections[n][0];
-				if( std::abs(levelset[k]) > dist+ds ) {
-					it = narrowlist.erase(it);
-				} else {
-					it ++;
-				}
-			}
-			//
-			// Tranfer to vector container
-			std::vector<size_t> narrowbands;
-			narrowbands.insert(narrowbands.end(),narrowlist.begin(),narrowlist.end());
-			//
-			// Propagate once
-			parallel.for_each(narrowbands.size(),[&](size_t _n) {
+			std::vector<char> fixed_save (fixed);
+			std::vector<float> levelset_save (levelset);
+			parallel.for_each(fixed.size(),[&](size_t n) {
 				//
-				size_t n = narrowbands[_n];
-				if( ! connections[n].empty() ) {
+				if( ! fixed_save[n] ) {
 					//
 					// Pick neighboring nodes
-					std::vector<size_t> tri(connections[n].size()+1); tri[0] = n;
-					for( size_t i=0; i<connections[n].size(); i++ ) tri[1+i] = connections[n][i];
-					//
-					// Find the number of valid connections
-					size_t num_valid (0);
-					if( connections[n].size() > 2 && fixed[tri[1]] && fixed[tri[2]] ) num_valid = 2;
-					else if( connections[n].size() > 1 && fixed[tri[1]] ) num_valid = 1;
-					//
-					// Compute shape function if necessary
-					double M[3][3];
-					for( unsigned i=0; i<3; i++ ) for( unsigned j=0; j<3; j++ ) M[i][j] = 0.0;
-					if( num_valid == 2 ) {
-						double A[3][3];
-						for( int i=0; i<num_valid+1; i++ ) for( int j=0; j<num_valid+1; j++ ) {
-							if( i < num_valid ) A[i][j] = positions[tri[j]][i];
-							else A[i][j] = 1.0;
+					std::vector<size_t> tri;
+					tri.push_back(n);
+					bool has_connection (false);
+					iterate_connections(n,[&]( size_t m ) {
+						has_connection = true;
+						if( fixed_save[m]) {
+							if( std::abs(levelset_save[m]) < front_distance &&
+								levelset_save[n] * levelset_save[m] > 0.0 && 
+								std::abs(levelset_save[m]) < std::abs(levelset_save[n]) ) tri.push_back(m);
 						}
-						if( ! matinv<double>::invert3x3(A,M)) num_valid = 1;
+					});
+					if( ! has_connection ) {
+						fixed[n] = true;
 					}
 					//
-					// Levelset extrapolation
-					int sgn = levelset[tri[0]] > 0.0 ? 1 : -1;
-					if( num_valid == 2 ) {
+					// Find the number of valid connections
+					size_t num_valid = tri.size();
+					if( num_valid > 1 ) {
 						//
-						// Build quadric equation
-						vec2d det;
-						vec2d coef;
-						for( int dim=0; dim<num_valid; dim++ ) {
-							det[dim] = M[0][dim];
-							coef[dim] = 0.0;
-							for( int k=1; k<num_valid+1; k++ ) {
-								coef[dim] += M[k][dim]*levelset[tri[k]];
+						// Sort by distance
+						std::vector<char> order_map(num_valid);
+						std::iota(order_map.begin(),order_map.end(), 0);
+						std::sort(order_map.begin()+1,order_map.end(),[&](char a, char b){
+							return std::abs(levelset_save[tri[a]]) < std::abs(levelset_save[tri[b]]);
+						});
+						//
+						// Levelset extrapolation
+						float sgn = levelset_save[n] > 0.0 ? 1 : -1;
+						if( num_valid > 2 ) {
+							//
+							// Compute shape function if necessary
+							double M[3][3], Q[3][3];
+							for( char i=0; i<3; i++ ) for( char j=0; j<3; j++ ) {
+								if( i < 2 ) Q[i][j] = position_func(tri[order_map[j]])[i];
+								else Q[i][j] = 1.0;
+							}
+							if( matinv<double>::invert3x3(Q,M)) {
+								//
+								// Build quadric equation
+								vec2d det, coef;
+								for( char dim=0; dim<2; dim++ ) {
+									det[dim] = M[0][dim];
+									for( char k=1; k<2+1; k++ ) {
+										coef[dim] += M[k][dim]*levelset_save[tri[order_map[k]]];
+									}
+								}
+								// Compute quadric coefficients
+								double A = det.norm2();
+								double B = 2.*det*coef;
+								double C = coef.norm2()-1.0;
+								assert(A);
+								double D = B/A;
+								levelset[n] = sgn*0.5*sqrtf(std::max(1e-8,D*D-4.0*C/A))-0.5*D;
+								//
+							} else {
+								num_valid = 2;
 							}
 						}
-						// Compute quadric coefficients
-						double A = det.norm2();
-						double B = 2.*det*coef;
-						double C = coef.norm2()-1.0;
-						assert(A);
-						double D = B/A;
-						levelset[n] = sgn*0.5*sqrtf(std::max(1e-8,D*D-4.0*C/A))-0.5*D;
-					} else if( num_valid == 1 ) {
 						//
-						// If only one neighbor is fixed, just copy that one
-						levelset[n] = levelset[tri[1]]+sgn*(positions[tri[1]]-positions[tri[0]]).len();
+						if( num_valid == 2 ) {
+							//
+							// If only one neighbor is fixed, just copy that one
+							levelset[n] = levelset_save[tri[order_map[1]]]+sgn*(position_func(tri[order_map[1]])-position_func(n)).len();
+						}
+						//
+						fixed[n] = true;
+						//
+						// Clamp
+						float levelset_min (1.0);
+						float levelset_max (-1.0);
+						for( unsigned n=1; n<tri.size(); ++n ) {
+							levelset_min = std::min(levelset_min,levelset_save[tri[n]]);
+							levelset_max = std::max(levelset_max,levelset_save[tri[n]]);
+						}
+						//
+						if( sgn < 0.0 ) levelset[n] = std::min(levelset[n],levelset_max);
+						else levelset[n] = std::max(levelset[n],levelset_min);
 					}
 				}
 			});
 			//
-			// Fix the narrow bands
-			for( size_t _n=0; _n<narrowbands.size(); ++_n ) {
-				size_t n = narrowbands[_n];
-				if( ! connections[n].empty() ) {
-					levelset[n] = std::min(distance,(double)levelset[n]);
-					fixed[n] = true;
-				}
-			}
+			size_t count_unfixed (0);
+			for( const auto &e : fixed ) if( ! e ) count_unfixed ++;
+			if( ! count_unfixed || prev_count_unfixed == count_unfixed ) break;
+			prev_count_unfixed = count_unfixed;
 		}
 	}
 };

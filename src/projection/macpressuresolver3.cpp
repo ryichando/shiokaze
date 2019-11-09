@@ -30,6 +30,7 @@
 #include <shiokaze/linsolver/RCMatrix_solver.h>
 #include <shiokaze/utility/macutility3_interface.h>
 #include <shiokaze/projection/macproject3_interface.h>
+#include <shiokaze/rigidbody/rigidworld3_utility.h>
 #include <shiokaze/core/console.h>
 #include <shiokaze/core/timer.h>
 #include <shiokaze/utility/utility.h>
@@ -48,15 +49,15 @@ protected:
 	}
 	//
 	virtual void project( double dt,
-				 macarray3<float> &velocity,
-				 const array3<float> &solid,
-				 const array3<float> &fluid) override {
+				macarray3<float> &velocity,
+				const array3<float> &solid,
+				const array3<float> &fluid,
+				const std::vector<signed_rigidbody3_interface *> *rigidbodies ) override {
 		//
 		scoped_timer timer(this);
 		//
 		timer.tick(); console::dump( ">>> Pressure Projection started...\n" );
 		//
-		shared_array3<float> pressure(m_shape);
 		shared_macarray3<float> areas(velocity.shape());
 		shared_macarray3<float> rhos(velocity.shape());
 		//
@@ -217,16 +218,33 @@ protected:
 		//
 		RCMatrix_utility<size_t,double>::report(Lhs.get(),"Lhs");
 		//
+		if( m_param.warm_start ) {
+			// Tweak the linear system
+			if( ! m_prev_pressure ) {
+				m_prev_pressure = m_factory->allocate_vector(index);
+			} else {
+				m_prev_pressure->resize(index);
+			}
+			auto new_rhs = Lhs->multiply(m_prev_pressure.get());
+			rhs->subtract(new_rhs.get());
+		}
+		//
 		// Solve the linear system
 		timer.tick(); console::dump( "Solving the linear system...");
 		auto result = m_factory->allocate_vector(index);
-		unsigned count = m_solver->solve(Lhs.get(),rhs.get(),result.get());
-		console::write(get_argument_name()+"_number_projection_iteration", count);
-		console::dump( "Done. Took %d iterations. Took %s\n", count, timer.stock("linsolve").c_str());
+		auto status = m_solver->solve(Lhs.get(),rhs.get(),result.get());
+		console::write(get_argument_name()+"_number_projection_iteration", status.count);
+		console::dump( "Done. Took %d iterations, Resid=%e. Took %s\n", status.count, status.residual, timer.stock("linsolve").c_str());
+		//
+		if( m_param.warm_start ) {
+			result->add(m_prev_pressure.get());
+			m_prev_pressure->copy(result.get());
+		}
 		//
 		// Re-arrange to the array
+		m_pressure.clear();
 		index_map->const_serial_actives([&](int i, int j, int k, const auto& it) {
-			pressure->set(i,j,k,result->at(it()));
+			m_pressure.set(i,j,k,result->at(it()));
 		});
 		//
 		// Update the full velocity
@@ -238,8 +256,8 @@ protected:
 				if( pi[dim] == 0 || pi[dim] == velocity.shape()[dim] ) it.set(0.0);
 				else {
 					velocity[dim].subtract(i,j,k, dt * (
-						+ pressure()(i,j,k)
-						- pressure()(i-(dim==0),j-(dim==1),k-(dim==2))
+						+ m_pressure(i,j,k)
+						- m_pressure(i-(dim==0),j-(dim==1),k-(dim==2))
 						) / (rho*m_dx));
 				}
 			} else {
@@ -258,6 +276,7 @@ protected:
 		config.get_bool("SecondOrderAccurateSolid",m_param.second_order_accurate_solid,"Whether to enforce second order accuracy for solid surfaces");
 		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tenstion coefficient");
 		config.get_double("Gain",m_param.gain,"Rate for volume correction");
+		config.get_bool("WarmStart",m_param.warm_start,"Start from the solution of previous pressure");
 		config.set_default_bool("ReportProgress",false);
 	}
 	virtual void initialize( const shape3 &shape, double dx ) override {
@@ -268,9 +287,12 @@ protected:
 	//
 	virtual void post_initialize() override {
 		//
+		m_pressure.initialize(m_shape);
 		m_target_volume = m_current_volume = m_y_prev = 0.0;
 	}
-	//
+	virtual const array3<float> * get_pressure() const override {
+		return &m_pressure;
+	}
 	//
 	struct Parameters {
 		//
@@ -281,11 +303,13 @@ protected:
 		bool ignore_solid {false};
 		bool second_order_accurate_fluid {true};
 		bool second_order_accurate_solid {true};
+		bool warm_start {false};
 	};
 	Parameters m_param;
 	//
 	shape3 m_shape;
 	double m_dx {0.0};
+	array3<float> m_pressure{this};
 	//
 	macutility3_driver m_macutility{this,"macutility3"};
 	RCMatrix_factory_driver<size_t,double> m_factory{this,"RCMatrix"};
@@ -295,6 +319,7 @@ protected:
 	double m_current_volume {0.0};
 	double m_y_prev {0.0};
 	//
+	RCMatrix_vector_ptr<size_t,double> m_prev_pressure;
 };
 //
 extern "C" module * create_instance() {

@@ -110,6 +110,25 @@ public:
 		}
 	}
 	/**
+	 \~english @brief Perform a parallel loop operation. Thread is guaranteed the same if (n mod 8) is the same.
+	 @param[in] size Size of the loop.
+	 @param[in] func Function that processes a loop.
+	 \~japanese @brief 並列処理を行う。もし (n mod 8) が同じなら、スレッドも同じことが保証される。
+	 @param[in] size ループの大きさ。
+	 @param[in] func 実際のループ処理を行う関数。
+	 */
+	void for_each_byte_safe( size_t size, std::function<void(size_t n, int thread_index)> func ) const {
+		size_t size_div_8 = (size+7) / 8;
+		for_each( size_div_8, [&]( size_t n_div_8, int thread_index ) {
+			for( char i=0; i<8; ++i ) {
+				size_t n = 8*n_div_8+i;
+				if( n < size ) {
+					func(n,thread_index);
+				}
+			}
+		});
+	}
+	/**
 	 \~english @brief Perform a parallel loop operation.
 	 @param[in] size Size of the loop.
 	 @param[in] func Function that processes a loop.

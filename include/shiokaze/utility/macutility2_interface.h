@@ -28,6 +28,7 @@
 #include <shiokaze/core/recursive_configurable_module.h>
 #include <shiokaze/array/macarray2.h>
 #include <shiokaze/core/dylibloader.h>
+#include <tuple>
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -97,18 +98,78 @@ public:
 	 */
 	virtual void compute_face_density( const array2<float> &solid, const array2<float> &fluid, macarray2<float> &density ) const = 0;
 	/**
-	 \~english @brief Get the total kinetic energy.
+	 \~english @brief Get the kinetic energy.
 	 @param[in] solid Solid level set.
 	 @param[in] fluid Fluid level set.
 	 @param[in] velocity Velocity field.
 	 @return Total kinetic energy.
-	 \~japanese @brief 
+	 \~japanese @brief 運動エネルギーを計算する。
 	 @param[in] solid 壁のレベルセット。
 	 @param[in] fluid 水のレベルセット。
 	 @param[in] velocity 速度場。
 	 @return 運動エネルギー。
 	 */
 	virtual double get_kinetic_energy( const array2<float> &solid, const array2<float> &fluid, const macarray2<float> &velocity ) const = 0;
+	/**
+	 \~english @brief Get the gravitational potential energy.
+	 @param[in] solid Solid level set.
+	 @param[in] fluid Fluid level set.
+	 @param[in] gravity Gravity vector.
+	 @return Gravitational potential energy.
+	 \~japanese @brief 重力ポテンシャルエネルギーを計算する。
+	 @param[in] solid 壁のレベルセット。
+	 @param[in] fluid 水のレベルセット。
+	 @param[in] gravity 重力加速度のベクトル。
+	 @return 重力ポテンシャルエネルギー。
+	 */
+	virtual double get_gravitational_potential_energy( const array2<float> &solid, const array2<float> &fluid, vec2d gravity ) const = 0;
+	/**
+	 \~english @brief Get the surface tension potential energy.
+	 @param[in] solid Solid level set.
+	 @param[in] fluid Fluid level set.
+	 @param[in] tension_coeff Surface tension coefficient.
+	 @return Surface tension potential energy.
+	 \~japanese @brief 表面張力ポテンシャルエネルギーを計算する。
+	 @param[in] solid 壁のレベルセット。
+	 @param[in] fluid 水のレベルセット。
+	 @param[in] tension_coeff 表面張力の係数。
+	 @return 表面張力ポテンシャルエネルギー。
+	 */
+	virtual double get_surfacetension_potential_energy( const array2<float> &solid, const array2<float> &fluid, double tension_coeff ) const = 0;
+	/**
+	 \~english @brief Get the total energy.
+	 @param[in] solid Solid level set.
+	 @param[in] fluid Fluid level set.
+	 @param[in] velocity Velocity field.
+	 @param[in] gravity Gravity vector.
+	 @param[in] tension_coeff Surface tension coefficient.
+	 @return Total energy.
+	 \~japanese @brief 全エネルギーを計算する。
+	 @param[in] solid 壁のレベルセット。
+	 @param[in] fluid 水のレベルセット。
+	 @param[in] velocity 速度場。
+	 @param[in] gravity 重力加速度のベクトル。
+	 @param[in] tension_coeff 表面張力の係数。
+	 @return 全エネルギー。
+	 */
+	virtual double get_total_energy( const array2<float> &solid, const array2<float> &fluid, const macarray2<float> &velocity, vec2d gravity, double tension_coeff ) const = 0;
+	/**
+	 \~english @brief Get all kinds of energy.
+	 @param[in] solid Solid level set.
+	 @param[in] fluid Fluid level set.
+	 @param[in] velocity Velocity field.
+	 @param[in] gravity Gravity vector.
+	 @param[in] tension_coeff Surface tension coefficient.
+	 @return List of respective energy {gravitaional energy,kinetic energy, surface area energy}
+	 \~japanese @brief 全エネルギーの種類を計算する。
+	 @param[in] solid 壁のレベルセット。
+	 @param[in] fluid 水のレベルセット。
+	 @param[in] velocity 速度場。
+	 @param[in] gravity 重力加速度のベクトル。
+	 @param[in] tension_coeff 表面張力の係数。
+	 @return それぞれのエネルギーの種類。{位置エネルギー、運動エネルギー、表面積エネルギー}
+	 */
+	virtual std::tuple<double,double,double> get_all_kinds_of_energy( const array2<float> &solid, const array2<float> &fluid, const macarray2<float> &velocity, vec2d gravity, double tension_coeff ) const = 0;
 	/**
 	 \~english @brief Get the jacobian of a velocity.
 	 @param[in] p Position in physical space.

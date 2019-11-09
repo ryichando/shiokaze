@@ -30,6 +30,7 @@
 #include <shiokaze/utility/macutility2_interface.h>
 #include <shiokaze/visualizer/gridvisualizer2_interface.h>
 #include <shiokaze/projection/macproject2_interface.h>
+#include <shiokaze/rigidbody/rigidworld2_utility.h>
 #include <memory>
 //
 SHKZ_USING_NAMESPACE
@@ -48,7 +49,8 @@ protected:
 	virtual void project(double dt,
 						macarray2<float> &velocity,
 						const array2<float> &solid,
-						const array2<float> &fluid) override {
+						const array2<float> &fluid,
+						const std::vector<signed_rigidbody2_interface *> *rigidbodies ) override {
 		//
 		shared_macarray2<float> areas(velocity.shape());
 		shared_macarray2<float> rhos(velocity.shape());
@@ -189,9 +191,25 @@ protected:
 			});
 		}
 		//
+		if( m_param.warm_start ) {
+			// Tweak the linear system
+			if( ! m_prev_pressure ) {
+				m_prev_pressure = m_factory->allocate_vector(index);
+			} else {
+				m_prev_pressure->resize(index);
+			}
+			auto new_rhs = Lhs->multiply(m_prev_pressure.get());
+			rhs->subtract(new_rhs.get());
+		}
+		//
 		// Solve the linear system
 		auto result = m_factory->allocate_vector(index);
 		m_solver->solve(Lhs.get(),rhs.get(),result.get());
+		//
+		if( m_param.warm_start ) {
+			result->add(m_prev_pressure.get());
+			m_prev_pressure->copy(result.get());
+		}
 		//
 		// Re-arrange to the array
 		m_pressure.clear();
@@ -219,6 +237,10 @@ protected:
 		});
 	}
 	//
+	virtual const array2<float> * get_pressure() const override {
+		return &m_pressure;
+	}
+	//
 	virtual void draw( graphics_engine &g ) const override {
 		if( m_param.draw_pressure ) {
 			//
@@ -233,6 +255,7 @@ protected:
 		config.get_bool("DrawPressure",m_param.draw_pressure,"Whether to draw pressure");
 		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tenstion coefficient");
 		config.get_double("Gain",m_param.gain,"Rate for volume correction");
+		config.get_bool("WarmStart",m_param.warm_start,"Start from the solution of previous pressure");
 		config.set_default_bool("ReportProgress",false);
 	}
 	//
@@ -256,6 +279,7 @@ protected:
 		bool draw_pressure {true};
 		bool second_order_accurate_fluid {true};
 		bool second_order_accurate_solid {true};
+		bool warm_start {false};
 	};
 	Parameters m_param;
 	//
@@ -273,6 +297,7 @@ protected:
 	double m_current_volume {0.0};
 	double m_y_prev {0.0};
 	//
+	RCMatrix_vector_ptr<size_t,double> m_prev_pressure;
 };
 //
 extern "C" module * create_instance() {

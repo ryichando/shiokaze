@@ -91,6 +91,16 @@ protected:
 		this->uv_coordinates = uv_coordinates;
 		assert( uv_coordinates.size() == vertices.size());
 	}
+	virtual void clear() override {
+		vertices.clear();
+		vertices.shrink_to_fit();
+		faces.clear();
+		faces.shrink_to_fit();
+		vertex_colors.clear();
+		vertex_colors.shrink_to_fit();
+		uv_coordinates.clear();
+		uv_coordinates.shrink_to_fit();
+	}
 	//
 	virtual bool export_ply( std::string path ) override {
 		//
@@ -106,7 +116,7 @@ protected:
 		// Write header
 		fprintf(ply_fp,"ply\n");
 		fprintf(ply_fp,"format binary_little_endian 1.0\n");
-		fprintf(ply_fp,"element vertex %d\n", (int)vertices.size());
+		fprintf(ply_fp,"element vertex %zu\n", vertices.size());
 		fprintf(ply_fp,"property float x\n");
 		fprintf(ply_fp,"property float y\n");
 		fprintf(ply_fp,"property float z\n");
@@ -119,7 +129,7 @@ protected:
 			fprintf(ply_fp,"property float s\n");
 			fprintf(ply_fp,"property float t\n");
 		}
-		fprintf(ply_fp,"element face %d\n", (int)faces.size());
+		fprintf(ply_fp,"element face %zu\n", faces.size());
 		fprintf(ply_fp,"property list uchar int vertex_indices\n");
 		fprintf(ply_fp,"end_header\n");
 		fflush(ply_fp);
@@ -131,7 +141,7 @@ protected:
 			printf ( "Could not open the path (%s)\n", path.c_str());
 			return false;
 		}
-		for( uint n=0; n<vertices.size(); n++ ) {
+		for( size_t n=0; n<vertices.size(); n++ ) {
 			float v[3] = { (float)vertices[n][0], (float)vertices[n][1], (float)vertices[n][2] };
 			fwrite(v,3,sizeof(float),ply_fp);
 			if( vertex_colors.size()) {
@@ -147,7 +157,7 @@ protected:
 			}
 		}
 		// Write faces
-		for( uint n=0; n<faces.size(); n++ ) {
+		for( size_t n=0; n<faces.size(); n++ ) {
 			unsigned char num = faces[n].size();
 			fwrite( &num,1,sizeof(unsigned char),ply_fp);
 			for( unsigned m=0; m<faces[n].size(); m++ ) {
@@ -191,34 +201,34 @@ protected:
 		append(name, strlen(name)+1, buffer);
 		uint64_t v_number = vertices.size();
 		uint64_t f_number = 0;
-		for( unsigned n=0; n<faces.size(); n++ ) {
+		for( size_t n=0; n<faces.size(); n++ ) {
 			const std::vector<size_t> &face = faces[n];
 			if( face.size() == 3 ) f_number += 1;
 			else if( face.size() == 4 ) f_number += 2;
 		}
 		append(&v_number,sizeof(uint64_t),buffer);
 		append(&f_number,sizeof(uint64_t),buffer);
-		for( unsigned n=0; n<vertices.size(); n++ ) {
+		for( size_t n=0; n<vertices.size(); n++ ) {
 			double v[3] = { vertices[n][0], vertices[n][1], vertices[n][2] };
 			append(&v[0],sizeof(double),buffer);
 			append(&v[1],sizeof(double),buffer);
 			append(&v[2],sizeof(double),buffer);
 		}
 		if( uv_coordinates.size()) {
-			for( unsigned n=0; n<uv_coordinates.size(); n++ ) {
+			for( size_t n=0; n<uv_coordinates.size(); n++ ) {
 				append(&uv_coordinates[n][0],sizeof(double),buffer);
 				append(&uv_coordinates[n][1],sizeof(double),buffer);
 			}
 		}
 		if( vertex_colors.size()) {
-			for( unsigned n=0; n<vertex_colors.size(); n++ ) {
+			for( size_t n=0; n<vertex_colors.size(); n++ ) {
 				double v[3] = { vertex_colors[n][0], vertex_colors[n][1], vertex_colors[n][2] };
 				append(&v[0],sizeof(double),buffer);
 				append(&v[1],sizeof(double),buffer);
 				append(&v[2],sizeof(double),buffer);
 			}
 		}
-		for( unsigned n=0; n<faces.size(); n++ ) {
+		for( size_t n=0; n<faces.size(); n++ ) {
 			const std::vector<size_t> &face = faces[n];
 			if( face.size() == 3 ) {
 				for( unsigned m=0; m<face.size(); m++ ) {

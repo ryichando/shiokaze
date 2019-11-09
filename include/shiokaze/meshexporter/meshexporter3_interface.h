@@ -62,6 +62,11 @@ public:
 	 */
 	virtual void set_texture_coordinates( const std::vector<vec2d> &uv_coordinates ) = 0;
 	/**
+	 \~english @brief Clear internal storage.
+	 \~japanese @brief 内部ストレージを初期化する。
+	 */
+	virtual void clear() = 0;
+	/**
 	 \~english @brief Export as PLY file.
 	 @param[in] path File path.
 	 \~japanese @brief PLY として出力する。

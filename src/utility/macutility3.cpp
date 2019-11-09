@@ -30,6 +30,7 @@
 #include <shiokaze/array/shared_array3.h>
 #include <shiokaze/array/array_derivative3.h>
 #include <shiokaze/array/array_utility3.h>
+#include <shiokaze/cellmesher/cellmesher3_interface.h>
 #include <shiokaze/core/dylibloader.h>
 #include <shiokaze/core/console.h>
 #include <shiokaze/core/scoped_timer.h>
@@ -205,6 +206,25 @@ protected:
 			});
 		}
 	}
+	double get_kinetic_energy( const macarray3<float> &areas, const macarray3<float> &rhos, const macarray3<float> &velocity ) const {
+		//
+		std::vector<float> results(velocity.get_thread_num(),0.0);
+		velocity.const_parallel_actives([&]( int dim, int i, int j, int k, const auto &it, int tn ) {
+			double area = areas[dim](i,j,k);
+			if( area ) {
+				double rho = rhos[dim](i,j,k);
+				if( rho ) {
+					double u = velocity[dim](i,j,k);
+					double dV = (m_dx*m_dx*m_dx) * (area*rho);
+					results[tn] += 0.5*(u*u)*dV;
+				}
+			}
+		});
+		//
+		double result (0.0);
+		for( const auto &e : results ) result += e;
+		return result;
+	}
 	virtual double get_kinetic_energy( const array3<float> &solid, const array3<float> &fluid, const macarray3<float> &velocity ) const override {
 		//
 		shared_macarray3<float> tmp_areas(velocity.type());
@@ -213,22 +233,73 @@ protected:
 		compute_area_fraction(solid,tmp_areas());
 		compute_fluid_fraction(fluid,tmp_rhos());
 		//
-		std::vector<float> results(velocity.get_thread_num(),0.0);
-		velocity.const_parallel_actives([&]( int dim, int i, int j, int k, const auto &it, int tn ) {
-			double area = tmp_areas()[dim](i,j,k);
+		return get_kinetic_energy(tmp_areas(),tmp_rhos(),velocity);
+	}
+	double get_gravitational_potential_energy( const macarray3<float> &areas, const macarray3<float> &rhos, vec3d gravity ) const {
+		//
+		double sum (0.0);
+		rhos.const_serial_actives([&]( int dim, int i, int j, int k, const auto &it ) {
+			const float area = areas[dim](i,j,k);
 			if( area ) {
-				double rho = tmp_rhos()[dim](i,j,k);
-				if( rho ) {
-					double u = velocity[dim](i,j,k);
-					double dA = (m_dx*m_dx*m_dx) * (area*rho);
-					results[tn] += 0.5*(u*u)*dA;
-				}
+				vec3d p = m_dx*vec3d(i,j,k).face(dim);
+				sum += area * p[1] * it();
 			}
 		});
+		for( int dim : DIMS3 ) {
+			rhos[dim].const_serial_inside([&]( int i, int j, int k, const auto &it ) {
+				if( ! it.active()) {
+					const float area = areas[dim](i,j,k);
+					if( area ) {
+						vec3d p = m_dx*vec3d(i,j,k).face(dim);
+						sum += area * p[1] * it();
+					}
+				}
+			});
+		}
+		return -sum * gravity[1] * (m_dx*m_dx*m_dx) / 3.0;
+	}
+	virtual double get_gravitational_potential_energy( const array3<float> &solid, const array3<float> &fluid, vec3d gravity ) const override {
 		//
-		double result (0.0);
-		for( const auto &e : results ) result += e;
-		return result;
+		shared_macarray3<float> tmp_areas(fluid.shape());
+		shared_macarray3<float> tmp_rhos(fluid.shape());
+		//
+		compute_area_fraction(solid,tmp_areas());
+		compute_fluid_fraction(fluid,tmp_rhos());
+		//
+		return get_gravitational_potential_energy(tmp_areas(),tmp_rhos(),gravity);
+	}
+	virtual double get_surfacetension_potential_energy( const array3<float> &solid, const array3<float> &fluid, double tension_coeff ) const override {
+		//
+		if( tension_coeff ) {
+			std::vector<vec3d> vertices;
+			std::vector<std::vector<size_t> > faces;
+			m_mesher->generate_mesh(fluid,vertices,faces);
+			//
+			return tension_coeff * utility::compute_area(vertices,faces,[&]( const vec3d &p ) {
+				return interpolate<float>(solid,m_dx*p) > 0.0;
+			});
+		} else {
+			return 0.0;
+		}
+	}
+	virtual double get_total_energy( const array3<float> &solid, const array3<float> &fluid, const macarray3<float> &velocity, vec3d gravity, double tension_coeff ) const override {
+		//
+		const auto energy_list = get_all_kinds_of_energy(solid,fluid,velocity,gravity,tension_coeff);
+		return std::get<0>(energy_list)+std::get<1>(energy_list)+std::get<2>(energy_list);
+	}
+	virtual std::tuple<double,double,double> get_all_kinds_of_energy( const array3<float> &solid, const array3<float> &fluid, const macarray3<float> &velocity, vec3d gravity, double tension_coeff ) const override {
+		//
+		shared_macarray3<float> tmp_areas(velocity.type());
+		shared_macarray3<float> tmp_rhos(velocity.type());
+		//
+		compute_area_fraction(solid,tmp_areas());
+		compute_fluid_fraction(fluid,tmp_rhos());
+		//
+		return {
+			get_gravitational_potential_energy(tmp_areas(),tmp_rhos(),gravity),
+			get_kinetic_energy(tmp_areas(),tmp_rhos(),velocity),
+			get_surfacetension_potential_energy(solid,fluid,tension_coeff)
+		};
 	}
 	virtual void get_velocity_jacobian( const vec3d &p, const macarray3<float> &velocity, vec3f jacobian[DIM3] ) const override {
 		for( unsigned dim : DIMS3 ) {
@@ -345,6 +416,7 @@ protected:
 	double m_dx;
 	shape3 m_shape;
 	parallel_driver m_parallel{this};
+	cellmesher3_driver m_mesher{this,"marchingcubes"};
 };
 //
 extern "C" module * create_instance() {
