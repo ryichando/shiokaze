@@ -58,7 +58,7 @@
 	</medium>
 </shape>
 
-<shape type="ply">
+<shape type="serialized">
 	<string name="filename" value="$solid_filename"/>
 	<bsdf type="twosided"><bsdf type="diffuse">
 	</bsdf></bsdf>

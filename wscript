@@ -58,8 +58,7 @@ def common_configure(conf,target):
 		suffix = '_debug'
 		conf.define('SHKZ_BUILD_TARGET','Debug')
 		conf.define('SHKZ_DEBUG',1)
-		conf.env.CXXFLAGS.append('-g')
-		conf.env.CXXFLAGS.append('-O0')
+		conf.env.CXXFLAGS.extend(['-g','-O0'])
 		conf.env.LINKFLAGS.append('-g')
 	elif target == 'release':
 		suffix = ''
@@ -89,9 +88,16 @@ def get_target_name(bld,name):
 	else:
 		return 'shiokaze_'+name+bld.env.suffix
 #
+def get_lib_name(bld,name):
+	if type(name) is list:
+		return [bld.env.suffix for x in name]
+	else:
+		return name+bld.env.suffix
+#
 def build(bld):
 	#
 	bld.get_target_name = get_target_name
+	bld.get_lib_name = get_lib_name
 	bld.use_opengl = use_opengl
 	#
 	bld.root_path = bld.path.abspath()

@@ -1,8 +1,8 @@
 /*
-**	waterdrop2.cpp
+**	cube2.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on June 20, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on October 29, 2019.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -23,42 +23,35 @@
 */
 //
 #include <shiokaze/math/vec.h>
+#include <shiokaze/utility/utility.h>
 #include <shiokaze/core/configuration.h>
 #include <string>
 #include <cmath>
 //
 SHKZ_USING_NAMESPACE
 //
-static bool noSolid (false);
-static double radius (0.5);
-static double water_height (0.37);
-static double water_radius (0.075);
-static double water_level (0.245);
+static double g_width (0.2);
+static unsigned g_default_gn (64);
+static vec2d g_center(0.5,0.5);
 //
 extern "C" void configure( configuration &config ) {
-	configuration::auto_group group(config,"Waterdrop Scene 2D","Waterdrop");
-	config.get_bool("NoSolid",noSolid,"Should remove solids");
-	config.get_double("ContainerRadius",radius,"Solid container radius");
-	config.get_double("Radius",water_radius,"Radius of water");
-	config.get_double("WaterLevel",water_level,"Water level");
-	config.get_double("WaterHeight",water_height,"Water height");
+	configuration::auto_group group(config,"Cube Scene 2D","Cube");
+	config.get_double("Width",g_width,"Width of cube");
+	config.get_vec2d("Center",g_center.v,"Center of cube");
 }
 //
 extern "C" std::map<std::string,std::string> get_default_parameters() {
 	std::map<std::string,std::string> dictionary;
+	dictionary["ResolutionX"] = std::to_string(g_default_gn);
+	dictionary["ResolutionY"] = std::to_string(g_default_gn);
+	dictionary["Gravity"] = "0.0,0.0";
+	dictionary["SurfaceTension"] = "5e-3";
+	dictionary["TimeStep"] = "1.5e-2";
 	return dictionary;
 }
 //
 extern "C" double fluid( const vec2d &p ) {
-	return std::min(p[1]-water_level,(p-vec2d(0.5,water_height)).len()-water_radius);
-}
-//
-extern "C" double solid( const vec2d &p ) {
-	if( noSolid ) {
-		return 1.0;
-	} else {
-		return radius-(p-vec2d(0.5,0.5)).len();
-	}
+	return utility::box(p,g_center-vec2d(g_width,g_width),g_center+vec2d(g_width,g_width));
 }
 //
 extern "C" const char *license() {

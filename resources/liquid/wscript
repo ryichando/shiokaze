@@ -25,61 +25,71 @@
 def build(bld):
 	#
 	bld.shlib(source = 'waterdrop2.cpp',
-			target = 'waterdrop2'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'waterdrop2'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'waterdrop3.cpp',
-			target = 'waterdrop3'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'waterdrop3'),
+			cxxflags = ['-Wno-return-type-c-linkage'],
+			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'cube2.cpp',
+			target = bld.get_lib_name(bld,'cube2'),
+			cxxflags = ['-Wno-return-type-c-linkage'],
+			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'cube3.cpp',
+			target = bld.get_lib_name(bld,'cube3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'dambreak2.cpp',
-			target = 'dambreak2'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'dambreak2'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'dambreak3.cpp',
-			target = 'dambreak3'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'dambreak3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'cylinders3.cpp',
-			target = 'cylinders3'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'cylinders3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'stanfordparty3.cpp',
-			target = 'stanfordparty3'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'stanfordparty3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'glugging2.cpp',
-			target = 'glugging2'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'glugging2'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'glugging3.cpp',
-			target = 'glugging3'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'glugging3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'tiltedliquid3.cpp',
-			target = 'tiltedliquid3'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'tiltedliquid3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'tiltedliquid2.cpp',
-			target = 'tiltedliquid2'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'tiltedliquid2'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'filmliquid2.cpp',
-			target = 'filmliquid2'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'filmliquid2'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'filmliquid3.cpp',
-			target = 'filmliquid3'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'filmliquid3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))

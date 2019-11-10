@@ -41,9 +41,9 @@ for frame in range(1,end+1):
 		interval = 10
 		#
 		# Path to mesh files
-		mesh_file = '../mesh/'+str(frame)+'_mesh.ply'
+		mesh_file = '../mesh/'+str(frame)+'_mesh.serialized'
 		if xml_name == 'transparent':
-			mesh_file = '../mesh/'+str(frame)+'_mesh_enclosed.ply'
+			mesh_file = '../mesh/'+str(frame)+'_mesh_enclosed.serialized'
 		#
 		while( not os.path.exists(mesh_file)):
 			time.sleep(1)
@@ -62,7 +62,7 @@ for frame in range(1,end+1):
 		paramMap['sample_count'] = SampleCount
 		#
 		paramMap['mesh_filename'] = mesh_file
-		paramMap['solid_filename'] = '../mesh/static_solids/levelset_solid.ply'
+		paramMap['solid_filename'] = '../mesh/static_solids/levelset_solid.serialized'
 		scene = SceneHandler.loadScene(fileResolver.resolve(xml_name+'.xml'),paramMap)
 		#
 		# Create a queue for tracking render jobs

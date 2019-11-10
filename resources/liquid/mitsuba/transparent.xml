@@ -45,7 +45,7 @@
 	</bsdf>
 </shape>
 
-<shape type="ply">
+<shape type="serialized">
 	<string name="filename" value="$mesh_filename"/>
 	<bsdf type="dielectric">
 		<string name="intIOR" value="water"/>
@@ -57,7 +57,7 @@
 	</medium>
 </shape>
 
-<shape type="ply">
+<shape type="serialized">
 	<string name="filename" value="$solid_filename"/>
 	<bsdf type="twosided"><bsdf type="diffuse">
 	</bsdf></bsdf>

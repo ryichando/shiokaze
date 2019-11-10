@@ -38,7 +38,7 @@
 	</bsdf>
 </shape>
 
-<shape type="ply">
+<shape type="serialized">
 	<string name="filename" value="$mesh_filename"/>
 	<bsdf type="twosided"><bsdf type="plastic">
 		<srgb name="diffuseReflectance" value="$liquid_color"/>
@@ -46,7 +46,7 @@
 	</bsdf></bsdf>
 </shape>
 
-<shape type="ply">
+<shape type="serialized">
 	<string name="filename" value="$solid_filename"/>
 	<bsdf type="twosided"><bsdf type="diffuse">
 	</bsdf></bsdf>

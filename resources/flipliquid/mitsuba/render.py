@@ -68,7 +68,7 @@ for frame in range(1,end+1):
 		interval = 10
 		#
 		# Path to mesh files
-		mesh_file = '../mesh/'+str(frame)+'_mesh.ply'
+		mesh_file = '../mesh/'+str(frame)+'_mesh.serialized'
 		if name == 'transparent':
 			mesh_file = '../mesh/'+str(frame)+'_mesh_enclosed.serialized'
 
@@ -95,7 +95,7 @@ for frame in range(1,end+1):
 		paramMap['liquid_color'] = str(LiquidColor_Red)+', '+str(LiquidColor_Green)+', '+str(LiquidColor_Blue)
 		#
 		paramMap['mesh_filename'] = mesh_file
-		paramMap['solid_filename'] = '../mesh/static_solids/levelset_solid.ply'
+		paramMap['solid_filename'] = '../mesh/static_solids/levelset_solid.serialized'
 		scene = SceneHandler.loadScene(fileResolver.resolve(name+'.xml'),paramMap)
 		#
 		# Append ballistic particles if exists

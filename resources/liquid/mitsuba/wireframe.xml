@@ -38,7 +38,7 @@
 	</bsdf>
 </shape>
 
-<shape type="ply">
+<shape type="serialized">
 	<string name="filename" value="$mesh_filename"/>
 	<bsdf type="twosided"><bsdf type="plastic">
 		<float name="intIOR" value="1.5"/>
@@ -49,7 +49,7 @@
 	</bsdf></bsdf>
 </shape>
 
-<shape type="ply">
+<shape type="serialized">
 	<string name="filename" value="$solid_filename"/>
 	<bsdf type="twosided"><bsdf type="diffuse">
 	</bsdf></bsdf>

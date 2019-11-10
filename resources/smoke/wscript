@@ -26,31 +26,31 @@
 def build(bld):
 	#
 	bld.shlib(source = 'circle2.cpp',
-			target = 'circle2'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'circle2'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'plume2.cpp',
-			target = 'plume2'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'plume2'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'maze2.cpp',
-			target = 'maze2'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'maze2'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'taylor_green_vortex2.cpp',
-			target = 'taylor_green_vortex2'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'taylor_green_vortex2'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'sphere3.cpp',
-			target = 'sphere3'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'sphere3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
 	#
 	bld.shlib(source = 'plume3.cpp',
-			target = 'plume3'+bld.env.suffix,
+			target = bld.get_lib_name(bld,'plume3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
