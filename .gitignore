@@ -3,3 +3,5 @@
 build
 html
 log_*
+docs/en/*
+docs/ja/*
