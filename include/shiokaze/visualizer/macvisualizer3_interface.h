@@ -46,7 +46,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] velocity 速度場。
 	 */
-	virtual void draw_velocity( graphics_engine &g, const macarray3<float> &velocity ) const = 0;
+	virtual void draw_velocity( graphics_engine &g, const macarray3<Real> &velocity ) const = 0;
 	/**
 	 \~english @brief Draw scalar field.
 	 @param[in] g Graphics engine.
@@ -55,7 +55,7 @@ public:
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] array Target grid.
 	 */
-	virtual void visualize_scalar( graphics_engine &g, const macarray3<float> &array ) const = 0;
+	virtual void visualize_scalar( graphics_engine &g, const macarray3<Real> &array ) const = 0;
 	//
 private:
 	//

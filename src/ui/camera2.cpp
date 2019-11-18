@@ -32,19 +32,19 @@ SHKZ_USING_NAMESPACE
 class camera2 : public camera2_interface {
 protected:
 	//
-	MODULE_NAME("camera2")
-	//
 	virtual void configure ( configuration &config ) override {
 		//
 		config.get_double("ScrollSpeed",m_param.scroll_speed,"Scroll speed");
 		config.get_double("MinScale",m_param.min_scale,"Minimal scale");
+		config.get_bool("ResetView",m_param.reset_view,"Reset view");
 	}
 	//
 	virtual void initialize( const environment_map &environment ) override {
 		//
-		m_origin = vec2d();
-		m_scale = 1.0;
-		m_bounding_box_set = false;
+		if( ! m_bounding_box_set || m_param.reset_view ) {
+			m_origin = vec2d();
+			m_scale = 1.0;
+		}
 	}
 	//
 	virtual void resize( int width, int height ) override {
@@ -53,9 +53,9 @@ protected:
 		m_height = height;
 	}
 	//
-	virtual void set_bounding_box( const double *p0, const double *p1, bool reset_view ) override {
+	virtual void set_bounding_box( const double *p0, const double *p1 ) override {
 		//
-		if( reset_view ) {
+		if( ! m_bounding_box_set || m_param.reset_view ) {
 			double scale (1.0);
 			scale = std::max(p1[0]-p0[0],p1[1]-p0[1]);
 			set_2D_coordinate(p0,scale);
@@ -213,6 +213,7 @@ protected:
 	struct Parameters {
 		double scroll_speed {0.01};
 		double min_scale {0.01};
+		bool reset_view {false};
 	};
 	Parameters m_param;
 	//

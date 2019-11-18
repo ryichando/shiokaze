@@ -317,7 +317,7 @@ template <class T, unsigned D> struct vec {
 	 @param[in] r 2次元ベクトル。
 	 @return 結果。
 	 */
-	template<class Y> T cross2(const vec<Y,2> &r) const {
+	template<class Y=Real> T cross2(const vec<Y,2> &r) const {
 		assert( D == 2 );
 		return v[0]*r[1]-v[1]*r[0];
 	}
@@ -329,7 +329,7 @@ template <class T, unsigned D> struct vec {
 	 @param[in] r 2次元ベクトル。
 	 @return 結果。
 	 */
-	template<class Y> vec<T,3> cross(const vec<Y,3> &r) const {
+	template<class Y=Real> vec<T,3> cross(const vec<Y,3> &r) const {
 		assert( D == 3 );
 		return vec<T,3>(v[1]*r[2]-v[2]*r[1],v[2]*r[0]-v[0]*r[2],v[0]*r[1]-v[1]*r[0]);
 	}
@@ -339,8 +339,8 @@ template <class T, unsigned D> struct vec {
 	 \~japanese @brief インデックス位置からセルの中心位置を計算する。
 	 @return セルの中心の位置。
 	 */
-	vec<double,D> cell() const {
-		vec<double,D> result;
+	template<class Y=Real> vec<Y,D> cell() const {
+		vec<Y,D> result;
 		for( int dim=0; dim<D; ++dim ) result[dim] = v[dim]+0.5;
 		return result;
 	}
@@ -350,8 +350,8 @@ template <class T, unsigned D> struct vec {
 	 \~japanese @brief インデックス位置からセルの節点位置を計算する。
 	 @return セルの節点の位置。
 	 */
-	vec<double,D> nodal() const {
-		vec<double,D> result;
+	template<class Y=Real> vec<Y,D> nodal() const {
+		vec<Y,D> result;
 		for( int dim=0; dim<D; ++dim ) result[dim] = v[dim];
 		return result;
 	}
@@ -363,8 +363,8 @@ template <class T, unsigned D> struct vec {
 	 @param[in] dim 面の向きの次元番号。
 	 @return セルの面の中心位置。
 	 */
-	vec<double,D> face( int dim ) const {
-		vec<double,D> result;
+	template<class Y=Real> vec<Y,D> face( int dim ) const {
+		vec<Y,D> result;
 		for( int _dim=0; _dim<D; ++_dim ) result[_dim] = v[_dim]+0.5*(dim!=_dim);
 		return result;
 	}
@@ -376,9 +376,9 @@ template <class T, unsigned D> struct vec {
 	 @param[in] dim エッジの向きの次元番号。
 	 @return エッジの中心位置。
 	 */
-	vec<double,D> edge( int dim ) const {
+	template<class Y=Real> vec<Y,D> edge( int dim ) const {
 		assert( D == 3 );
-		return vec<double,3>(v[0]+0.5*(dim==0),v[1]+0.5*(dim==1),v[2]+0.5*(dim==2));
+		return vec<Y,3>(v[0]+0.5*(dim==0),v[1]+0.5*(dim==1),v[2]+0.5*(dim==2));
 	}
 };
 template <class T, class Y> static inline T operator^(const vec<T,2> &l, const vec<Y,2> &r) {
@@ -397,9 +397,11 @@ template <class T, unsigned D> static inline vec<T,D> operator-(const vec<T,D> &
 template <class T> using vec2 = vec<T,2>;
 template <class T> using vec3 = vec<T,3>;
 //
+using vec2r = vec2<Real>;
 using vec2f = vec2<float>;
 using vec2d = vec2<double>;
 using vec2i = vec2<int>;
+using vec3r = vec3<Real>;
 using vec3f = vec3<float>;
 using vec3d = vec3<double>;
 using vec3i = vec3<int>;

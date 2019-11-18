@@ -113,6 +113,9 @@ def build(bld):
 						bld.root_path+'/include',
 						bld.root_path+'/local/include']
 	#
+	if os.path.exists(bld.root_path+'/private-include'):
+		bld.env.INCLUDES.append(bld.root_path+'/private-include')
+	#
 	if use_opengl:
 		if sys.platform == 'darwin':
 			bld.LIB_OPENGL = ['glfw3']
@@ -131,6 +134,9 @@ def build(bld):
 	MODULES = glob.glob(bld.root_path+'/src/*/')
 	RESOURCES = []
 	LOCAL = []
+	#
+	if os.path.exists(bld.root_path+'/private-src'):
+		LOCAL.extend(glob.glob(bld.root_path+'/private-src/*/'))
 	#
 	if os.path.exists(bld.root_path+'/local/wscript'):
 		LOCAL.append(bld.root_path+'/local')

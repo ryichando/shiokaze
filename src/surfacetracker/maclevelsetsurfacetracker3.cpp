@@ -42,13 +42,12 @@ class maclevelsetsurfacetracker3 : public maclevelsetsurfacetracker3_interface {
 protected:
 	//
 	LONG_NAME("MAC Levelset Surface Tracker 3D")
-	MODULE_NAME("maclevelsetsurfacetracker3")
 	//
-	virtual void advect( array3<float> &fluid, const array3<float> &solid, const macarray3<float> &u, double dt ) override {
+	virtual void advect( array3<Real> &fluid, const array3<Real> &solid, const macarray3<Real> &u, double dt ) override {
 		//
 		scoped_timer timer(this);
 		if( dt ) {
-			shared_array3<float> fluid_save(fluid);
+			shared_array3<Real> fluid_save(fluid);
 			m_macadvection->advect_scalar(fluid,u,fluid_save(),dt,"levelset");
 		}
 		//
@@ -64,14 +63,14 @@ protected:
 	}
 	//
 	virtual void export_fluid_mesh( std::string path_to_directory, unsigned frame,
-							  const array3<float> &solid, const array3<float> &fluid,
+							  const array3<Real> &solid, const array3<Real> &fluid,
 							  std::function<vec3d(const vec3d &)> vertex_color_func=nullptr,
 							  std::function<vec2d(const vec3d &)> uv_coordinate_func=nullptr ) const override {
 		//
 		std::string path_wo_suffix = console::format_str("%s/%u_mesh", path_to_directory.c_str(), frame );
 		export_fluid_mesh(path_wo_suffix,solid,fluid,true,vertex_color_func,uv_coordinate_func);
 		//
-		shared_array3<float> fluid_closed(m_shape);
+		shared_array3<Real> fluid_closed(m_shape);
 		if( m_param.enclose_solid ) {
 			m_gridutility->combine_levelset(solid,fluid,fluid_closed());
 		} else {
@@ -126,7 +125,7 @@ protected:
 	}
 	//
 	void export_fluid_mesh( std::string path_wo_suffix, 
-							const array3<float> &solid, const array3<float> &fluid,
+							const array3<Real> &solid, const array3<Real> &fluid,
 							bool delete_solid_embedded,
 							std::function<vec3d(const vec3d &)> vertex_color_func=nullptr,
 							std::function<vec2d(const vec3d &)> uv_coordinate_func=nullptr ) const {

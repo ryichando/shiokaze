@@ -44,12 +44,11 @@ class macnbflip2 : public macflip2_interface {
 protected:
 	//
 	LONG_NAME("MAC Narrowband FLIP 2D")
-	MODULE_NAME("macnbflip2")
 	//
 	// Seed FLIP particles
-	virtual size_t seed( const array2<float> &fluid,
+	virtual size_t seed( const array2<Real> &fluid,
 						 std::function<double(const vec2d &p)> solid,
-						 const macarray2<float> &velocity ) override;
+						 const macarray2<Real> &velocity ) override;
 	//
 	// Map FLIP momentum from particles to grid
 	virtual void splat( macarray2<macflip2_interface::mass_momentum2> &mass_and_momentum ) const override;
@@ -63,21 +62,21 @@ protected:
 	virtual void mark_bullet( std::function<double(const vec2d &p)> fluid, std::function<vec2d(const vec2d &p)> velocity, double time ) override;
 	//
 	// Correct particle position
-	virtual void correct( std::function<double(const vec2d &p)> fluid, const macarray2<float> &velocity ) override;
+	virtual void correct( std::function<double(const vec2d &p)> fluid, const macarray2<Real> &velocity ) override;
 	//
 	// Update fluid level set
-	virtual void update( std::function<double(const vec2d &p)> solid, array2<float> &fluid ) override;
+	virtual void update( std::function<double(const vec2d &p)> solid, array2<Real> &fluid ) override;
 	//
 	// Update FLIP velocity
-	virtual void update( const macarray2<float> &prev_velocity,
-						 const macarray2<float> &new_velocity,
+	virtual void update( const macarray2<Real> &prev_velocity,
+						 const macarray2<Real> &new_velocity,
 						 double dt, vec2d gravity, double PICFLIP ) override;
 	//
 	// Update FLIP velocity
-	virtual void update( std::function<void(const vec2f &p, vec2f &velocity, float &mass, bool bullet )> func ) override;
+	virtual void update( std::function<void(const vec2r &p, vec2r &velocity, Real &mass, bool bullet )> func ) override;
 	//
 	// Delete particles
-	virtual size_t remove(std::function<double(const vec2f &p, bool bullet)> test_function ) override;
+	virtual size_t remove(std::function<double(const vec2r &p, bool bullet)> test_function ) override;
 	//
 	// Draw FLIP partciels
 	virtual void draw( graphics_engine &g, double time=0.0 ) const override;
@@ -115,14 +114,14 @@ protected:
 	// FLIP particles
 	struct Particle {
 		//
-		vec2f p;
-		vec2f c[DIM2];
-		vec2f velocity;
-		float mass;
-		float r;
+		vec2r p;
+		vec2r c[DIM2];
+		vec2r velocity;
+		Real mass;
+		Real r;
 		char bullet;
-		float bullet_time;
-		float sizing_value;
+		Real bullet_time;
+		Real sizing_value;
 		unsigned live_count;
 	};
 	//
@@ -136,16 +135,16 @@ protected:
 	parallel_driver m_parallel{this};
 	//
 	virtual void sort_particles();
-	virtual void update_velocity_derivative( Particle& particle, const macarray2<float> &velocity );
+	virtual void update_velocity_derivative( Particle& particle, const macarray2<Real> &velocity );
 	virtual void additionally_apply_velocity_derivative( macarray2<macflip2_interface::mass_momentum2> &mass_and_momentum ) const;
 	//
 	static double grid_kernel( const vec2d &r, double dx );
 	static vec2d grid_gradient_kernel( const vec2d &r, double dx );
 	//
 	// A set of fluid levelset functions that are overridable
-	virtual double interpolate_fluid( const array2<float> &fluid, const vec2d &p ) const;
+	virtual double interpolate_fluid( const array2<Real> &fluid, const vec2d &p ) const;
 	virtual vec2d interpolate_fluid_gradient( std::function<double(const vec2d &p)> fluid, const vec2d &p ) const;
-	virtual vec2d interpolate_fluid_gradient( const array2<float> &fluid, const vec2d &p ) const;
+	virtual vec2d interpolate_fluid_gradient( const array2<Real> &fluid, const vec2d &p ) const;
 	virtual vec2d interpolate_solid_gradient( std::function<double(const vec2d &p)> solid, const vec2d &p ) const;
 	virtual void draw_flip_circle ( graphics_engine &g, const vec2d &p, double r, bool bullet ) const;
 	//

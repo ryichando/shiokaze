@@ -402,8 +402,6 @@ private:
 template <class N, class T> class RCMatrix_factory : public RCMatrix_factory_interface<N,T> {
 protected:
 	//
-	MODULE_NAME("RCMatrix_factory")
-	//
 	virtual RCMatrix_vector_ptr<N,T> allocate_vector( N size ) const override {
 		return RCMatrix_vector_ptr<N,T>(new RCMatrix_vector<N,T>(size,m_parallel,*this));
 	}

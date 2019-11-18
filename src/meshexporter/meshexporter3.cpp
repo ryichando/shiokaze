@@ -75,8 +75,6 @@ static void compress_memory( void *in_data, size_t in_data_size, std::vector<uin
 class meshexporter3 : public meshexporter3_interface {
 public:
 	//
-	MODULE_NAME("meshexporter3")
-	//
 protected:
 	//
 	virtual void set_mesh( const std::vector<vec3d> &vertices, const std::vector<std::vector<size_t> > &faces) override {
@@ -117,17 +115,17 @@ protected:
 		fprintf(ply_fp,"ply\n");
 		fprintf(ply_fp,"format binary_little_endian 1.0\n");
 		fprintf(ply_fp,"element vertex %zu\n", vertices.size());
-		fprintf(ply_fp,"property float x\n");
-		fprintf(ply_fp,"property float y\n");
-		fprintf(ply_fp,"property float z\n");
+		fprintf(ply_fp,"property Real x\n");
+		fprintf(ply_fp,"property Real y\n");
+		fprintf(ply_fp,"property Real z\n");
 		if( vertex_colors.size()) {
 			fprintf(ply_fp,"property uchar red\n");
 			fprintf(ply_fp,"property uchar green\n");
 			fprintf(ply_fp,"property uchar blue\n");
 		}
 		if( uv_coordinates.size()) {
-			fprintf(ply_fp,"property float s\n");
-			fprintf(ply_fp,"property float t\n");
+			fprintf(ply_fp,"property Real s\n");
+			fprintf(ply_fp,"property Real t\n");
 		}
 		fprintf(ply_fp,"element face %zu\n", faces.size());
 		fprintf(ply_fp,"property list uchar int vertex_indices\n");
@@ -142,8 +140,8 @@ protected:
 			return false;
 		}
 		for( size_t n=0; n<vertices.size(); n++ ) {
-			float v[3] = { (float)vertices[n][0], (float)vertices[n][1], (float)vertices[n][2] };
-			fwrite(v,3,sizeof(float),ply_fp);
+			Real v[3] = { (Real)vertices[n][0], (Real)vertices[n][1], (Real)vertices[n][2] };
+			fwrite(v,3,sizeof(Real),ply_fp);
 			if( vertex_colors.size()) {
 				unsigned char colors[3] = {
 					(unsigned char)(254.0*std::min(1.0,std::max(0.0,vertex_colors[n][0]))),
@@ -152,8 +150,8 @@ protected:
 				fwrite(colors,3,sizeof(unsigned char),ply_fp);
 			}
 			if( uv_coordinates.size()) {
-				float coord[2] = { (float)uv_coordinates[n][0], (float)uv_coordinates[n][1] };
-				fwrite(coord,2,sizeof(float),ply_fp);
+				Real coord[2] = { (Real)uv_coordinates[n][0], (Real)uv_coordinates[n][1] };
+				fwrite(coord,2,sizeof(Real),ply_fp);
 			}
 		}
 		// Write faces

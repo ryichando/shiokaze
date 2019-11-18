@@ -39,7 +39,6 @@ class macstreamfuncsolver2 : public macproject2_interface {
 protected:
 	//
 	LONG_NAME("MAC Streamfunction Solver 2D")
-	MODULE_NAME("macstreamfuncsolver2")
 	//
 	virtual void set_target_volume( double current_volume, double target_volume ) override {
 		m_current_volume = current_volume;
@@ -47,14 +46,15 @@ protected:
 	}
 	//
 	virtual void project(double dt,
-						macarray2<float> &velocity,
-						const array2<float> &solid,
-						const array2<float> &fluid,
+						macarray2<Real> &velocity,
+						const array2<Real> &solid,
+						const array2<Real> &fluid,
+						double surface_tension,
 						const std::vector<signed_rigidbody2_interface *> *rigidbodies ) override {
 		//
-		shared_macarray2<float> areas(m_shape);
-		shared_macarray2<float> rhos(m_shape);
-		shared_macarray2<float> E_array(m_shape);
+		shared_macarray2<Real> areas(m_shape);
+		shared_macarray2<Real> rhos(m_shape);
+		shared_macarray2<Real> E_array(m_shape);
 		//
 		shared_array2<char> corners(m_shape.nodal());
 		shared_array2<char> visited(m_shape.nodal());
@@ -83,10 +83,10 @@ protected:
 		}
 		//
 		// Compute curvature and substitute to the right hand side for the surface tension force
-		if( m_param.surftens_k ) {
+		if( surface_tension ) {
 			//
 			// Compute curvature and store them into an array
-			shared_array2<float> curvature(fluid.shape());
+			shared_array2<Real> curvature(fluid.shape());
 			curvature->activate_as(fluid);
 	 		curvature->parallel_actives([&](int i, int j, auto &it, int tn ) {
 				double value = (
@@ -99,7 +99,7 @@ protected:
 				it.set(value);
 			});
 			//
-			double kappa = m_param.surftens_k;
+			double kappa = surface_tension;
 			velocity.parallel_actives([&](int dim, int i, int j, auto &it, int tn ) {
 				double rho = rhos()[dim](i,j);
 				//
@@ -141,7 +141,7 @@ protected:
 		//
 		// This function computes the face diagonal area term [A]
 		auto face_area_matrix = [&]() {
-			std::vector<float> A(face_size,0.0);
+			std::vector<Real> A(face_size,0.0);
 			for( int dim : DIMS2 ) {
 				m_parallel.for_each(areas()[dim].shape(),[&]( int i, int j, int tn ) {
 					unsigned row = Xf(i,j,dim);
@@ -153,8 +153,8 @@ protected:
 		};
 		//
 		// This function computes the inverse of a face diagonal area term [iA]
-		auto inverse_face_area_matrix = [&]( const std::vector<float> &A ) {
-			std::vector<float> iA(face_size,0.0);
+		auto inverse_face_area_matrix = [&]( const std::vector<Real> &A ) {
+			std::vector<Real> iA(face_size,0.0);
 			m_parallel.for_each(face_size,[&]( unsigned row) {
 				if( A[row] ) iA[row] = 1.0 / A[row];
 			});
@@ -163,7 +163,7 @@ protected:
 		//
 		// This function computes the diagonal face mass term [F]
 		auto face_mass_matrix = [&]() {
-			std::vector<float> F(face_size);
+			std::vector<Real> F(face_size);
 			for( int dim : DIMS2 ) {
 				m_parallel.for_each(rhos()[dim].shape(),[&]( int i, int j, int tn ) {
 					unsigned row = Xf(i,j,dim);
@@ -174,8 +174,8 @@ protected:
 		};
 		//
 		// This function computes the diagonal vecpotential(nodal) mass term [E]
-		auto edge_mass_matrix = [&]( const std::vector<float> &F ) {
-			std::vector<float> E(Lhs_size,0.0);
+		auto edge_mass_matrix = [&]( const std::vector<Real> &F ) {
+			std::vector<Real> E(Lhs_size,0.0);
 			E_array->parallel_all([&](int dim, int i, int j, auto &it, int tn) {
 				it.set(F[Xf(i,j,dim)]);
 			});
@@ -195,7 +195,7 @@ protected:
 		};
 		//
 		// This function computes the curl matrix [C]
-		auto curl_matrix = [&]( const std::vector<float> &A ) {
+		auto curl_matrix = [&]( const std::vector<Real> &A ) {
 			//
 			auto C = m_factory->allocate_matrix(face_size,Lhs_size);
 			for( int dim : DIMS2 ) {
@@ -276,10 +276,10 @@ protected:
 			return Z;
 		};
 		//
-		std::vector<float> A = face_area_matrix();
-		std::vector<float> iA = inverse_face_area_matrix(A);
-		std::vector<float> F = face_mass_matrix();
-		std::vector<float> E = edge_mass_matrix(F);
+		std::vector<Real> A = face_area_matrix();
+		std::vector<Real> iA = inverse_face_area_matrix(A);
+		std::vector<Real> F = face_mass_matrix();
+		std::vector<Real> E = edge_mass_matrix(F);
 		//
 		// Precompute respective matrices
 		if( ! m_C ) {
@@ -292,14 +292,14 @@ protected:
 			m_P = m_CZ_t->multiply(m_CZ.get());
 		}
 		//
-		std::vector<float> iAF (face_size);
+		std::vector<Real> iAF (face_size);
 		m_parallel.for_each(face_size, [&]( size_t row ) {
 			iAF[row] = iA[row]*F[row]-1.0;
 		});
 		//
 		// Hacked matrix operations
 		auto hacked_multiply = [&]( const RCMatrix_ptr<size_t,double> At, const RCMatrix_ptr<size_t,double> A,
-			const std::vector<float> &diag, const std::vector<char> &invalidated, RCMatrix_ptr<size_t,double> result ) {
+			const std::vector<Real> &diag, const std::vector<char> &invalidated, RCMatrix_ptr<size_t,double> result ) {
 			//
 			assert(diag.size()==A->rows());
 			result->initialize(At->rows(),A->columns());
@@ -357,7 +357,7 @@ protected:
 		hacked_add(Lhs_A,m_P,invalidated_edges,Lhs);
 		//
 		// Compute right hand side
-		std::vector<float> pu_vector(m_CZ_t->columns());
+		std::vector<Real> pu_vector(m_CZ_t->columns());
 		rhos->const_parallel_all([&](int dim, int i, int j, auto &it, int tn){
 			//
 			unsigned row = Xf(i,j,dim);
@@ -365,7 +365,7 @@ protected:
 		});
 		//
 		// Assign to the vorticity
-		std::vector<float> rhs = m_CZ_t->multiply(pu_vector);
+		std::vector<Real> rhs = m_CZ_t->multiply(pu_vector);
 		//
 		// Compute difference from previous call and add to the right-hand side
 		if( m_param.diff_solve ) {
@@ -381,7 +381,7 @@ protected:
 				}
 			}
 			//
-			std::vector<float> rhs_diff = Lhs->multiply(m_vecpotential);
+			std::vector<Real> rhs_diff = Lhs->multiply(m_vecpotential);
 			m_parallel.for_each(Lhs->rows(),[&]( size_t row ) {
 				rhs[row] -= rhs_diff[row];
 			});
@@ -469,13 +469,13 @@ protected:
 	}
 	//
 	void volume_correct(double dt,
-						macarray2<float> &velocity,
-						const array2<float> &solid,
-						const array2<float> &fluid,
-						const macarray2<float> &areas,
-						const macarray2<float> &rhos) {
+						macarray2<Real> &velocity,
+						const array2<Real> &solid,
+						const array2<Real> &fluid,
+						const macarray2<Real> &areas,
+						const macarray2<Real> &rhos) {
 		//
-		shared_array2<float> pressure(m_shape);
+		shared_array2<Real> pressure(m_shape);
 		//
 		// Label cell indices
 		size_t index (0);
@@ -542,9 +542,9 @@ protected:
 			for( int nq=0; nq<4; nq++ ) {
 				int dim = direction[nq];
 				if( ! m_shape.out_of_bounds(query[nq]) ) {
-					float area = areas[dim](face[nq]);
+					Real area = areas[dim](face[nq]);
 					if( area ) {
-						float rho = rhos[dim](face[nq]);
+						Real rho = rhos[dim](face[nq]);
 						if( rho ) {
 							double value = dt*area/(m_dx*m_dx*rho);
 							if( fluid(query[nq]) < 0.0 ) {
@@ -572,7 +572,7 @@ protected:
 		//
 		// Update the full velocity
 		velocity.parallel_actives([&](int dim, int i, int j, auto &it, int tn ) {
-			float rho = rhos[dim](i,j);
+			Real rho = rhos[dim](i,j);
 			if( areas[dim](i,j) && rho ) {
 				vec2i pi(i,j);
 				if( pi[dim] == 0 || pi[dim] == velocity.shape()[dim] ) it.set(0.0);
@@ -586,7 +586,7 @@ protected:
 		});
 	}
 	//
-	virtual const array2<float> * get_pressure() const override {
+	virtual const array2<Real> * get_pressure() const override {
 		return nullptr;
 	}
 	//
@@ -603,7 +603,6 @@ protected:
 		config.get_bool("SecondOrderAccurateFluid",m_param.second_order_accurate_fluid,"Whether to enforce second order accuracy");
 		config.get_bool("SecondOrderAccurateSolid",m_param.second_order_accurate_solid,"Whether to enforce second order accuracy for solid surfaces");
 		config.get_bool("DrawStreamfunc",m_param.draw_streamfunc);
-		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tension force coefficient");
 		config.get_double("CorrectionGain",m_param.gain,"Volume correctino gain");
 		config.get_bool("DiffSolve",m_param.diff_solve,"Whether we should perform difference-based linear system solve");
 		config.set_default_bool("ReportProgress",false);
@@ -624,7 +623,6 @@ protected:
 	//
 	struct Parameters {
 		//
-		double surftens_k {0.0};
 		double gain {1.0};
 		bool diff_solve {true};
 		bool draw_streamfunc {true};
@@ -636,8 +634,8 @@ protected:
 	shape2 m_shape;
 	double m_dx;
 	//
-	array2<float> m_vecpotential_array{this};
-	std::vector<float> m_vecpotential;
+	array2<Real> m_vecpotential_array{this};
+	std::vector<Real> m_vecpotential;
 	//
 	RCMatrix_factory_driver<size_t,double> m_factory{this,"RCMatrix"};
 	RCMatrix_solver_driver<size_t,double> m_solver{this,"pcg"};

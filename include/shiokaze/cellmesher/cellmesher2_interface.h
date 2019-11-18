@@ -49,7 +49,7 @@ public:
 	 @param[out] vertices 生成されたメッシュの頂点列。
 	 @param[out] faces 生成されたメッシュの三角形あるいは四角形配列。
 	 */
-	virtual void generate_contour( const array2<float> &levelset, std::vector<vec2d> &vertices, std::vector<std::vector<size_t> > &faces ) const = 0;
+	virtual void generate_contour( const array2<Real> &levelset, std::vector<vec2d> &vertices, std::vector<std::vector<size_t> > &faces ) const = 0;
 	//
 private:
 	//

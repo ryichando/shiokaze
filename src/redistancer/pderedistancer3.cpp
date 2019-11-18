@@ -34,10 +34,9 @@ class pderedistancer3 : public redistancer3_interface {
 protected:
 	//
 	LONG_NAME("PDE Redistancer 3D")
-	MODULE_NAME("pderedistancer3")
 	ARGUMENT_NAME("PDERedist")
 	//
-	virtual void redistance( array3<float> &phi_array, unsigned width ) override {
+	virtual void redistance( array3<Real> &phi_array, unsigned width ) override {
 		//
 		double half_bandwidth = width * m_dx;
 		auto smoothed_sgn = []( double value, double m_dx ) {
@@ -67,15 +66,15 @@ protected:
 			it.set(extrapolated_value);
 		});
 		//
-		shared_array3<float> phi_array0 (phi_array);
+		shared_array3<Real> phi_array0 (phi_array);
 		//
-		shared_array3<float> smoothed_sgns (phi_array.type());
+		shared_array3<Real> smoothed_sgns (phi_array.type());
 		smoothed_sgns->activate_as(phi_array);
 		smoothed_sgns->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
 			it.set(smoothed_sgn(phi_array0()(i,j,k),m_dx));
 		});
 		//
-		auto derivative = [&]( const array3<float> &phi_array, array3<float> &phi_array_derivative ) {
+		auto derivative = [&]( const array3<Real> &phi_array, array3<Real> &phi_array_derivative ) {
 			//
 			phi_array_derivative.clear();
 			phi_array_derivative.activate_as(phi_array);
@@ -137,7 +136,7 @@ protected:
 			//
 			if( m_param.temporal_scheme == "Euler" ) {
 				//
-				shared_array3<float>	phi_array_derivative0(phi_array.type()),
+				shared_array3<Real>	phi_array_derivative0(phi_array.type()),
 										phi_array_save(phi_array);
 				//
 				phi_array.set_touch_only_actives(true);
@@ -150,7 +149,7 @@ protected:
 				//
 			} else if( m_param.temporal_scheme == "RK2" ) {
 				//
-				shared_array3<float>	phi_array_derivative0(phi_array.type()),
+				shared_array3<Real>	phi_array_derivative0(phi_array.type()),
 										phi_array_derivative1(phi_array.type()),
 										phi_array_derivative_tmp(phi_array.type());
 				//

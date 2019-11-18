@@ -75,8 +75,8 @@ void macflipliquid2::idle() {
 	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	unsigned step = m_timestepper->get_step_count();
 	//
-	shared_macarray2<float> face_density(m_shape);
-	shared_macarray2<float> save_velocity(m_shape);
+	shared_macarray2<Real> face_density(m_shape);
+	shared_macarray2<Real> save_velocity(m_shape);
 	shared_macarray2<macflip2_interface::mass_momentum2> mass_and_momentum(m_shape);
 	//
 	// Update fluid levelset
@@ -117,11 +117,11 @@ void macflipliquid2::idle() {
 	m_macutility->compute_face_density(m_solid,m_fluid,face_density());
 	//
 	// Compute the combined grid velocity
-	shared_macarray2<float> overwritten_velocity(m_shape);
+	shared_macarray2<Real> overwritten_velocity(m_shape);
 	overwritten_velocity->activate_as(mass_and_momentum());
 	overwritten_velocity->parallel_actives([&](int dim, int i, int j, auto &it, int tn ) {
 		const auto value = mass_and_momentum()[dim](i,j);
-		float grid_mass = std::max(0.0f,face_density()[dim](i,j)-value.mass);
+		Real grid_mass = std::max((Real)0.0,face_density()[dim](i,j)-value.mass);
 		it.set((grid_mass*m_velocity[dim](i,j)+value.momentum)/(grid_mass+value.mass));
 	});
 	//
@@ -140,7 +140,7 @@ void macflipliquid2::idle() {
 	set_volume_correction(m_macproject.get());
 	//
 	// Project
-	m_macproject->project(dt,m_velocity,m_solid,m_fluid);
+	m_macproject->project(dt,m_velocity,m_solid,m_fluid,(macliquid2::m_param).surftens_k);
 	//
 	// Extend both the level set and velocity
 	extend_both();
@@ -166,14 +166,14 @@ vec2d macflipliquid2::interpolate_velocity( const vec2d &p ) const {
 //
 void macflipliquid2::draw_highresolution( graphics_engine &g ) const {
 	//
-	shared_array2<float> doubled_fluid(m_double_shape.cell(),1.0);
-	shared_array2<float> doubled_solid(m_double_shape.nodal(),1.0);
+	shared_array2<Real> doubled_fluid(m_double_shape.cell(),1.0);
+	shared_array2<Real> doubled_solid(m_double_shape.nodal(),1.0);
 	//
-	array_upsampler2::upsample_to_double_cell<float>(m_fluid,m_dx,doubled_fluid());
-	array_upsampler2::upsample_to_double_nodal<float>(m_solid,m_dx,doubled_solid());
+	array_upsampler2::upsample_to_double_cell<Real>(m_fluid,m_dx,doubled_fluid());
+	array_upsampler2::upsample_to_double_nodal<Real>(m_solid,m_dx,doubled_solid());
 	//
 	shared_bitarray2 mask(m_double_shape);
-	shared_array2<float> sizing_array(m_shape);
+	shared_array2<Real> sizing_array(m_shape);
 	//
 	std::vector<particlerasterizer2_interface::Particle2> points, ballistic_points;
 	std::vector<macflip2_interface::particle2> particles = m_flip->get_particles();
@@ -192,13 +192,13 @@ void macflipliquid2::draw_highresolution( graphics_engine &g ) const {
 		}
 		//
 		vec2i pi = m_shape.find_cell(point.p/m_dx);
-		sizing_array->set(pi,std::max((float)particles[n].sizing_value,sizing_array()(pi)));
+		sizing_array->set(pi,std::max((Real)particles[n].sizing_value,sizing_array()(pi)));
 	}
 	//
 	mask().dilate(4);
-	doubled_fluid->activate_as(mask());
+	doubled_fluid->activate_as_bit(mask());
 	//
-	shared_array2<float> particle_levelset(m_double_shape,0.125*m_dx);
+	shared_array2<Real> particle_levelset(m_double_shape,0.125*m_dx);
 	m_highres_particlerasterizer->build_levelset(particle_levelset(),mask(),points);
 	//
 	doubled_fluid->parallel_actives([&](int i, int j, auto &it, int tn) {

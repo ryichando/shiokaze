@@ -188,9 +188,9 @@ void macbackwardflip3::reset_forward_tracers () {
 	});
 }
 //
-void macbackwardflip3::integrate_forward_tracers ( const macarray3<float> &velocity0, const macarray3<float> &velocity1, const macarray3<float> &g, double dt ) {
+void macbackwardflip3::integrate_forward_tracers ( const macarray3<Real> &velocity0, const macarray3<Real> &velocity1, const macarray3<Real> &g, double dt ) {
 	//
-	auto getVector = [&]( const vec3d &p, const macarray3<float> &u ) {
+	auto getVector = [&]( const vec3d &p, const macarray3<Real> &u ) {
 		vec3d new_u;
 		for( unsigned dim : DIMS3 ) new_u[dim] = array_interpolator3::interpolate(u[dim],p/m_dx-0.5*vec3d(dim!=0,dim!=1,dim!=2));
 		return new_u;
@@ -199,7 +199,7 @@ void macbackwardflip3::integrate_forward_tracers ( const macarray3<float> &veloc
 	scoped_timer timer{this};
 	timer.tick(); console::dump("Advancing forward tracers...");
 	//
-	shared_array3<vec3f> m_forward_tracers_save(m_forward_tracers);
+	shared_array3<vec3r> m_forward_tracers_save(m_forward_tracers);
 	m_forward_tracers.parallel_all([&](int i, int j, int k, auto &it) {
 		vec3d p = it();
 		const vec3d u0 = getVector(p,velocity0);
@@ -223,18 +223,18 @@ void macbackwardflip3::integrate_forward_tracers ( const macarray3<float> &veloc
 	console::dump( "Done. Took %s\n", timer.stock("FLIP_forward_trace").c_str());
 }
 //
-static vec3d get_velocity ( const vec3d &p, double dx, const macarray3<float> &velocity ) {
+static vec3d get_velocity ( const vec3d &p, double dx, const macarray3<Real> &velocity ) {
 	vec3d new_u;
 	for( int dim : DIMS3 ) new_u[dim] = array_interpolator3::interpolate(velocity[dim],p/dx-0.5*vec3d(dim!=0,dim!=1,dim!=2));
 	return new_u;
 }
 //
-void macbackwardflip3::backtrace(std::vector<vec3f> &p, std::vector<vec3f> &u, const std::vector<float> &mass, std::vector<std::vector<float> > &adaptivity_rate, std::vector<float> *d ) {
+void macbackwardflip3::backtrace(std::vector<vec3r> &p, std::vector<vec3r> &u, const std::vector<Real> &mass, std::vector<std::vector<Real> > &adaptivity_rate, std::vector<Real> *d ) {
 	//
 	assert(p.size()==u.size());
 	if( m_exist_density ) std::fill(d->begin(),d->end(),0.0);
 	//
-	auto backtrace = [&]( const vec3d &p, vec3d &u, double dt, double dx, const macarray3<float> &velocity0, const macarray3<float> &velocity1 ) {
+	auto backtrace = [&]( const vec3d &p, vec3d &u, double dt, double dx, const macarray3<Real> &velocity0, const macarray3<Real> &velocity1 ) {
 		vec3d u0 = get_velocity(p,dx,velocity0);
 		vec3d u1 = get_velocity(p-dt*u0,dx,velocity1);
 		u = 0.5 * (u0+u1);
@@ -258,7 +258,7 @@ void macbackwardflip3::backtrace(std::vector<vec3f> &p, std::vector<vec3f> &u, c
 			unsigned all_count (0), single_count (0);
 			std::vector<unsigned> adaptive_count(m_param.max_temporal_adaptivity_level,0);
 			//
-			const macarray3<float> *prev_u = &m_velocity;
+			const macarray3<Real> *prev_u = &m_velocity;
 			const layer3 *last_layer (nullptr);
 			vec3d u_passive = get_velocity(m_tracer.p[n],m_dx,m_velocity);
 			for( unsigned k=0; k<maximal_backtrace_count; ) {
@@ -388,7 +388,7 @@ void macbackwardflip3::backtrace(std::vector<vec3f> &p, std::vector<vec3f> &u, c
 	});
 }
 //
-bool macbackwardflip3::backtrace( const array3<float> &solid, const array3<float> &fluid ) {
+bool macbackwardflip3::backtrace( const array3<Real> &solid, const array3<Real> &fluid ) {
 	//
 	scoped_timer timer(this);
 	if( m_buffers.empty()) {
@@ -429,7 +429,7 @@ bool macbackwardflip3::backtrace( const array3<float> &solid, const array3<float
 		});
 		console::dump( "Done. Took %s\n", timer.stock("set_zero_mass").c_str());
 		//
-		auto compute_face_velocity = [&]( macarray3<float> &u_array ) {
+		auto compute_face_velocity = [&]( macarray3<Real> &u_array ) {
 			u_array.parallel_all([&]( int dim, int i, int j, int k, auto &it, int tn ) {
 				double usum (0.0);
 				double wsum (0.0);
@@ -534,7 +534,7 @@ bool macbackwardflip3::backtrace( const array3<float> &solid, const array3<float
 	}
 }
 //
-bool macbackwardflip3::fetch( macarray3<float> &u_reconstructed ) const {
+bool macbackwardflip3::fetch( macarray3<Real> &u_reconstructed ) const {
 	//
 	if( m_buffers.size() && m_exist_gradient ) {
 		u_reconstructed.copy(m_u_reconstructed);
@@ -544,7 +544,7 @@ bool macbackwardflip3::fetch( macarray3<float> &u_reconstructed ) const {
 	}
 }
 //
-bool macbackwardflip3::fetch( array3<float> &density_reconstructed ) const {
+bool macbackwardflip3::fetch( array3<Real> &density_reconstructed ) const {
 	//
 	if( m_buffers.size() && m_exist_density ) {
 		density_reconstructed.copy(m_density_reconstructed);
@@ -554,13 +554,13 @@ bool macbackwardflip3::fetch( array3<float> &density_reconstructed ) const {
 	}
 }
 //
-void macbackwardflip3::register_buffer(const macarray3<float> &u1,
-									const macarray3<float> &u0,
-									const macarray3<float> *m_u_reconstructed,
-									const macarray3<float> *g,
-									const array3<float> *d1,
-									const array3<float> *d0,
-									const array3<float> *d_added,
+void macbackwardflip3::register_buffer(const macarray3<Real> &u1,
+									const macarray3<Real> &u0,
+									const macarray3<Real> *m_u_reconstructed,
+									const macarray3<Real> *g,
+									const array3<Real> *d1,
+									const array3<Real> *d0,
+									const array3<Real> *d_added,
 									double dt ) {
 	layer3 layer;
 	layer.allocate();

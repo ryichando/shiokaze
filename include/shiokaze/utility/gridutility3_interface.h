@@ -46,7 +46,7 @@ public:
 	 @param[in] nodal_array ノードベースのグリッド。
 	 @param[out] result 結果のセルベースのグリッド。
 	 */
-	virtual void convert_to_cell( const array3<float> &nodal_array, array3<float> &result ) const = 0;
+	virtual void convert_to_cell( const array3<Real> &nodal_array, array3<Real> &result ) const = 0;
 	/**
 	 \~english @brief Enclose a fluid level set by solid.
 	 @param[in] solid Solid level set.
@@ -59,7 +59,7 @@ public:
 	 @param[out] combined 包まれた結果のレベルセット。
 	 @param[in] solid_offset 壁のレベルセットのオフセット。
 	 */
-	virtual void combine_levelset( const array3<float> &solid, const array3<float> &fluid, array3<float> &combined, double solid_offset=0.0 ) const = 0;
+	virtual void combine_levelset( const array3<Real> &solid, const array3<Real> &fluid, array3<Real> &combined, double solid_offset=0.0 ) const = 0;
 	/**
 	 \~english @brief Extrapolate fluid level set towards solid.
 	 @param[in] solid Solid level set.
@@ -70,7 +70,7 @@ public:
 	 @param[in-out] fluid 外挿する流体のレベルセット。
 	 @param[in] threshold 壁のレベルセットの表面のレベルセットの値。
 	 */
-	virtual void extrapolate_levelset( const array3<float> &solid, array3<float> &fluid, double threshold=0.0 ) const = 0;
+	virtual void extrapolate_levelset( const array3<Real> &solid, array3<Real> &fluid, double threshold=0.0 ) const = 0;
 	/**
 	 \~english @brief Compute the gradient of a level set.
 	 @param[in] levelset Level set.
@@ -79,14 +79,14 @@ public:
 	 @param[in] levelset レベルセット。
 	 @param[out] gradient 出力の勾配。
 	 */
-	virtual void compute_gradient( const array3<float> &levelset, array3<vec3d> &gradient ) const = 0;
+	virtual void compute_gradient( const array3<Real> &levelset, array3<vec3d> &gradient ) const = 0;
 	/**
 	 \~english @brief Trim narrow band of a level set within one cell away from the interface.
 	 @param[in] levelset Fluid level set.
 	 \~japanese @brief レベルセットを境界から1セルだけ離れたセルにトリミングする。
 	 @param[in] levelset 流体のレベルセット。
 	 */
-	virtual void trim_narrowband( array3<float> &levelset ) const = 0;
+	virtual void trim_narrowband( array3<Real> &levelset ) const = 0;
 	/**
 	 \~english @brief Get the volume of fluid level set.
 	 @param[in] fluid Fluid level set of 2x2x2.
@@ -106,7 +106,7 @@ public:
 	 @param[in] fluid 流体のレベルセット。
 	 @return 体積。
 	 */
-	virtual double get_volume( const array3<float> &solid, const array3<float> &fluid ) const = 0;
+	virtual double get_volume( const array3<Real> &solid, const array3<Real> &fluid ) const = 0;
 	/**
 	 \~english @brief Assign solid level set for visualization.
 	 @param[in] dylib Reference to an instance of dylibloader.
@@ -119,7 +119,7 @@ public:
 	 @param[out] solid 出力の可視化のためのレベルセット。
 	 @return もし可視化のためのレベルセットがセットされたら、\c true を、そうでなければ \c false を返す。
 	 */
-	virtual bool assign_visualizable_solid( const dylibloader &dylib, double dx, array3<float> &solid ) const = 0;
+	virtual bool assign_visualizable_solid( const dylibloader &dylib, double dx, array3<Real> &solid ) const = 0;
 	//
 private:
 	virtual void initialize( const shape3 &shape, double dx ) = 0;

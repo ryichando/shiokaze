@@ -55,7 +55,7 @@ private:
 	//
 	virtual void post_initialize() override {
 		m_array.initialize(m_shape);
-		m_camera->set_bounding_box(vec2d().v,m_shape.box(m_dx).v,true);
+		m_camera->set_bounding_box(vec2d().v,m_shape.box(m_dx).v);
 	}
 	//
 	virtual bool keyboard( int key, int action, int mods ) override {
@@ -103,7 +103,7 @@ private:
 		g.draw_string(vec2d(0.025,0.025).v, "Press \"R\" to reset");
 	}
 	//
-	array2<float> m_array {this};
+	array2<Real> m_array {this};
 	shape2 m_shape {42,32};
 	double m_dx;
 	gridvisualizer2_driver m_gridvisualizer{this,"gridvisualizer2"};

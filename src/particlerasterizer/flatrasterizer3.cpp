@@ -34,11 +34,10 @@ class flatrasterizer3 : public particlerasterizer3_interface {
 protected:
 	//
 	LONG_NAME("Flat Rasterizer 3D")
-	MODULE_NAME("flatrasterizer3")
 	//
-	virtual void build_levelset( array3<float> &fluid, const bitarray3 &mask, const std::vector<Particle3> &particles ) const override {
+	virtual void build_levelset( array3<Real> &fluid, const bitarray3 &mask, const std::vector<Particle3> &particles ) const override {
 		//
-		std::vector<vec3f> points(particles.size());
+		std::vector<vec3r> points(particles.size());
 		for( size_t n=0; n<points.size(); ++n ) points[n] = particles[n].p;
 		const_cast<pointgridhash3_driver &>(m_pointgridhash)->sort_points(points);
 		//
@@ -48,7 +47,7 @@ protected:
 		};
 		//
 		fluid.clear();
-		fluid.activate_as(mask);
+		fluid.activate_as_bit(mask);
 		fluid.parallel_actives( [&](int i, int j, int k, auto &it ) {
 			if( mask(i,j,k)) {
 				vec3d x (m_dx*vec3i(i,j,k).cell());

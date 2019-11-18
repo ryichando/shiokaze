@@ -33,18 +33,17 @@ protected:
 	//
 	LONG_NAME("Dual Marching Cubes Mesh Generator 3D")
 	AUTHOR_NAME("Dominik Wodniok")
-	MODULE_NAME("dualmc")
 	//
-	virtual void generate_mesh( const array3<float> &levelset, std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) const override {
+	virtual void generate_mesh( const array3<Real> &levelset, std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) const override {
 		//
 		assert(m_dx);
 		vec3d global_origin = levelset.shape()==m_shape.nodal() ? vec3d() : m_dx * vec3d(0.5,0.5,0.5);
 		//
 		// Convert to linear voxel data
 		shape3 s = levelset.shape();
-		std::vector<float> data = levelset.linearize();
+		std::vector<Real> data = levelset.linearize();
 		//
-		DualMC<float> dmc;
+		DualMC<Real> dmc;
 		std::vector<Vertex> _vertices;
 		std::vector<Quad> _quads;
 		//

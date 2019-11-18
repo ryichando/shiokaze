@@ -51,7 +51,7 @@ public:
 	 @param[in] u 移流に使用する速度場。
 	 @param[in] dt タイムステップサイズ。
 	 */
-	virtual void advect( array2<float> &fluid, const array2<float> &solid, const macarray2<float> &u, double dt ) = 0;
+	virtual void advect( array2<Real> &fluid, const array2<Real> &solid, const macarray2<Real> &u, double dt ) = 0;
 	//
 private:
 	virtual void initialize( const shape2 &shape, double dx ) = 0;

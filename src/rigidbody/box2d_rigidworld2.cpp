@@ -57,7 +57,6 @@ class box2d_rigidworld2 : public rigidworld2_interface {
 protected:
 	//
 	LONG_NAME("Box2D Rigidbody Engine")
-	MODULE_NAME("box2d_rigidworld2")
 	AUTHOR_NAME("Erin Catto")
 	//
 	virtual ~box2d_rigidworld2() {
@@ -169,8 +168,8 @@ protected:
 			// ----------
 			b2Vec2 position = body.GetPosition();
 			b2Vec2 velocity = body.GetLinearVelocity();
-			float angle = body.GetAngle();
-			float angularVelocity = body.GetAngularVelocity();
+			Real angle = body.GetAngle();
+			Real angularVelocity = body.GetAngularVelocity();
 			// -----------
 			rigidbody.m_position.center = vec2d(position.x,position.y) / m_param.scale;
 			rigidbody.m_position.angle = angle;
@@ -185,7 +184,7 @@ protected:
 			//
 			if( rigidbody.m_attribute.drawable ) {
 				//
-				float m[9];
+				Real m[9];
 				rigidbody.getOpenGLMatrix(m);
 				//
 				for( unsigned i=0; i<rigidbody.m_polyshapes.size(); ++i ) {

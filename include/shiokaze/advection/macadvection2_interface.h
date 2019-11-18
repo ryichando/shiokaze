@@ -49,9 +49,9 @@ public:
 	 @paran[in] fluid 液体のレベルセット。
 	 @param[in] dt 時間幅。
 	 */
-	virtual void advect_scalar(	array2<float> &scalar,				// Cell-centered
-								const macarray2<float> &velocity,	// Face-located
-								const array2<float> &fluid,		// Fluid level set
+	virtual void advect_scalar(	array2<Real> &scalar,				// Cell-centered
+								const macarray2<Real> &velocity,	// Face-located
+								const array2<Real> &fluid,		// Fluid level set
 								double dt ) = 0;
 	/**
 	 \~english @brief Advect vector field.
@@ -65,9 +65,9 @@ public:
 	 @paran[in] fluid 液体のレベルセット。
 	 @param[in] dt 時間幅.
 	 */
-	virtual void advect_vector(	macarray2<float> &u,				// Face-located
-								const macarray2<float> &velocity,	// Face-located
-								const array2<float> &fluid,		// Fluid level set
+	virtual void advect_vector(	macarray2<Real> &u,				// Face-located
+								const macarray2<Real> &velocity,	// Face-located
+								const array2<Real> &fluid,		// Fluid level set
 								double dt ) = 0;
 	//
 private:

@@ -32,7 +32,6 @@ protected:
 	//
 	LONG_NAME("Conjugate Gradient Solver")
 	ARGUMENT_NAME("CG")
-	MODULE_NAME("cg_solver")
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_double("Residual",m_param.residual,"Tolerable residual");

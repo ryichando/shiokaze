@@ -261,7 +261,7 @@ struct shape2 {
 	 \~japanese @brief 小数点を含む位置情報の入力から一番近いセルの位置を取得する。
 	 @param[in] p 入力の小数点を含む位置。
 	 */
-	vec2i find_cell( const vec2d &p ) const {
+	template <class T> vec2i find_cell( const vec2<T> &p ) const {
 		return cell().clamp(p);
 	}
 	/**
@@ -270,7 +270,7 @@ struct shape2 {
 	 \~japanese @brief 小数点を含む位置情報の入力から一番近いノード(節点)の位置を取得する。
 	 @param[in] p 入力の小数点を含む位置。
 	 */
-	vec2i find_node( const vec2d &p ) const {
+	template <class T> vec2i find_node( const vec2<T> &p ) const {
 		return nodal().clamp(p+vec2d(0.5,0.5));
 	}
 	/**
@@ -279,7 +279,7 @@ struct shape2 {
 	 \~japanese @brief スタッガード格子の文脈で、小数点を含む位置情報の入力から一番近い面の位置を取得する。
 	 @param[in] p 入力の小数点を含む位置。
 	 */
-	vec2i find_face( const vec2d &p, unsigned dim ) const {
+	template <class T> vec2i find_face( const vec2<T> &p, unsigned dim ) const {
 		return face(dim).clamp(p+0.5*vec2d(dim==0,dim==1));
 	}
 	/**
@@ -727,7 +727,7 @@ struct shape3 {
 	 \~japanese @brief 小数点を含む位置情報の入力から一番近いノード(節点)の位置を取得する。
 	 @param[in] p 入力の小数点を含む位置。
 	 */
-	vec3i find_node( const vec3d &p ) const {
+	template <class T> vec3i find_node( const vec3<T> &p ) const {
 		return nodal().clamp(p+vec3d(0.5,0.5,0.5));
 	}
 	/**
@@ -736,7 +736,7 @@ struct shape3 {
 	 \~japanese @brief 小数点を含む位置情報の入力から一番近いエッジの位置を取得する。
 	 @param[in] p 入力の小数点を含む位置。
 	 */
-	vec3i find_edge( const vec3d &p, unsigned dim ) const {
+	template <class T> vec3i find_edge( const vec3<T> &p, unsigned dim ) const {
 		return edge(dim).clamp(p+0.5*vec3d(dim!=0,dim!=1,dim!=2));
 	}
 	/**
@@ -745,7 +745,7 @@ struct shape3 {
 	 \~japanese @brief スタッガード格子の文脈で、小数点を含む位置情報の入力から一番近い面の位置を取得する。
 	 @param[in] p 入力の小数点を含む位置。
 	 */
-	vec3i find_face( const vec3d &p, unsigned dim ) const {
+	template <class T> vec3i find_face( const vec3<T> &p, unsigned dim ) const {
 		return face(dim).clamp(p+0.5*vec3d(dim==0,dim==1,dim==2));
 	}
 	/**

@@ -25,7 +25,7 @@
 #ifndef SHKZ_ORDERING_CORE_H
 #define SHKZ_ORDERING_CORE_H
 //
-#include <shiokaze/array/shape.h>
+#include <shiokaze/math/shape.h>
 #include <shiokaze/core/recursive_configurable_module.h>
 #include <functional>
 #include <vector>

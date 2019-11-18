@@ -41,7 +41,6 @@ class macpressuresolver3 : public macproject3_interface {
 protected:
 	//
 	LONG_NAME("MAC Pressure Solver 3D")
-	MODULE_NAME("macpressuresolver3")
 	//
 	virtual void set_target_volume( double current_volume, double target_volume ) override {
 		m_current_volume = current_volume;
@@ -49,17 +48,18 @@ protected:
 	}
 	//
 	virtual void project( double dt,
-				macarray3<float> &velocity,
-				const array3<float> &solid,
-				const array3<float> &fluid,
+				macarray3<Real> &velocity,
+				const array3<Real> &solid,
+				const array3<Real> &fluid,
+				double surface_tension,
 				const std::vector<signed_rigidbody3_interface *> *rigidbodies ) override {
 		//
 		scoped_timer timer(this);
 		//
 		timer.tick(); console::dump( ">>> Pressure Projection started...\n" );
 		//
-		shared_macarray3<float> areas(velocity.shape());
-		shared_macarray3<float> rhos(velocity.shape());
+		shared_macarray3<Real> areas(velocity.shape());
+		shared_macarray3<Real> rhos(velocity.shape());
 		//
 		// Pre-compute solid cut "areas" and fluid density "rhos" for each cell face
 		timer.tick(); console::dump( "Precomputing solid and fluid fractions...");
@@ -82,13 +82,13 @@ protected:
 		console::dump( "Done. Took %s\n", timer.stock("solid_fluid_fractions").c_str());
 		///
 		// Compute curvature and substitute to the right hand side for the surface tension force
-		if( m_param.surftens_k ) {
+		if( surface_tension ) {
 			//
 			timer.tick(); console::dump( "Computing surface tension force...");
-			double kappa = m_param.surftens_k;
+			double kappa = surface_tension;
 			//
 			// Compute curvature and store them into an array
-			shared_array3<float> curvature(fluid.shape());
+			shared_array3<Real> curvature(fluid.shape());
 			curvature->parallel_op([&]( int i, int j, int k, auto &it, int tn ) {
 				double value = (
 					+fluid(m_shape.clamp(i-1,j,k))+fluid(m_shape.clamp(i+1,j,k))
@@ -274,7 +274,6 @@ protected:
 	virtual void configure( configuration &config ) override {
 		config.get_bool("SecondOrderAccurateFluid",m_param.second_order_accurate_fluid,"Whether to enforce second order accuracy");
 		config.get_bool("SecondOrderAccurateSolid",m_param.second_order_accurate_solid,"Whether to enforce second order accuracy for solid surfaces");
-		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tenstion coefficient");
 		config.get_double("Gain",m_param.gain,"Rate for volume correction");
 		config.get_bool("WarmStart",m_param.warm_start,"Start from the solution of previous pressure");
 		config.set_default_bool("ReportProgress",false);
@@ -290,13 +289,12 @@ protected:
 		m_pressure.initialize(m_shape);
 		m_target_volume = m_current_volume = m_y_prev = 0.0;
 	}
-	virtual const array3<float> * get_pressure() const override {
+	virtual const array3<Real> * get_pressure() const override {
 		return &m_pressure;
 	}
 	//
 	struct Parameters {
 		//
-		double surftens_k {0.0};
 		double gain {1.0};
 		double eps_fluid {1e-2};
 		double eps_solid {1e-2};
@@ -309,7 +307,7 @@ protected:
 	//
 	shape3 m_shape;
 	double m_dx {0.0};
-	array3<float> m_pressure{this};
+	array3<Real> m_pressure{this};
 	//
 	macutility3_driver m_macutility{this,"macutility3"};
 	RCMatrix_factory_driver<size_t,double> m_factory{this,"RCMatrix"};

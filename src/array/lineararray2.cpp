@@ -44,7 +44,6 @@ protected:
 	//
 	LONG_NAME("Linear Array 2D")
 	ARGUMENT_NAME("LinArray")
-	MODULE_NAME("lineararray2")
 	//
 	virtual void initialize( unsigned nx, unsigned ny, unsigned element_bytes ) override {
 		//

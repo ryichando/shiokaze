@@ -22,7 +22,7 @@
 #ifndef SHKZ_DILATE2_H
 #define SHKZ_DILATE2_H
 //
-#include <shiokaze/array/shape.h>
+#include <shiokaze/math/shape.h>
 #include <shiokaze/parallel/parallel_driver.h>
 #include <shiokaze/array/array_core2.h>
 #include <vector>

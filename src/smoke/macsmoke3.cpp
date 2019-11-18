@@ -126,7 +126,7 @@ void macsmoke3::post_initialize () {
 	if( m_param.use_dust ) {
 		timer.tick(); console::dump( "Seeding dust particles..." );
 		//
-		shared_array3<float> density_copy(m_density);
+		shared_array3<Real> density_copy(m_density);
 		density_copy->dilate();
 		//
 		double space = 1.0 / m_param.r_sample;
@@ -134,8 +134,8 @@ void macsmoke3::post_initialize () {
 			for( int ii=0; ii<m_param.r_sample; ++ii ) for( int jj=0; jj<m_param.r_sample; ++jj ) for( int kk=0; kk<m_param.r_sample; ++kk ) {
 				vec3d unit_pos = 0.5*vec3d(space,space,space)+vec3d(ii*space,jj*space,kk*space);
 				vec3d pos = m_dx*(unit_pos+vec3d(i,j,k));
-				if( array_interpolator3::interpolate<float>(m_solid,pos/m_dx) > 0.0 &&
-					array_interpolator3::interpolate<float>(m_density,pos/m_dx-vec3d(0.5,0.5,0.5))) {
+				if( array_interpolator3::interpolate<Real>(m_solid,pos/m_dx) > 0.0 &&
+					array_interpolator3::interpolate<Real>(m_density,pos/m_dx-vec3d(0.5,0.5,0.5))) {
 					m_dust_particles.push_back(pos);
 				}
 			}
@@ -144,7 +144,7 @@ void macsmoke3::post_initialize () {
 		console::dump( "Done. Seeded=%d. Took %s.\n", m_dust_particles.size(), timer.stock("seed_m_dust_particles").c_str());
 	}
 	//
-	m_camera->set_bounding_box(vec3d().v,m_shape.box(m_dx).v,true);
+	m_camera->set_bounding_box(vec3d().v,m_shape.box(m_dx).v);
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
 	//
 	if( m_param.show_graph ) {
@@ -162,7 +162,7 @@ void macsmoke3::drag( double x, double y, double z, double u, double v, double w
 	}
 }
 //
-void macsmoke3::inject_external_force( macarray3<float> &velocity ) {
+void macsmoke3::inject_external_force( macarray3<Real> &velocity ) {
 	//
 	if( m_force_exist ) {
 		velocity += m_external_force;
@@ -171,7 +171,7 @@ void macsmoke3::inject_external_force( macarray3<float> &velocity ) {
 	}
 }
 //
-void macsmoke3::add_source ( macarray3<float> &velocity, array3<float> &density, double time, double dt ) {
+void macsmoke3::add_source ( macarray3<Real> &velocity, array3<Real> &density, double time, double dt ) {
 	//
 	scoped_timer timer(this);
 	//
@@ -188,7 +188,7 @@ void macsmoke3::add_source ( macarray3<float> &velocity, array3<float> &density,
 		});
 		//
 		// Density
-		auto add_density = [&]( array3<float> &density ) {
+		auto add_density = [&]( array3<Real> &density ) {
 			density.parallel_all([&](int i, int j, int k, auto &it) {
 				vec3d p = m_dx*vec3i(i,j,k).cell();
 				double d(0.0); vec3d dummy;
@@ -233,7 +233,7 @@ void macsmoke3::add_source ( macarray3<float> &velocity, array3<float> &density,
 	}
 }
 //
-void macsmoke3::rasterize_dust_particles( array3<float> &rasterized_density ) {
+void macsmoke3::rasterize_dust_particles( array3<Real> &rasterized_density ) {
 	//
 	rasterized_density.clear();
 	double scale = 1.0 / pow(m_param.r_sample,DIM3);
@@ -245,11 +245,11 @@ void macsmoke3::rasterize_dust_particles( array3<float> &rasterized_density ) {
 	}
 }
 //
-void macsmoke3::add_buoyancy_force( macarray3<float> &velocity, const array3<float> &density, double dt ) {
+void macsmoke3::add_buoyancy_force( macarray3<Real> &velocity, const array3<Real> &density, double dt ) {
 	//
 	velocity[1].parallel_all([&]( int i, int j, int k, auto &it, int tn ) {
 		vec3d pi = vec3i(i,j,k).face(1);
-		float d = array_interpolator3::interpolate<float>(density,(pi-vec3d(0.5,0.5,0.5)));
+		Real d = array_interpolator3::interpolate<Real>(density,(pi-vec3d(0.5,0.5,0.5)));
 		it.increment(m_param.buoyancy_factor*dt*d);
 	});
 }
@@ -277,7 +277,7 @@ void macsmoke3::idle() {
 		});
 	}
 	//
-	shared_macarray3<float> velocity_save(m_velocity);
+	shared_macarray3<Real> velocity_save(m_velocity);
 	m_macadvection->advect_vector(m_velocity,velocity_save(),m_fluid,dt,"velocity");
 	//
 	// Add buoyancy force
@@ -302,20 +302,20 @@ void macsmoke3::idle() {
 	m_macstats->dump_stats(m_solid,m_fluid,m_velocity,m_timestepper.get());
 }
 //
-void macsmoke3::advect_dust_particles( const macarray3<float> &velocity, double dt ) {
+void macsmoke3::advect_dust_particles( const macarray3<Real> &velocity, double dt ) {
 	//
 	m_parallel.for_each( m_dust_particles.size(), [&]( size_t n, int tn ) {
 		vec3d &p = m_dust_particles[n];
-		vec3d u0 = macarray_interpolator3::interpolate<float>(velocity,p/m_dx);
-		vec3d u1 =  macarray_interpolator3::interpolate<float>(velocity,(p+dt*u0)/m_dx);
+		vec3d u0 = macarray_interpolator3::interpolate<Real>(velocity,p/m_dx);
+		vec3d u1 =  macarray_interpolator3::interpolate<Real>(velocity,(p+dt*u0)/m_dx);
 		p += 0.5 * dt * (u0+u1);
 	});
 	//
 	m_parallel.for_each( m_dust_particles.size(), [&]( size_t n, int tn ) {
 		vec3d &p = m_dust_particles[n];
-		double phi = array_interpolator3::interpolate<float>(m_solid,p/m_dx);
+		double phi = array_interpolator3::interpolate<Real>(m_solid,p/m_dx);
 		if( phi < 0.0 ) {
-			float derivative[DIM3];
+			Real derivative[DIM3];
 			array_derivative3::derivative(m_solid,p/m_dx,derivative);
 			p = p - phi*vec3d(derivative).normal();
 		}
@@ -396,12 +396,12 @@ void macsmoke3::do_export_density( int frame ) const {
 	const char version (3);
 	const int value (1), xn (m_shape[0]), yn (m_shape[1]), zn (m_shape[2]);
 	//
-	const float minX (-0.5*xn*m_dx);
-	const float minY (-0.5*yn*m_dx);
-	const float minZ (-0.5*zn*m_dx);
-	const float maxX (0.5*xn*m_dx);
-	const float maxY (0.5*yn*m_dx);
-	const float maxZ (0.5*zn*m_dx);
+	const Real minX (-0.5*xn*m_dx);
+	const Real minY (-0.5*yn*m_dx);
+	const Real minZ (-0.5*zn*m_dx);
+	const Real maxX (0.5*xn*m_dx);
+	const Real maxY (0.5*yn*m_dx);
+	const Real maxZ (0.5*zn*m_dx);
 	//
 	fwrite(vol_str,3,1,fp);
 	fwrite(&version,sizeof(version),1,fp);
@@ -417,7 +417,7 @@ void macsmoke3::do_export_density( int frame ) const {
 	fwrite(&maxY,sizeof(maxY),1,fp);
 	fwrite(&maxZ,sizeof(maxZ),1,fp);
 	//
-	std::vector<float> density_linearized(xn*yn*zn);
+	std::vector<Real> density_linearized(xn*yn*zn);
 	m_density.const_parallel_all([&](int i, int j, int k, auto &it) {
 		density_linearized[i+j*(xn)+k*(xn*yn)] = it();
 	});

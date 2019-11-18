@@ -43,7 +43,6 @@ protected:
 	//
 	LONG_NAME("Linear Array 3D")
 	ARGUMENT_NAME("LinArray")
-	MODULE_NAME("lineararray3")
 	//
 	virtual void initialize( unsigned nx, unsigned ny, unsigned nz, unsigned element_bytes ) override {
 		//

@@ -36,8 +36,6 @@ SHKZ_USING_NAMESPACE
 class sysstats : public sysstats_interface {
 protected:
 	//
-	MODULE_NAME("sysstats")
-	//
 	virtual void report_stats() const override {
 		console::dump("Arguments: %s\n", arg_str.c_str());
 		size_t num_grids2 = shared_array_core2::get_total_grid_count();

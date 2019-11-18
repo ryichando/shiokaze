@@ -27,32 +27,32 @@ def build(bld):
 	bld.shlib(source = 'dilation2-example.cpp',
 			target = bld.get_target_name(bld,'dilation2-example'),
 			cxxflags = ['-DSPATIAL_DIM=2'],
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'dilation3-example.cpp',
 			target = bld.get_target_name(bld,'dilation3-example'),
 			cxxflags = ['-DSPATIAL_DIM=3'],
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'gridops3-example.cpp',
 			target = bld.get_target_name(bld,'gridops3-example'),
 			cxxflags = ['-DSPATIAL_DIM=3'],
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'demo-example.cpp',
 			target = bld.get_target_name(bld,'demo-example'),
 			cxxflags = ['-DSPATIAL_DIM=2'],
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'levelset2-example.cpp',
 			target = bld.get_target_name(bld,'levelset2-example'),
 			cxxflags = ['-DSPATIAL_DIM=2'],
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'levelset3-example.cpp',
 			target = bld.get_target_name(bld,'levelset3-example'),
 			cxxflags = ['-DSPATIAL_DIM=3'],
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'meshexporter-demo3.cpp',
 			target = bld.get_target_name(bld,'meshexporter3-demo'),
@@ -61,25 +61,35 @@ def build(bld):
 	bld.shlib(source = 'rigidbody2-example.cpp',
 			target = bld.get_target_name(bld,'rigidbody2-example'),
 			cxxflags = ['-DSPATIAL_DIM=2'],
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'rigidbody3-example.cpp',
 			target = bld.get_target_name(bld,'rigidbody3-example'),
 			cxxflags = ['-DSPATIAL_DIM=3'],
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'treearray2-example.cpp',
 			target = bld.get_target_name(bld,'treearray2-example'),
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'treearray3-example.cpp',
 			target = bld.get_target_name(bld,'treearray3-example'),
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'arraybenchmark2-example.cpp',
 			target = bld.get_target_name(bld,'arraybenchmark2-example'),
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
 #
 	bld.shlib(source = 'arraybenchmark3-example.cpp',
 			target = bld.get_target_name(bld,'arraybenchmark3-example'),
-			use = bld.get_target_name(bld,['core']))
+			use = bld.get_target_name(bld,'core'))
+#
+	bld.shlib(source = 'accuracytest2-example.cpp',
+			target = bld.get_target_name(bld,'accuracytest2-example'),
+			cxxflags = ['-DSPATIAL_DIM=2'],
+			use = bld.get_target_name(bld,'core'))
+#
+	bld.shlib(source = 'accuracytest3-example.cpp',
+			target = bld.get_target_name(bld,'accuracytest3-example'),
+			cxxflags = ['-DSPATIAL_DIM=3'],
+			use = bld.get_target_name(bld,'core'))

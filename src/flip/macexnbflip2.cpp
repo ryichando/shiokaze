@@ -66,21 +66,21 @@ static void pointwise_gaussian_blur( const array2<T> &source, array2<T> &result,
 	});
 }
 //
-void macexnbflip2::internal_sizing_func(array2<float> &sizing_array,
+void macexnbflip2::internal_sizing_func(array2<Real> &sizing_array,
 							const bitarray2 &mask,
-							const array2<float> &fluid,
-							const macarray2<float> &velocity ) const {
+							const array2<Real> &fluid,
+							const macarray2<Real> &velocity ) const {
 	//
-	shared_array2<vec2f> diff(m_shape);
+	shared_array2<vec2r> diff(m_shape);
 	//
 	if( m_param.mode==0 || m_param.mode==1 ) {
 		//
 		// 1. Make velocity array
-		shared_array2<vec2f> velocity_array(m_shape);
+		shared_array2<vec2r> velocity_array(m_shape);
 		velocity.convert_to_full(velocity_array());
 		//
 		// 2. Apply gaussian blur to 1
-		shared_array2<vec2f> gaussian_blured_velocity_array(m_shape);
+		shared_array2<vec2r> gaussian_blured_velocity_array(m_shape);
 		pointwise_gaussian_blur(velocity_array(),gaussian_blured_velocity_array(),m_param.radius);
 		//
 		// 3. Take diff between 1 and 2
@@ -90,11 +90,11 @@ void macexnbflip2::internal_sizing_func(array2<float> &sizing_array,
 	}
 	//
 	// 4. Compute blurred levelset
-	shared_array2<float> fluid_blurred(fluid);
+	shared_array2<Real> fluid_blurred(fluid);
 	if( m_param.mode==0 || m_param.mode==2 ) pointwise_gaussian_blur(fluid,fluid_blurred(),m_param.radius);
 	//
 	// 5. Set sizing_array
-	sizing_array.activate_as(mask);
+	sizing_array.activate_as_bit(mask);
 	sizing_array.parallel_actives([&](int i, int j, auto &it, int tn ) {
 		//
 		double value0, value1;
@@ -143,13 +143,13 @@ void macexnbflip2::configure( configuration &config ) {
 	}
 }
 //
-void macexnbflip2::compute_sizing_func( const array2<float> &fluid, const bitarray2 &mask, const macarray2<float> &velocity, array2<float> &sizing_array ) const {
+void macexnbflip2::compute_sizing_func( const array2<Real> &fluid, const bitarray2 &mask, const macarray2<Real> &velocity, array2<Real> &sizing_array ) const {
 	//
-	auto diffuse = [&]( array2<float> &array, int width, double rate ) {
+	auto diffuse = [&]( array2<Real> &array, int width, double rate ) {
 		//
 		for( unsigned count=0; count<width; count++ ) {
 			//
-			shared_array2<float> array_save(array);
+			shared_array2<Real> array_save(array);
 			array.parallel_actives([&](int i, int j, auto &it, int tn ) {
 				if( mask(i,j)) {
 					double sum (0.0);
@@ -174,7 +174,7 @@ void macexnbflip2::compute_sizing_func( const array2<float> &fluid, const bitarr
 	};
 	//
 	// Evaluate sizing function
-	shared_array2<float> pop_array(m_shape);
+	shared_array2<Real> pop_array(m_shape);
 	internal_sizing_func(pop_array(),mask,fluid,velocity);
 	//
 	sizing_array.clear(0.0f);
@@ -187,7 +187,7 @@ void macexnbflip2::compute_sizing_func( const array2<float> &fluid, const bitarr
 		// Assign initial value
 		sizing_array.activate_as(pop_array());
 		sizing_array.parallel_actives([&]( int i, int j, auto &it, int tn ) {
-			it.set(std::max(0.0f,std::min(1.0f,pop_array()(i,j))));
+			it.set(std::max((Real)0.0,std::min((Real)1.0,pop_array()(i,j))));
 		});
 	}
 }

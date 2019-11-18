@@ -36,12 +36,11 @@ class maclevelsetsurfacetracker2 : public maclevelsetsurfacetracker2_interface {
 protected:
 	//
 	LONG_NAME("MAC Levelset Surface Tracker 2D")
-	MODULE_NAME("maclevelsetsurfacetracker2")
 	//
-	virtual void advect( array2<float> &fluid, const array2<float> &solid, const macarray2<float> &u, double dt ) override {
+	virtual void advect( array2<Real> &fluid, const array2<Real> &solid, const macarray2<Real> &u, double dt ) override {
 		//
 		if( dt ) {
-			shared_array2<float> fluid_save(fluid);
+			shared_array2<Real> fluid_save(fluid);
 			m_macadvection->advect_scalar(fluid,u,fluid_save(),dt);
 		}
 		m_redistancer->redistance(fluid,m_param.levelset_half_bandwidth_count);

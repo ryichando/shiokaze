@@ -46,7 +46,6 @@ public:
 	//
 	macsmoke2();
 	LONG_NAME("MAC Smoke 2D")
-	MODULE_NAME("macsmoke2")
 	ARGUMENT_NAME("Smoke")
 	//
 protected:
@@ -61,14 +60,14 @@ protected:
 	virtual void configure( configuration &config ) override;
 	virtual void post_initialize() override;
 	//
-	macarray2<float> m_velocity{this};
-	macarray2<float> m_external_force{this};
+	macarray2<Real> m_velocity{this};
+	macarray2<Real> m_external_force{this};
 	//
-	array2<float> m_density{this};
-	array2<float> m_accumulation{this};
+	array2<Real> m_density{this};
+	array2<Real> m_accumulation{this};
 	//
-	array2<float> m_fluid{this};
-	array2<float> m_solid{this};
+	array2<Real> m_fluid{this};
+	array2<Real> m_solid{this};
 	//
 	std::vector<vec2d> m_dust_particles;
 	//
@@ -103,11 +102,11 @@ protected:
 	parallel_driver m_parallel{this};
 	dylibloader m_dylib;
 	//
-	virtual void inject_external_force( macarray2<float> &velocity );
-	virtual void add_buoyancy_force( macarray2<float> &velocity, const array2<float> &density, double dt );
-	virtual void advect_dust_particles( const macarray2<float> &velocity, double dt );
-	virtual void add_source ( macarray2<float> &velocity, array2<float> &density, double time, double dt );
-	virtual void rasterize_dust_particles( array2<float> &rasterized_density );
+	virtual void inject_external_force( macarray2<Real> &velocity );
+	virtual void add_buoyancy_force( macarray2<Real> &velocity, const array2<Real> &density, double dt );
+	virtual void advect_dust_particles( const macarray2<Real> &velocity, double dt );
+	virtual void add_source ( macarray2<Real> &velocity, array2<Real> &density, double time, double dt );
+	virtual void rasterize_dust_particles( array2<Real> &rasterized_density );
 	virtual void draw_dust_particles( graphics_engine &g ) const;
 	virtual void add_to_graph();
 };

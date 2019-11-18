@@ -24,7 +24,7 @@
 //
 #include <shiokaze/math/vec.h>
 #include <shiokaze/core/configuration.h>
-#include <shiokaze/array/shape.h>
+#include <shiokaze/math/shape.h>
 #include <shiokaze/utility/utility.h>
 #include <cmath>
 //

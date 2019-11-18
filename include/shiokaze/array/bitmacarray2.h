@@ -386,13 +386,6 @@ public:
 		}
 	}
 	/**
-	 \~english @brief Loop over all the active cells in parallel by read-only fashion.
-	 @param[in] func Function that defines how each grid cell is processed.
-	 \~japanese @brief アクティブセルを並列に読み込みのみで処理する。
-	 @param[in] func それぞれのセルを処理する関数。
-	 */
-	inline void const_parallel_actives( std::function<void(const typename bitarray2::const_iterator& it)> func ) const { const_parallel_op(func,ACTIVES); }
-	/**
 	 \~english @brief Loop over all the cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルを並列に読み込みのみで処理する。
@@ -418,7 +411,8 @@ public:
 	 \~japanese @brief アクティブセルを並列に読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_parallel_actives( std::function<void(int dim, int i, int j, const typename bitarray2::const_iterator& it)> func ) const { const_parallel_op(func,ACTIVES); }
+	inline void const_parallel_actives( std::function<void(int dim, int i, int j)> func ) const {
+		const_parallel_op([&](int dim, int i, int j, const typename bitarray2::const_iterator& it){ func(dim,i,j); }, ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -445,7 +439,7 @@ public:
 	 \~japanese @brief アクティブセルを並列に読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_parallel_actives( std::function<void(int dim, int i, int j, const typename bitarray2::const_iterator& it, int thread_index)> func ) const { const_parallel_op(func,ACTIVES); }
+	inline void const_parallel_actives( std::function<void(int dim, int i, int j, int thread_index)> func ) const { const_parallel_op([&](int dim, int i, int j, const typename bitarray2::const_iterator& it, int thread_index) { func(dim,i,j,thread_index); }, ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -525,13 +519,6 @@ public:
 		}
 	}
 	/**
-	 \~english @brief Loop over all the active cells in serial order by read-only fashion.
-	 @param[in] func Function that defines how each grid cell is processed.
-	 \~japanese @brief アクティブなセルをシリアルに読み込みのみで処理する。
-	 @param[in] func それぞれのセルを処理する関数。
-	 */
-	inline void const_serial_actives( std::function<void(const typename bitarray2::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
-	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルをシリアルに読み込みのみで処理する。
@@ -557,7 +544,8 @@ public:
 	 \~japanese @brief アクティブなセルをシリアルに読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	inline void const_serial_actives( std::function<void(int dim, int i, int j, const typename bitarray2::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
+	inline void const_serial_actives( std::function<void(int dim, int i, int j)> func ) const {
+		const_serial_op([&](int dim, int i, int j, const typename bitarray2::const_iterator& it) { func(dim,i,j); }, ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -637,13 +625,6 @@ public:
 		}
 	}
 	/**
-	 \~english @brief Loop over all the active cells in serial order by read-only fashion.
-	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
-	 \~japanese @brief アクティブなセルを読み込み可能に限定してシリアルに処理する。
-	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
-	 */
-	inline void interruptible_const_serial_actives( std::function<bool(const typename bitarray2::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
-	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
 	 \~japanese @brief 全てのセルを読み込み可能に限定してシリアルに処理する。
@@ -669,7 +650,8 @@ public:
 	 \~japanese @brief アクティブなセルを読み込み可能に限定してシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 */
-	inline void interruptible_const_serial_actives( std::function<bool(int dim, int i, int j, const typename bitarray2::const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
+	inline void interruptible_const_serial_actives( std::function<bool(int dim, int i, int j)> func ) const {
+		const_serial_op([&](int dim, int i, int j, const typename bitarray2::const_iterator& it){ return func(dim,i,j); }, ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
@@ -765,6 +747,17 @@ public:
 		 \~japanese @brief y 次元のグリッドのタイプ。
 		 */
 		typename bitarray2::type2 type1;
+		/**
+		 \~english @brief Check equality.
+		 @return \c true if equal \c false otherwise.
+		 \~japanese @brief 同値の確認。
+		 @return 同じなら \c true を、そうでなければ \c false を返す。
+		 */
+		bool operator==( const type2 &type ) const {
+			return
+				core_name == type.core_name && shape == type.shape &&
+				type0 == type.type0 && type1 == type.type1;
+		}
 	};
 	/**
 	 \~english @brief Get the type of this grid.

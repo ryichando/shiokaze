@@ -25,7 +25,7 @@
 #include <shiokaze/linsolver/RCMatrix_solver.h>
 #include <cstdint>
 #include <cmath>
-#include "pcgsolver/pcg_solver.h"
+#include <pcgsolver/pcg_solver.h>
 //
 SHKZ_USING_NAMESPACE
 //
@@ -35,7 +35,6 @@ protected:
 	LONG_NAME("Preconditioned Conjugate Gradient Solver")
 	AUTHOR_NAME("Robert Bridson")
 	ARGUMENT_NAME("PCG")
-	MODULE_NAME("pcg_solver")
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_double("Residual",m_param.residual,"Tolerable residual");

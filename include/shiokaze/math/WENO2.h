@@ -48,7 +48,7 @@ public:
 	 @param[in] order WENO の次数。4 あるいは 6 が指定可能。
 	 @return 補間結果。
 	 */
-	static vec2d interpolate( const array2<vec2f> &array, const vec2d &p, unsigned order=6 ) {
+	static vec2d interpolate( const array2<vec2r> &array, const vec2d &p, unsigned order=6 ) {
 		//
 		const auto shape = array.shape();
 		double x = std::max(0.0,std::min(shape.w-1.,p[0]));
@@ -94,7 +94,7 @@ public:
 	 @param[in] order WENO の次数。4 あるいは 6 が指定可能。
 	 @return 補間結果。
 	 */
-	static double interpolate( const array2<float> &array, const vec2d &p, unsigned order=6 ) {
+	static double interpolate( const array2<Real> &array, const vec2d &p, unsigned order=6 ) {
 		//
 		const auto shape = array.shape();
 		double x = std::max(0.0,std::min(shape.w-1.,p[0]));

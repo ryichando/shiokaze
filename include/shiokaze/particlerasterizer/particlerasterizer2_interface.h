@@ -27,6 +27,7 @@
 //
 #include <shiokaze/core/recursive_configurable_module.h>
 #include <shiokaze/math/vec.h>
+#include <shiokaze/array/bitarray2.h>
 #include <shiokaze/array/array2.h>
 #include <vector>
 //
@@ -47,12 +48,12 @@ public:
 		 \~english @brief Particle position.
 		 \~japanese @brief 粒子の位置。
 		 */
-		vec2f p;
+		vec2r p;
 		/**
 		 \~english @brief Particle radius.
 		 \~japanese @brief 粒子の半径。
 		 */
-		float r;
+		Real r;
 	};
 	/**
 	 \~english @brief Building a level set from the set of particles.
@@ -64,7 +65,7 @@ public:
 	 @param[in] mask レベルセットの値を計算するステンシルマスク。ステンシルマスクが有効な部分だけ計算される。
 	 @param[in] particles 粒子群。
 	 */
-	virtual void build_levelset( array2<float> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const = 0;
+	virtual void build_levelset( array2<Real> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const = 0;
 	//
 private:
 	virtual void initialize( const shape2 &shape, double dx ) = 0;

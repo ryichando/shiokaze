@@ -48,11 +48,13 @@ public:
 	virtual velocity3 get_velocity() const override {
 		return m_velocity;
 	}
-	virtual void getOpenGLMatrix( float m[16] ) const override {
+	virtual void getOpenGLMatrix( Real m[16] ) const override {
 		btTransform tranform;
 		m_motionState->getWorldTransform(tranform);
 		tranform.setOrigin(tranform.getOrigin() / m_scale);
-		tranform.getOpenGLMatrix(m);
+		btScalar _m[16];
+		tranform.getOpenGLMatrix(_m);
+		for( int n=0; n<16; ++n ) m[n] = _m[n];
 	}
 	//
 	std::vector<polyshape3> m_polyshapes;
@@ -77,7 +79,6 @@ class bullet3_rigidworld3 : public rigidworld3_interface {
 protected:
 	//
 	LONG_NAME("Bullet3 Rigidbody Engine")
-	MODULE_NAME("bullet3_rigidworld3")
 	AUTHOR_NAME("Erwin Coumans et al.")
 	//
 	virtual ~bullet3_rigidworld3() {
@@ -288,7 +289,7 @@ protected:
 			//
 			if( rigidbody.m_attribute.drawable ) {
 				//
-				float m[16];
+				Real m[16];
 				rigidbody.getOpenGLMatrix(m);
 				//
 				if( rigidbody.m_attribute.density == 0.0 ) {

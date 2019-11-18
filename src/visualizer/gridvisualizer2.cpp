@@ -36,7 +36,7 @@ SHKZ_USING_NAMESPACE
 class gridvisualizer2 : public gridvisualizer2_interface {
 protected:
 	//
-	virtual void draw_active( graphics_engine &g, const array2<float> &q ) const override {
+	virtual void draw_active( graphics_engine &g, const array2<Real> &q ) const override {
 		if( m_param.draw_active ) {
 			g.color4(1.0,0.0,0.0,0.25);
 			q.const_serial_actives([&](int i, int j, const auto &it) {
@@ -49,7 +49,7 @@ protected:
 			});
 		}
 	}
-	virtual void draw_inside( graphics_engine &g, const array2<float> &q ) const override {
+	virtual void draw_inside( graphics_engine &g, const array2<Real> &q ) const override {
 		if( m_param.draw_inside ) {
 			g.color4(1.0,0.0,0.0,0.25);
 			q.const_serial_inside([&](int i, int j, const auto &it) {
@@ -79,7 +79,7 @@ protected:
 			g.end();
 		}
 	}
-	virtual void draw_density( graphics_engine &g, const array2<float> &density ) const override {
+	virtual void draw_density( graphics_engine &g, const array2<Real> &density ) const override {
 		if( m_param.draw_density ) {
 			density.const_serial_actives([&](int i, int j, const auto &it) {
 				g.color4(1.0,1.0,1.0,it());
@@ -92,7 +92,7 @@ protected:
 			});
 		}
 	}
-	virtual void draw_velocity( graphics_engine &g, const array2<vec2f> &velocity ) const override {
+	virtual void draw_velocity( graphics_engine &g, const array2<vec2r> &velocity ) const override {
 		if( m_param.draw_velocity ) {
 			//
 			g.color4(1.0,1.0,1.0,0.5);
@@ -103,7 +103,7 @@ protected:
 			});
 		}
 	}
-	virtual void draw_levelset( graphics_engine &g, const array2<float> &levelset ) const override {
+	virtual void draw_levelset( graphics_engine &g, const array2<Real> &levelset ) const override {
 		//
 		// Cell Centered
 		vec2d origin;
@@ -168,18 +168,18 @@ protected:
 		}
 #endif
 	}
-	virtual void draw_solid( graphics_engine &g, const array2<float> &solid ) const override {
+	virtual void draw_solid( graphics_engine &g, const array2<Real> &solid ) const override {
 		if( m_param.draw_solid ) {
 			g.color4(0.9,0.6,0.3,0.5);
 			draw_levelset(g,solid);
 		}
 	}
-	virtual void draw_fluid( graphics_engine &g, const array2<float> &solid, const array2<float> &fluid ) const override {
+	virtual void draw_fluid( graphics_engine &g, const array2<Real> &solid, const array2<Real> &fluid ) const override {
 		if( m_param.draw_fluid ) {
 			//
 			g.color4(0.5,0.6,1.0,0.5);
 			if( m_param.enclose_fluid ) {
-				shared_array2<float> combined(fluid.type());
+				shared_array2<Real> combined(fluid.type());
 				m_gridutility->combine_levelset(solid,fluid,*combined.get());
 				draw_levelset(g,*combined.get());
 			} else {
@@ -191,7 +191,7 @@ protected:
 			}
 		}
 	}
-	virtual void visualize_cell_scalar( graphics_engine &g, const array2<float> &q ) const override {
+	virtual void visualize_cell_scalar( graphics_engine &g, const array2<Real> &q ) const override {
 		double maxv = -1e18;
 		double minv = 1e18;
 		double alpha = 0.5;
@@ -225,7 +225,7 @@ protected:
 			});
 		}
 	}
-	virtual void visualize_nodal_scalar( graphics_engine &g, const array2<float> &q ) const override {
+	virtual void visualize_nodal_scalar( graphics_engine &g, const array2<Real> &q ) const override {
 		double maxv = -1e18;
 		double minv = 1e18;
 		double alpha = 0.5;

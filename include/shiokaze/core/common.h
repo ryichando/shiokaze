@@ -72,4 +72,6 @@ const static int DIM3 (3);
 //
 SHKZ_END_NAMESPACE
 //
+#include "config.h"
+//
 #endif

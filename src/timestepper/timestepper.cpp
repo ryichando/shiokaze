@@ -34,8 +34,6 @@ SHKZ_USING_NAMESPACE
 class timestepper : public timestepper_interface {
 public:
 	//
-	MODULE_NAME("timestepper")
-	//
 	timestepper () {
 		//
 	#ifdef USE_OPENGL

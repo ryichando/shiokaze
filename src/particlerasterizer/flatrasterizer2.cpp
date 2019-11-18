@@ -34,11 +34,10 @@ class flatrasterizer2 : public particlerasterizer2_interface {
 protected:
 	//
 	LONG_NAME("Flat Rasterizer 2D")
-	MODULE_NAME("flatrasterizer2")
 	//
-	virtual void build_levelset( array2<float> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const override {
+	virtual void build_levelset( array2<Real> &fluid, const bitarray2 &mask, const std::vector<Particle2> &particles ) const override {
 		//
-		std::vector<vec2f> points(particles.size());
+		std::vector<vec2r> points(particles.size());
 		for( size_t n=0; n<points.size(); ++n ) points[n] = particles[n].p;
 		const_cast<pointgridhash2_driver &>(m_pointgridhash)->sort_points(points);
 		//
@@ -48,7 +47,7 @@ protected:
 		};
 		//
 		fluid.clear();
-		fluid.activate_as(mask);
+		fluid.activate_as_bit(mask);
 		fluid.parallel_actives( [&](int i, int j, auto &it ) {
 			if( mask(i,j)) {
 				vec2d x (m_dx*vec2i(i,j).cell());

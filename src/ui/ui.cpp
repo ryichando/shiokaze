@@ -102,10 +102,10 @@ static void cursor_position_callback(::GLFWwindow* window, double xpos, double y
 	int width, window_width, height, window_height;
 	::glfwGetWindowSize(window,&window_width,&window_height);
 	::glfwGetFramebufferSize(window,&width,&height);
-	float scale_x = width / (float)window_width;
-	float scale_y = height / (float)window_height;
-	float x = scale_x*xpos;
-	float y = scale_x*ypos;
+	Real scale_x = width / (Real)window_width;
+	Real scale_y = height / (Real)window_height;
+	Real x = scale_x*xpos;
+	Real y = scale_x*ypos;
 	g->m_mouse_pos = vec2d(x,y);
 	//
 	UI_interface::event_structure event;

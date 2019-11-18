@@ -53,7 +53,7 @@ public:
 	 @param[in] u 移流に使用する速度場。
 	 @param[in] dt タイムステップサイズ。
 	 */
-	virtual void advect( array3<float> &fluid, const array3<float> &solid, const macarray3<float> &u, double dt ) = 0;
+	virtual void advect( array3<Real> &fluid, const array3<Real> &solid, const macarray3<Real> &u, double dt ) = 0;
 	/**
 	 \~english @brief Export level set surface as a mesh file.
 	 @param[in] path_to_directory Path to the directory to export.
@@ -67,7 +67,7 @@ public:
 	 @param[in] uv_coordinate_func UV座標関数。nullptr も可。
 	 */
 	virtual void export_fluid_mesh(std::string path_to_directory, unsigned frame,
-							  const array3<float> &solid, const array3<float> &fluid,
+							  const array3<Real> &solid, const array3<Real> &fluid,
 							  std::function<vec3d(const vec3d &)> vertex_color_func=nullptr,
 							  std::function<vec2d(const vec3d &)> uv_coordinate_func=nullptr ) const = 0;
 	//

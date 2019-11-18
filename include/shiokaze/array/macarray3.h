@@ -997,6 +997,17 @@ public:
 		 \~japanese @brief z 次元のグリッドのタイプ。
 		 */
 		typename array3<T>::type3 type2;
+		/**
+		 \~english @brief Check equality.
+		 @return \c true if equal \c false otherwise.
+		 \~japanese @brief 同値の確認。
+		 @return 同じなら \c true を、そうでなければ \c false を返す。
+		 */
+		bool operator==( const type3 &type ) const {
+			return
+				core_name == type.core_name && shape == type.shape &&
+				type0 == type.type0 && type1 == type.type1 && type2 == type.type2;
+		}
 	};
 	/**
 	 \~english @brief Get the type of this grid.

@@ -44,13 +44,11 @@ public:
 	 \~english @brief Set a bounding box.
 	 @param[in] p0 Left bottom corner position.
 	 @param[in] p1 Right top corner position.
-	 @param[in] reset_view Whether to reset the view according to the bounding box info.
 	 \~japanese @brief バウンディングボックスを設定する。
 	 @param[in] p0 左下のコーナー位置。
 	 @param[in] p1 右上のコーナー位置。
-	 @param[in] reset_view バウンディングボックスの情報を元にカメラの設定をリセットするか。
 	 */
-	virtual void set_bounding_box( const double *p0, const double *p1, bool reset_view ) = 0;
+	virtual void set_bounding_box( const double *p0, const double *p1 ) = 0;
 	/**
 	 \~english @brief Set up a camera with a target position, origin position, fov and others.
 	 @param[in] target Target position.

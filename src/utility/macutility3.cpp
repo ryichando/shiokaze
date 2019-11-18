@@ -45,11 +45,9 @@ using namespace array_interpolator3;
 class macutility3 : public macutility3_interface {
 protected:
 	//
-	MODULE_NAME("macutility3")
-	//
-	virtual double compute_max_u ( const macarray3<float> &velocity ) const override {
+	virtual double compute_max_u ( const macarray3<Real> &velocity ) const override {
 		//
-		shared_array3<vec3f> cell_velocity(m_shape);
+		shared_array3<vec3r> cell_velocity(m_shape);
 		velocity.convert_to_full(cell_velocity());
 		//
 		std::vector<double> max_u_t(cell_velocity->get_thread_num(),0.0);
@@ -60,9 +58,9 @@ protected:
 		for( double u : max_u_t ) max_u = std::max(max_u,u);
 		return max_u;
 	}
-	virtual void constrain_velocity( const array3<float> &solid, macarray3<float> &velocity ) const override {
+	virtual void constrain_velocity( const array3<Real> &solid, macarray3<Real> &velocity ) const override {
 		//
-		shared_macarray3<float> velocity_save = shared_macarray3<float>(velocity.type());
+		shared_macarray3<Real> velocity_save = shared_macarray3<Real>(velocity.type());
 		velocity_save->copy(velocity);
 		//
 		if( levelset_exist(solid) ) {
@@ -71,12 +69,12 @@ protected:
 				velocity.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn) {
 					vec3i pi(i,j,k);
 					vec3d p(vec3i(i,j,k).face(dim));
-					if( interpolate<float>(solid,p) < 0.0 ) {
-						float derivative[DIM3];
+					if( interpolate<Real>(solid,p) < 0.0 ) {
+						Real derivative[DIM3];
 						array_derivative3::derivative(solid,p,derivative);
 						vec3d normal = vec3d(derivative)/m_dx;
 						if( normal.norm2() ) {
-							vec3d u = macarray_interpolator3::interpolate<float>(velocity_save(),p);
+							vec3d u = macarray_interpolator3::interpolate<Real>(velocity_save(),p);
 							if( u * normal < 0.0 ) {
 								it.set((u-normal*(u*normal))[dim]);
 							}
@@ -88,12 +86,12 @@ protected:
 			}
 		}
 	}
-	virtual void extrapolate_and_constrain_velocity( const array3<float> &solid, macarray3<float> &velocity, int extrapolate_width ) const override {
+	virtual void extrapolate_and_constrain_velocity( const array3<Real> &solid, macarray3<Real> &velocity, int extrapolate_width ) const override {
 		//
 		macarray_extrapolator3::extrapolate(velocity,extrapolate_width);
 		constrain_velocity(solid,velocity);
 	}
-	virtual void compute_area_fraction( const array3<float> &solid, macarray3<float> &areas ) const override {
+	virtual void compute_area_fraction( const array3<Real> &solid, macarray3<Real> &areas ) const override {
 		//
 		if( levelset_exist(solid) ) {
 			//
@@ -165,7 +163,7 @@ protected:
 			}
 		}
 	}
-	virtual void compute_fluid_fraction( const array3<float> &fluid, macarray3<float> &rhos ) const override {
+	virtual void compute_fluid_fraction( const array3<Real> &fluid, macarray3<Real> &rhos ) const override {
 		//
 		if( levelset_exist(fluid)) {
 			//
@@ -194,21 +192,21 @@ protected:
 			rhos.clear(1.0);
 		}
 	}
-	virtual void compute_face_density( const array3<float> &solid, const array3<float> &fluid, macarray3<float> &density ) const override {
+	virtual void compute_face_density( const array3<Real> &solid, const array3<Real> &fluid, macarray3<Real> &density ) const override {
 		//
 		compute_fluid_fraction(fluid,density);
 		if( levelset_exist(solid) ) {
 			//
-			shared_macarray3<float> tmp_areas(density.type());
+			shared_macarray3<Real> tmp_areas(density.type());
 			compute_area_fraction(solid,tmp_areas());
 			density.parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn) {
 				it.multiply(tmp_areas()[dim](i,j,k));
 			});
 		}
 	}
-	double get_kinetic_energy( const macarray3<float> &areas, const macarray3<float> &rhos, const macarray3<float> &velocity ) const {
+	double get_kinetic_energy( const macarray3<Real> &areas, const macarray3<Real> &rhos, const macarray3<Real> &velocity ) const {
 		//
-		std::vector<float> results(velocity.get_thread_num(),0.0);
+		std::vector<Real> results(velocity.get_thread_num(),0.0);
 		velocity.const_parallel_actives([&]( int dim, int i, int j, int k, const auto &it, int tn ) {
 			double area = areas[dim](i,j,k);
 			if( area ) {
@@ -225,21 +223,21 @@ protected:
 		for( const auto &e : results ) result += e;
 		return result;
 	}
-	virtual double get_kinetic_energy( const array3<float> &solid, const array3<float> &fluid, const macarray3<float> &velocity ) const override {
+	virtual double get_kinetic_energy( const array3<Real> &solid, const array3<Real> &fluid, const macarray3<Real> &velocity ) const override {
 		//
-		shared_macarray3<float> tmp_areas(velocity.type());
-		shared_macarray3<float> tmp_rhos(velocity.type());
+		shared_macarray3<Real> tmp_areas(velocity.type());
+		shared_macarray3<Real> tmp_rhos(velocity.type());
 		//
 		compute_area_fraction(solid,tmp_areas());
 		compute_fluid_fraction(fluid,tmp_rhos());
 		//
 		return get_kinetic_energy(tmp_areas(),tmp_rhos(),velocity);
 	}
-	double get_gravitational_potential_energy( const macarray3<float> &areas, const macarray3<float> &rhos, vec3d gravity ) const {
+	double get_gravitational_potential_energy( const macarray3<Real> &areas, const macarray3<Real> &rhos, vec3d gravity ) const {
 		//
 		double sum (0.0);
 		rhos.const_serial_actives([&]( int dim, int i, int j, int k, const auto &it ) {
-			const float area = areas[dim](i,j,k);
+			const Real area = areas[dim](i,j,k);
 			if( area ) {
 				vec3d p = m_dx*vec3d(i,j,k).face(dim);
 				sum += area * p[1] * it();
@@ -248,7 +246,7 @@ protected:
 		for( int dim : DIMS3 ) {
 			rhos[dim].const_serial_inside([&]( int i, int j, int k, const auto &it ) {
 				if( ! it.active()) {
-					const float area = areas[dim](i,j,k);
+					const Real area = areas[dim](i,j,k);
 					if( area ) {
 						vec3d p = m_dx*vec3d(i,j,k).face(dim);
 						sum += area * p[1] * it();
@@ -258,17 +256,17 @@ protected:
 		}
 		return -sum * gravity[1] * (m_dx*m_dx*m_dx) / 3.0;
 	}
-	virtual double get_gravitational_potential_energy( const array3<float> &solid, const array3<float> &fluid, vec3d gravity ) const override {
+	virtual double get_gravitational_potential_energy( const array3<Real> &solid, const array3<Real> &fluid, vec3d gravity ) const override {
 		//
-		shared_macarray3<float> tmp_areas(fluid.shape());
-		shared_macarray3<float> tmp_rhos(fluid.shape());
+		shared_macarray3<Real> tmp_areas(fluid.shape());
+		shared_macarray3<Real> tmp_rhos(fluid.shape());
 		//
 		compute_area_fraction(solid,tmp_areas());
 		compute_fluid_fraction(fluid,tmp_rhos());
 		//
 		return get_gravitational_potential_energy(tmp_areas(),tmp_rhos(),gravity);
 	}
-	virtual double get_surfacetension_potential_energy( const array3<float> &solid, const array3<float> &fluid, double tension_coeff ) const override {
+	virtual double get_surfacetension_potential_energy( const array3<Real> &solid, const array3<Real> &fluid, double tension_coeff ) const override {
 		//
 		if( tension_coeff ) {
 			std::vector<vec3d> vertices;
@@ -276,21 +274,21 @@ protected:
 			m_mesher->generate_mesh(fluid,vertices,faces);
 			//
 			return tension_coeff * utility::compute_area(vertices,faces,[&]( const vec3d &p ) {
-				return interpolate<float>(solid,m_dx*p) > 0.0;
+				return interpolate<Real>(solid,m_dx*p) > 0.0;
 			});
 		} else {
 			return 0.0;
 		}
 	}
-	virtual double get_total_energy( const array3<float> &solid, const array3<float> &fluid, const macarray3<float> &velocity, vec3d gravity, double tension_coeff ) const override {
+	virtual double get_total_energy( const array3<Real> &solid, const array3<Real> &fluid, const macarray3<Real> &velocity, vec3d gravity, double tension_coeff ) const override {
 		//
 		const auto energy_list = get_all_kinds_of_energy(solid,fluid,velocity,gravity,tension_coeff);
 		return std::get<0>(energy_list)+std::get<1>(energy_list)+std::get<2>(energy_list);
 	}
-	virtual std::tuple<double,double,double> get_all_kinds_of_energy( const array3<float> &solid, const array3<float> &fluid, const macarray3<float> &velocity, vec3d gravity, double tension_coeff ) const override {
+	virtual std::tuple<double,double,double> get_all_kinds_of_energy( const array3<Real> &solid, const array3<Real> &fluid, const macarray3<Real> &velocity, vec3d gravity, double tension_coeff ) const override {
 		//
-		shared_macarray3<float> tmp_areas(velocity.type());
-		shared_macarray3<float> tmp_rhos(velocity.type());
+		shared_macarray3<Real> tmp_areas(velocity.type());
+		shared_macarray3<Real> tmp_rhos(velocity.type());
 		//
 		compute_area_fraction(solid,tmp_areas());
 		compute_fluid_fraction(fluid,tmp_rhos());
@@ -301,14 +299,14 @@ protected:
 			get_surfacetension_potential_energy(solid,fluid,tension_coeff)
 		};
 	}
-	virtual void get_velocity_jacobian( const vec3d &p, const macarray3<float> &velocity, vec3f jacobian[DIM3] ) const override {
+	virtual void get_velocity_jacobian( const vec3d &p, const macarray3<Real> &velocity, vec3r jacobian[DIM3] ) const override {
 		for( unsigned dim : DIMS3 ) {
 			array_derivative3::derivative(velocity[dim],vec3d(p[0]/m_dx-0.5*(dim!=0),p[1]/m_dx-0.5*(dim!=1),p[2]/m_dx-0.5*(dim!=2)),jacobian[dim].v);
 			jacobian[dim] /= m_dx;
 		}
 	}
-	virtual void assign_initial_variables( const dylibloader &dylib, macarray3<float> &velocity,
-									array3<float> *solid=nullptr, array3<float> *fluid=nullptr,array3<float> *density=nullptr ) const override {
+	virtual void assign_initial_variables( const dylibloader &dylib, macarray3<Real> &velocity,
+									array3<Real> *solid=nullptr, array3<Real> *fluid=nullptr,array3<Real> *density=nullptr ) const override {
 		//
 		// Scoped timer
 		scoped_timer timer(this,"assign_initial_variables");
@@ -389,7 +387,7 @@ protected:
 		//
 		console::dump( "<<< Done. Took %s.\n", timer.stock("assign_variables").c_str());
 	}
-	virtual void add_force( vec3d p, vec3d f, macarray3<float> &external_force ) const override {
+	virtual void add_force( vec3d p, vec3d f, macarray3<Real> &external_force ) const override {
 		for( unsigned dim : DIMS3 ) {
 			vec3d index_coord = p/m_dx-vec3d(0.5,0.5,0.5);
 			external_force[dim].set(m_shape.face(dim).clamp(index_coord),f[dim]);

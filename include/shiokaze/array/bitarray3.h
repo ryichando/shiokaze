@@ -31,12 +31,10 @@
 #include <cstdio>
 #include <algorithm>
 #include <utility>
-#include "shape.h"
+#include <shiokaze/math/shape.h>
 #include "array_core3.h"
 //
 SHKZ_BEGIN_NAMESPACE
-//
-#define shkz_default_array_core3 "tiledarray3"
 //
 template <class T> class array3;
 /** @file */
@@ -202,7 +200,7 @@ public:
 	size_t count () const { return m_core->count(m_parallel); }
 	std::vector<vec3i> actives() const {
 		std::vector<vec3i> result;
-		const_serial_actives([&](int i, int j, int k, const auto &it) {
+		const_serial_actives([&](int i, int j, int k) {
 			result.push_back(vec3i(i,j,k));
 		});
 		return result;
@@ -232,7 +230,7 @@ public:
 	 @param[in] offset 目標となるグリッドに適用されるオフセット。
 	 */
 	void activate_as( const bitarray3 &array, const vec3i &offset=vec3i() ) {
-		array.const_serial_actives([&](int i, int j, int k, const auto &it) {
+		array.const_serial_actives([&](int i, int j, int k) {
 			const vec3i &pi = vec3i(i,j,k) + offset;
 			if( ! this->shape().out_of_bounds(pi) && ! (*this)(pi)) {
 				this->set(pi);
@@ -248,7 +246,7 @@ public:
 	 @param[in] offset 目標となるグリッドに適用されるオフセット。
 	 */
 	template <class Y> void activate_as( const array3<Y> &array, const vec3i &offset=vec3i() ) {
-		array.const_serial_actives([&](int i, int j, int k, const auto &it) {
+		array.const_serial_actives([&](int i, int j, int k, const auto &it ) {
 			const vec3i &pi = vec3i(i,j,k) + offset;
 			if( ! this->shape().out_of_bounds(pi) && ! (*this)(pi)) {
 				this->set(pi);
@@ -393,8 +391,8 @@ public:
 	bool operator==(const bitarray3 &v) const {
 		if( v.type() == type() ) {
 			bool differnt (false);
-			interruptible_const_serial_actives([&]( int i, int j, int k, const const_iterator& it) {
-				if( it() != v(i,j,k)) {
+			interruptible_const_serial_actives([&]( int i, int j, int k) {
+				if( ! v(i,j,k)) {
 					differnt = true;
 					return true;
 				} else {
@@ -563,13 +561,6 @@ public:
 		}
 	}
 	/**
-	 \~english @brief Loop over all the active cells in parallel by read-only fashion.
-	 @param[in] func Function that defines how each grid cell is processed.
-	 \~japanese @brief アクティブセルを並列に読み込みのみで処理する。
-	 @param[in] func それぞれのセルを処理する関数。
-	 */
-	void const_parallel_actives( std::function<void(const const_iterator& it)> func) const { const_parallel_op(func,ACTIVES); }
-	/**
 	 \~english @brief Loop over all the cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルを並列に読み込みのみで処理する。
@@ -595,7 +586,8 @@ public:
 	 \~japanese @brief アクティブセルを並列に読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	void const_parallel_actives( std::function<void(int i, int j, int k, const const_iterator& it)> func ) const { const_parallel_op(func,ACTIVES); }
+	void const_parallel_actives( std::function<void(int i, int j, int k)> func ) const {
+		const_parallel_op([&](int i, int j, int k, const const_iterator& it) { func(i,j,k); }, ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -622,7 +614,8 @@ public:
 	 \~japanese @brief アクティブセルを並列に読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	void const_parallel_actives( std::function<void(int i, int j, int k, const const_iterator& it, int thread_index)> func ) const { const_parallel_op(func,ACTIVES); }
+	void const_parallel_actives( std::function<void(int i, int j, int k, int thread_index)> func ) const {
+		const_parallel_op([&](int i, int j, int k, const const_iterator& it, int thread_index){ return func(i,j,k,thread_index); }, ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in parallel by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -717,13 +710,6 @@ public:
 		}
 	}
 	/**
-	 \~english @brief Loop over all the active cells in serial order by read-only fashion.
-	 @param[in] func Function that defines how each grid cell is processed.
-	 \~japanese @brief アクティブなセルをシリアルに読み込みのみで処理する。
-	 @param[in] func それぞれのセルを処理する関数。
-	 */
-	void const_serial_actives( std::function<void(const const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
-	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
 	 \~japanese @brief 全てのセルをシリアルに読み込みのみで処理する。
@@ -749,7 +735,8 @@ public:
 	 \~japanese @brief アクティブなセルをシリアルに読み込みのみで処理する。
 	 @param[in] func それぞれのセルを処理する関数。
 	 */
-	void const_serial_actives( std::function<void(int i, int j, int k, const const_iterator& it)> func ) const { const_serial_op(func,ACTIVES); }
+	void const_serial_actives( std::function<void(int i, int j, int k)> func ) const {
+		const_serial_op([&](int i, int j, int k, const const_iterator& it) { func(i,j,k); }, ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed.
@@ -844,13 +831,6 @@ public:
 		}
 	}
 	/**
-	 \~english @brief Loop over all the active cells in serial order by read-only fashion.
-	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
-	 \~japanese @brief アクティブなセルを読み込み可能に限定してシリアルに処理する。
-	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
-	 */
-	void interruptible_const_serial_actives( std::function<bool(const const_iterator& it)> func ) const { interruptible_const_serial_op(func,ACTIVES); }
-	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
 	 \~japanese @brief 全てのセルを読み込み可能に限定してシリアルに処理する。
@@ -876,7 +856,8 @@ public:
 	 \~japanese @brief アクティブなセルを読み込み可能に限定してシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 */
-	void interruptible_const_serial_actives( std::function<bool(int i, int j, int k, const const_iterator& it)> func ) const { interruptible_const_serial_op(func,ACTIVES); }
+	void interruptible_const_serial_actives( std::function<bool(int i, int j, int k)> func ) const {
+		interruptible_const_serial_op([&](int i, int j, int k, const const_iterator& it){ return func(i,j,k); }, ACTIVES); }
 	/**
 	 \~english @brief Loop over all the cells in serial order by read-only fashion.
 	 @param[in] func Function that defines how each grid cell is processed. Stop the loop if return true.
@@ -1020,7 +1001,7 @@ public:
 		 \~japanese @brief 同値の確認。
 		 @return 同じなら \c true を、そうでなければ \c false を返す。
 		 */
-		bool operator==( const type3 &type ) {
+		bool operator==( const type3 &type ) const {
 			return core_name == type.core_name && shape == type.shape;
 		}
 	};

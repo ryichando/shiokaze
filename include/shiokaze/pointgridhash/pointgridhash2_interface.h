@@ -26,7 +26,7 @@
 #define SHKZ_POINTGRIDHASH2_INTERFACE_H
 //
 #include <shiokaze/core/recursive_configurable_module.h>
-#include <shiokaze/array/shape.h>
+#include <shiokaze/math/shape.h>
 #include <shiokaze/math/vec.h>
 #include <vector>
 //
@@ -55,7 +55,7 @@ public:
 	 \~japanese @brief ポイント群をハッシュグリッドに振り分ける。
 	 @param[in] ponits 振り分けるポイント群。
 	 */
-	virtual void sort_points( const std::vector<vec2f> &points ) = 0;
+	virtual void sort_points( const std::vector<vec2r> &points ) = 0;
 	/**
 	 \~english @brief Get points in a cell.
 	 @param[in] pi Cell index position.

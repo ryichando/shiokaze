@@ -70,7 +70,7 @@ protected:
 		scoped_timer timer(this);
 		//
 		timer.tick(); console::dump("Generating spherical levelset (%dx%dx%d)...", m_shape[0],m_shape[1],m_shape[2]);
-		shared_array3<float> sphere(m_shape);
+		shared_array3<Real> sphere(m_shape);
 		sphere->parallel_all([&](int i, int j, int k, auto &it ) {
 			vec3d p = vec3d(i-m_shape.w/2.0,j-m_shape.h/2.0,k-m_shape.d/2.0) * m_dx;
 			it.set(p.len() - 0.4);

@@ -73,7 +73,7 @@ private:
 		m_world->clear();
 		//
 		const double vs (m_view_scale);
-		m_camera->set_bounding_box(vec3d().v,vec3d(vs,vs,vs).v,true);
+		m_camera->set_bounding_box(vec3d().v,vec3d(vs,vs,vs).v);
 		//
 		rg3::attribution3 wall_attribute = { "wall", 0.0, 1.0, 0.5, true, nullptr };
 		rigidworld3_utility::add_container_wall(m_world.get(),wall_attribute,vec3d(),vec3d(vs,vs,vs));
@@ -185,7 +185,7 @@ private:
 				const std::vector<vec3d> &vertices = polygon->vertices;
 				const std::vector<std::vector<size_t> > &faces = polygon->faces;
 				//
-				float m[16];
+				Real m[16];
 				rigidody->getOpenGLMatrix(m);
 				//
 				g.color4(0.5,0.3,0.2,0.75);

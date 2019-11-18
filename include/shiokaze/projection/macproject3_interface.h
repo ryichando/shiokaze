@@ -54,17 +54,20 @@ public:
 	 @param[in-out] velocity Velocity field.
 	 @param[in] solid Solid level set.
 	 @param[in] fluid Fluid level set.
+	 @param[in] surface_tension Surface tension coefficient.
 	 @param[in] rigidbodies Rigidbody list.
 	 \~japanese @brief ベクトル場を非圧縮に投影する。
 	 @param[in] dt タイムステップサイズ。
 	 @param[in-out] velocity ベクトル場。
 	 @param[in] solid 壁のレベルセット。
 	 @param[in] fluid 水のレベルセット。
+	 @param[in] surface_tension 表面張力の係数。
 	 @param[in] rigidbodies 剛体リスト。
 	 */
 	virtual void project (
-			double dt, macarray3<float> &velocity,
-			const array3<float> &solid, const array3<float> &fluid,
+			double dt, macarray3<Real> &velocity,
+			const array3<Real> &solid, const array3<Real> &fluid,
+			double surface_tension=0.0,
 			const std::vector<signed_rigidbody3_interface *> *rigidbodies=nullptr
 	) = 0;
 	/**
@@ -73,7 +76,7 @@ public:
 	 \~japanese @brief 圧力場を得る。
 	 @return 圧力場。
 	*/
-	virtual const array3<float>* get_pressure() const = 0;
+	virtual const array3<Real>* get_pressure() const = 0;
 	/**
 	 \~english @brief Draw internal information.
 	 @param[in] g Graphics engine.

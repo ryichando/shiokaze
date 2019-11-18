@@ -91,8 +91,8 @@ void macflipliquid3::idle() {
 	unsigned step = m_timestepper->get_step_count();
 	timer.tick(); console::dump( ">>> %s step started (dt=%.2e,CFL=%.2f)...\n", dt, CFL, console::nth(step).c_str());
 	//
-	shared_macarray3<float> face_density(m_shape);
-	shared_macarray3<float> save_velocity(m_shape);
+	shared_macarray3<Real> face_density(m_shape);
+	shared_macarray3<Real> save_velocity(m_shape);
 	shared_macarray3<macflip3_interface::mass_momentum3> mass_and_momentum(m_shape);
 	//
 	// Update fluid levelset
@@ -137,11 +137,11 @@ void macflipliquid3::idle() {
 	// Compute the combined grid velocity
 	timer.tick(); console::dump( "Computing combined grid velocity..." );
 	//
-	shared_macarray3<float> overwritten_velocity(m_shape);
+	shared_macarray3<Real> overwritten_velocity(m_shape);
 	overwritten_velocity->activate_as(mass_and_momentum());
 	overwritten_velocity->parallel_actives([&](int dim, int i, int j, int k, auto &it, int tn ) {
 		const auto value = mass_and_momentum()[dim](i,j,k);
-		float grid_mass = std::max(0.0f,face_density()[dim](i,j,k)-value.mass);
+		Real grid_mass = std::max((Real)0.0,face_density()[dim](i,j,k)-value.mass);
 		it.set((grid_mass*m_velocity[dim](i,j,k)+value.momentum)/(grid_mass+value.mass));
 	});
 	//
@@ -161,7 +161,7 @@ void macflipliquid3::idle() {
 	set_volume_correction(m_macproject.get());
 	//
 	// Project
-	m_macproject->project(dt,m_velocity,m_solid,m_fluid);
+	m_macproject->project(dt,m_velocity,m_solid,m_fluid,(macliquid3::m_param).surftens_k);
 	//
 	// Extend both the level set and velocity
 	extend_both();
@@ -184,14 +184,14 @@ void macflipliquid3::do_export_mesh( unsigned frame ) const {
 	//
 	timer.tick(); console::dump( "Computing high-resolution levelset..." );
 	//
-	shared_array3<float> doubled_fluid(m_double_shape.cell(),1.0);
-	shared_array3<float> doubled_solid(m_double_shape.nodal(),1.0);
+	shared_array3<Real> doubled_fluid(m_double_shape.cell(),1.0);
+	shared_array3<Real> doubled_solid(m_double_shape.nodal(),1.0);
 	//
-	array_upsampler3::upsample_to_double_cell<float>(m_fluid,m_dx,doubled_fluid());
-	array_upsampler3::upsample_to_double_nodal<float>(m_solid,m_dx,doubled_solid());
+	array_upsampler3::upsample_to_double_cell<Real>(m_fluid,m_dx,doubled_fluid());
+	array_upsampler3::upsample_to_double_nodal<Real>(m_solid,m_dx,doubled_solid());
 	//
 	shared_bitarray3 mask(m_double_shape);
-	shared_array3<float> sizing_array(m_shape);
+	shared_array3<Real> sizing_array(m_shape);
 	//
 	std::vector<particlerasterizer3_interface::Particle3> points, ballistic_points;
 	std::vector<macflip3_interface::particle3> particles = m_flip->get_particles();
@@ -210,13 +210,13 @@ void macflipliquid3::do_export_mesh( unsigned frame ) const {
 		}
 		//
 		vec3i pi = m_shape.find_cell(point.p/m_dx);
-		sizing_array->set(pi,std::max((float)particles[n].sizing_value,sizing_array()(pi)));
+		sizing_array->set(pi,std::max((Real)particles[n].sizing_value,sizing_array()(pi)));
 	}
 	//
 	mask().dilate(4);
-	doubled_fluid->activate_as(mask());
+	doubled_fluid->activate_as_bit(mask());
 	//
-	shared_array3<float> particle_levelset(m_double_shape,0.125*m_dx);
+	shared_array3<Real> particle_levelset(m_double_shape,0.125*m_dx);
 	m_highres_particlerasterizer->build_levelset(particle_levelset(),mask(),points);
 	//
 	doubled_fluid->parallel_actives([&](int i, int j, int k, auto &it, int tn) {
@@ -240,12 +240,12 @@ void macflipliquid3::do_export_mesh( unsigned frame ) const {
 	size_t size = ballistic_points.size();
 	fwrite(&size,1,sizeof(unsigned),fp);
 	for( size_t n=0; n<size; ++n ) {
-		float position[3] = { (float)ballistic_points[n].p.v[0],
-							  (float)ballistic_points[n].p.v[1],
-							  (float)ballistic_points[n].p.v[2] };
-		float radius = ballistic_points[n].r;
-		fwrite(position,3,sizeof(float),fp);
-		fwrite(&radius,1,sizeof(float),fp);
+		Real position[3] = { (Real)ballistic_points[n].p.v[0],
+							  (Real)ballistic_points[n].p.v[1],
+							  (Real)ballistic_points[n].p.v[2] };
+		Real radius = ballistic_points[n].r;
+		fwrite(position,3,sizeof(Real),fp);
+		fwrite(&radius,1,sizeof(Real),fp);
 	}
 	fclose(fp);
 	console::dump( "Done. Size=%d. Took %s\n", size, timer.stock("write_ballistic").c_str());
@@ -323,7 +323,7 @@ void macflipliquid3::draw( graphics_engine &g ) const {
 	m_flip->draw(g,m_timestepper->get_current_time());
 	//
 	// Visualize solid
-	shared_array3<float> solid_to_visualize(m_solid.shape());
+	shared_array3<Real> solid_to_visualize(m_solid.shape());
 	if( ! m_gridutility->assign_visualizable_solid(m_dylib,m_dx,solid_to_visualize())) solid_to_visualize->copy(m_solid);
 	if( array_utility3::levelset_exist(solid_to_visualize())) m_gridvisualizer->draw_solid(g,solid_to_visualize());
 	//

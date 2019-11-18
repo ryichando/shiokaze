@@ -158,7 +158,7 @@ public:
 	 \~japanese @brief OpenGL の行列情報を得る。
 	 @param[out] m OpenGL フォーマットの行列。
 	 */
-	virtual void getOpenGLMatrix( float m[16] ) const = 0;
+	virtual void getOpenGLMatrix( Real m[16] ) const = 0;
 };
 //
 /// \~english @brief 3D Rigidody world interface.

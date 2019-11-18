@@ -34,7 +34,6 @@ class blockordering : public ordering_core {
 public:
 	//
 	LONG_NAME("Block Ordering Encoder/Decoder")
-	MODULE_NAME("blockordering")
 	//
 	blockordering() {
 		block_size = 8;

@@ -32,8 +32,6 @@ static const std::vector<size_t> empty;
 class pointgridhash2 : public pointgridhash2_interface {
 protected:
 	//
-	MODULE_NAME("pointgridhash2")
-	//
 	virtual void clear() override {
 		if( m_num_sorted ) {
 			//
@@ -43,7 +41,7 @@ protected:
 			m_num_sorted = 0;
 		}
 	}
-	virtual void sort_points( const std::vector<vec2f> &points ) override {
+	virtual void sort_points( const std::vector<vec2r> &points ) override {
 		//
 		clear();
 		//

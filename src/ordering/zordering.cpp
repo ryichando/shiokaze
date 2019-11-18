@@ -35,7 +35,6 @@ class zordering : public ordering_core {
 protected:
 	//
 	LONG_NAME("Z-Curve Ordering Encoder/Decoder")
-	MODULE_NAME("zordering")
 	//
 	static int floor_power_of_two ( int x ) {
 		return std::floor(std::log2(x));

@@ -36,24 +36,22 @@ SHKZ_BEGIN_NAMESPACE
 class macbackwardflip3 : public macbackwardflip3_interface {
 protected:
 	//
-	MODULE_NAME("macbackwardflip3")
-	//
 	virtual void configure( configuration &config ) override;
 	virtual void initialize( const shape3 &shape, double dx ) override;
 	virtual void post_initialize() override;
 	//
-	virtual bool backtrace( const array3<float> &solid, const array3<float> &fluid ) override;
-	virtual bool fetch( macarray3<float> &u_reconstructed ) const override;
-	virtual bool fetch( array3<float> &density_reconstructed ) const override;
+	virtual bool backtrace( const array3<Real> &solid, const array3<Real> &fluid ) override;
+	virtual bool fetch( macarray3<Real> &u_reconstructed ) const override;
+	virtual bool fetch( array3<Real> &density_reconstructed ) const override;
 	//
 	virtual void register_buffer(
-						const macarray3<float> &u1,				// Velocity at the end of the step
-						const macarray3<float> &u0,				// Velocity at the beggining of the step
-						const macarray3<float> *u_reconstructed,	// Reconstructed dirty velocity of the beggining of the step - can be nullptr
-						const macarray3<float> *g,					// Pressure gradient and the external forces (scaled by dt) - can be nullptr
-						const array3<float> *d1,					// Density field of the end of the step - can be nullptr
-						const array3<float> *d0,					// Density field of the beggining of the step - can be nullptr
-						const array3<float> *d_added,				// Density field source of the current step - can be nullptr
+						const macarray3<Real> &u1,				// Velocity at the end of the step
+						const macarray3<Real> &u0,				// Velocity at the beggining of the step
+						const macarray3<Real> *u_reconstructed,	// Reconstructed dirty velocity of the beggining of the step - can be nullptr
+						const macarray3<Real> *g,					// Pressure gradient and the external forces (scaled by dt) - can be nullptr
+						const array3<Real> *d1,					// Density field of the end of the step - can be nullptr
+						const array3<Real> *d0,					// Density field of the beggining of the step - can be nullptr
+						const array3<Real> *d_added,				// Density field source of the current step - can be nullptr
 						double dt ) override;						// Time-step size of the current step
 	//
 	virtual void draw( graphics_engine &g ) const override;
@@ -78,11 +76,11 @@ protected:
 	//
 	typedef struct {
 		//
-		std::shared_ptr<macarray3<float> > u;
-		std::shared_ptr<macarray3<float> > u_reconstructed;
-		std::shared_ptr<macarray3<float> > g;
-		std::shared_ptr<array3<float> > d;
-		std::shared_ptr<array3<float> > d_added;
+		std::shared_ptr<macarray3<Real> > u;
+		std::shared_ptr<macarray3<Real> > u_reconstructed;
+		std::shared_ptr<macarray3<Real> > g;
+		std::shared_ptr<array3<Real> > d;
+		std::shared_ptr<array3<Real> > d_added;
 		//
 		double dt;
 		double time;
@@ -90,11 +88,11 @@ protected:
 		//
 		void allocate () {
 			if( ! allocated ) {
-				u = std::make_shared<macarray3<float> >();
-				u_reconstructed = std::make_shared<macarray3<float> >();
-				g = std::make_shared<macarray3<float> >();
-				d = std::make_shared<array3<float> >();
-				d_added = std::make_shared<array3<float> >();
+				u = std::make_shared<macarray3<Real> >();
+				u_reconstructed = std::make_shared<macarray3<Real> >();
+				g = std::make_shared<macarray3<Real> >();
+				d = std::make_shared<array3<Real> >();
+				d_added = std::make_shared<array3<Real> >();
 				allocated = true;
 			}
 		}
@@ -102,33 +100,33 @@ protected:
 	} layer3;
 	//
 	typedef struct {
-		std::vector<vec3f> p;
-		std::vector<vec3f> u;
-		std::vector<float> mass;
-		std::vector<std::vector<float> > adaptivity_rate;
-		std::vector<float> s;
+		std::vector<vec3r> p;
+		std::vector<vec3r> u;
+		std::vector<Real> mass;
+		std::vector<std::vector<Real> > adaptivity_rate;
+		std::vector<Real> s;
 	} tracers3;
 	tracers3 m_tracer;
 	//
 	typedef struct {
-		std::vector<float> wsum;
-		std::vector<vec3f> vel;
-		std::vector<vec3f> g;
+		std::vector<Real> wsum;
+		std::vector<vec3r> vel;
+		std::vector<vec3r> g;
 	} accumulator3;
 	accumulator3 m_accumulator;
 	//
-	macarray3<float> m_u_reconstructed{this};
-	array3<float> m_density_reconstructed{this};
+	macarray3<Real> m_u_reconstructed{this};
+	array3<Real> m_density_reconstructed{this};
 	//
 	bool m_exist_gradient;
 	bool m_exist_density;
 	//
 	unsigned m_step_back_limit {0};			// Followed by the method of Hachisuka [H06]
-	array3<vec3f> m_forward_tracers{this};	// Followed by the method of Hachisuka [H06]
-	array3<vec3f> m_g_integrated{this};		// Followed by the method of Hachisuka [H06]
+	array3<vec3r> m_forward_tracers{this};	// Followed by the method of Hachisuka [H06]
+	array3<vec3r> m_g_integrated{this};		// Followed by the method of Hachisuka [H06]
 	//
 	virtual void reset_forward_tracers();
-	virtual void integrate_forward_tracers( const macarray3<float> &velocity0, const macarray3<float> &velocity1, const macarray3<float> &g, double dt );
+	virtual void integrate_forward_tracers( const macarray3<Real> &velocity0, const macarray3<Real> &velocity1, const macarray3<Real> &g, double dt );
 	//
 	std::deque<layer3> m_buffers;
 	layer3 m_back_buffer;
@@ -140,17 +138,17 @@ protected:
 	shape3 m_shape;
 	double m_dx;
 	unsigned m_step {0};
-	macarray3<float> m_velocity{this};
-	array3<float> m_density{this};
-	macarray3<float> m_u_diff{this};
+	macarray3<Real> m_velocity{this};
+	array3<Real> m_density{this};
+	macarray3<Real> m_u_diff{this};
 	//
-	std::vector<vec3f> m_original_seed_vector;
-	std::vector<float> m_original_seed_mass;
+	std::vector<vec3r> m_original_seed_vector;
+	std::vector<Real> m_original_seed_mass;
 	array3<std::vector<unsigned> > m_seed_cell{this};
 	macarray3<std::vector<unsigned> > m_seed_face{this};
 	parallel_driver m_parallel{this};
 	//
-	void backtrace(	std::vector<vec3f> &p, std::vector<vec3f> &u, const std::vector<float> &mass, std::vector<std::vector<float> > &adaptivity_rate, std::vector<float> *d );
+	void backtrace(	std::vector<vec3r> &p, std::vector<vec3r> &u, const std::vector<Real> &mass, std::vector<std::vector<Real> > &adaptivity_rate, std::vector<Real> *d );
 };
 //
 SHKZ_END_NAMESPACE

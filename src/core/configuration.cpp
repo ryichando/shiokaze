@@ -30,6 +30,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <mutex>
+#include <typeinfo>
 #include <boost/date_time/gregorian/gregorian.hpp>
 //
 #define STACK_DEBUG		0
@@ -463,25 +464,27 @@ void configuration::set_default_double( std::string name, double value ) {
 	default_double[name] = value;
 }
 //
-bool configuration::get_float( std::string name, float &value, std::string description ) {
+bool configuration::get_real( std::string name, Real &value, std::string description ) {
 	std::lock_guard<std::mutex> guard(config_mutex);
 	//
-	auto it = default_float.find(concated_name(name));
-	if( it != default_float.end() ) {
+	auto it = default_real.find(concated_name(name));
+	if( it != default_real.end() ) {
 		value = it->second;
 	} else {
-		it = default_float.find(name);
-		if( it != default_float.end()) value = it->second;
+		it = default_real.find(name);
+		if( it != default_real.end()) value = it->second;
 	}
-	//
 	char buf[32]; auto load_buf = [&]() {
 		if( value == (int)value ) std::snprintf(buf,32,"%.1f",value);
 		else std::snprintf(buf,32,"%g",value);
 	};
-	float original_value = value;
+	//
+	Real original_value = value;
 	auto get = [&]( std::string name ) {
 		if( m_dictionary.find(name) != m_dictionary.end()) {
-			std::sscanf(m_dictionary.at(name).c_str(),"%f",&value);
+			double _value;
+			std::sscanf(m_dictionary.at(name).c_str(),"%lf",&_value);
+			value = _value;
 			load_buf();
 			return true;
 		}
@@ -497,14 +500,14 @@ bool configuration::get_float( std::string name, float &value, std::string descr
 	}
 }
 //
-void configuration::set_float( std::string name, float value ) {
+void configuration::set_real( std::string name, Real value ) {
 	std::lock_guard<std::mutex> guard(config_mutex);
 	m_dictionary[name] = std::to_string(value);
 }
 //
-void configuration::set_default_float( std::string name, float value ) {
+void configuration::set_default_real( std::string name, Real value ) {
 	std::lock_guard<std::mutex> guard(config_mutex);
-	default_float[name] = value;
+	default_real[name] = value;
 }
 //
 bool configuration::get_vec2i( std::string name, int value[2], std::string description ) {

@@ -32,7 +32,7 @@ protected:
 	//
 	LONG_NAME("Marching Square")
 	//
-	virtual void generate_contour( const array2<float> &levelset, std::vector<vec2d> &vertices, std::vector<std::vector<size_t> > &faces ) const override {
+	virtual void generate_contour( const array2<Real> &levelset, std::vector<vec2d> &vertices, std::vector<std::vector<size_t> > &faces ) const override {
 		//
 		assert(m_dx);
 		vec2d global_origin = levelset.shape()==m_shape.nodal() ? vec2d() : m_dx * vec2d(0.5,0.5);
@@ -45,20 +45,26 @@ protected:
 		levelset.const_serial_actives([&]( int i, int j, const auto &it ) {
 			if( i < s[0]-1 && j < s[1]-1 ) {
 				//
-				vec2d p[8];	int pnum; double v[2][2]; vec2d _vertices[2][2];
+				int count (0);
 				for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
-					v[ni][nj] = levelset(i+ni,j+nj);
-					_vertices[ni][nj] = m_dx*vec2d(i+ni,j+nj);
+					if(levelset.filled(i+ni,j+nj) || levelset.active(i+ni,j+nj)) count ++;
 				}
-				m_meshutility->march_points(v,_vertices,p,pnum,false);
-				std::vector<size_t> face;
-				for( int m=0; m<pnum; m++ ) {
-					vertices.push_back(p[m]+global_origin);
-					face.push_back(index++);
-					if( face.size() == 2 ) {
-						faces.push_back(face);
-						face.clear();
-						face.push_back(index);
+				if( count == 4 ) {
+					vec2d p[8];	int pnum; double v[2][2]; vec2d _vertices[2][2];
+					for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
+						v[ni][nj] = levelset(i+ni,j+nj);
+						_vertices[ni][nj] = m_dx*vec2d(i+ni,j+nj);
+					}
+					m_meshutility->march_points(v,_vertices,p,pnum,false);
+					std::vector<size_t> face;
+					for( int m=0; m<pnum; m++ ) {
+						vertices.push_back(p[m]+global_origin);
+						face.push_back(index++);
+						if( face.size() == 2 ) {
+							faces.push_back(face);
+							face.clear();
+							face.push_back(index);
+						}
 					}
 				}
 			}

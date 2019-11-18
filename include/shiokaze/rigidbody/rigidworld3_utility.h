@@ -119,7 +119,7 @@ public:
 	//https://stackoverflow.com/questions/1148309/inverting-a-4x4-matrix
 	bool getInverseOpenGLMatrix( const rigidbody3_interface *rigidbody, double invOut[16] ) const {
 		//
-		float m[16];
+		Real m[16];
 		rigidbody->getOpenGLMatrix(m);
 		//
 		double inv[16], det; int i;

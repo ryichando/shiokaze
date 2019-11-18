@@ -25,12 +25,19 @@
 #ifndef SHKZ_ARRAY2_H
 #define SHKZ_ARRAY2_H
 //
-#include "bitarray2.h"
+#include <shiokaze/math/vec.h>
+#include <shiokaze/parallel/parallel_driver.h>
+#include <cassert>
+#include <cstdio>
+#include <algorithm>
+#include <utility>
+#include <shiokaze/math/shape.h>
+#include "array_core2.h"
 //
 SHKZ_BEGIN_NAMESPACE
 //
 /** @file */
-/// \~english @brief Two dimensional grid class designed to be defined as instance member in recursive_configurable class.
+/// \~english @brief Two dimensional array class designed to be defined as instance member in recursive_configurable class.
 /// \~japanese @brief recursive_configurable インスタンスのメンバーインスタンスとして定義可能な2次元配列クラス。
 template<class T> class array2 : public recursive_configurable {
 public:
@@ -398,8 +405,8 @@ public:
 	 @param[in] array 目標となるグリッド。
 	 @param[in] offset 目標となるグリッドに適用されるオフセット。
 	 */
-	void activate_as( const bitarray2 &array, const vec2i &offset=vec2i() ) {
-		array.const_serial_actives([&](int i, int j, const auto &it) {
+	template <class Y> void activate_as_bit( const Y &array, const vec2i &offset=vec2i() ) {
+		array.const_serial_actives([&](int i, int j) {
 			const vec2i &pi = vec2i(i,j) + offset;
 			if( ! this->shape().out_of_bounds(pi) && ! this->active(pi)) {
 				this->set(pi,(*this)(pi));
@@ -1584,9 +1591,9 @@ public:
 	 \~japanese @brief 塗りつぶされた全てのセルを読み込み可能に限定してシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 */
-	void interruptible_const_serial_inside( std::function<bool(int i, int j, iterator& it)> func ) const {
+	void interruptible_const_serial_inside( std::function<bool(int i, int j, const const_iterator& it)> func ) const {
 		m_core->const_serial_inside([&](int i, int j, const void *value_ptr, const bool &active ){
-			iterator it(value_ptr,active,true,m_fill_value);
+			const_iterator it(value_ptr,active,true,m_fill_value);
 			return func(i,j,it);
 		});
 	}
@@ -1729,6 +1736,20 @@ public:
 		 \~japanese @brief 演算子によるグリッド操作がアクティブセルだけに影響を与えるべきか。
 		 */
 		bool touch_only_actives;
+		/**
+		 \~english @brief Comparison operator.
+		 \~japanese @brief 比較オペラータ。
+		 */
+		bool operator==(const type2 &rhs) const {
+			return 
+				core_name == rhs.core_name &&
+				shape == rhs.shape &&
+				background_value == rhs.background_value &&
+				fill_value && rhs.fill_value &&
+				is_fillable == rhs.is_fillable &&
+				is_levelset == rhs.is_levelset &&
+				touch_only_actives == rhs.touch_only_actives;
+		}
 	};
 	/**
 	 \~english @brief Get the type of this grid.

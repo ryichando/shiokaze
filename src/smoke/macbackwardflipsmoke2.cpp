@@ -42,11 +42,11 @@ void macbackwardflipsmoke2::idle() {
 	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	//
 	// Set of variables
-	shared_macarray2<float> velocity_reconstructed(m_shape);
+	shared_macarray2<Real> velocity_reconstructed(m_shape);
 	//
 	// Save the current density and velocity
-	shared_array2<float> density0 (m_density);
-	shared_macarray2<float> velocity0(m_velocity);
+	shared_array2<Real> density0 (m_density);
+	shared_macarray2<Real> velocity0(m_velocity);
 	//
 	// Backtrace the velocity back in time
 	m_backwardflip->backtrace(m_solid,m_fluid);
@@ -58,7 +58,7 @@ void macbackwardflipsmoke2::idle() {
 		m_macutility->extrapolate_and_constrain_velocity(m_solid,velocity_reconstructed(),(macsmoke2::m_param).extrapolated_width);
 		//
 		// Compute the dirty velocity
-		shared_macarray2<float> u(velocity_reconstructed());
+		shared_macarray2<Real> u(velocity_reconstructed());
 		m_macadvection->advect_vector(u(),m_velocity,m_fluid,dt);
 		m_velocity.copy(u());
 		//
@@ -78,7 +78,7 @@ void macbackwardflipsmoke2::idle() {
 	}
 	//
 	// Save the velocity before projection
-	shared_macarray2<float> velocity_b4_proj(m_velocity);
+	shared_macarray2<Real> velocity_b4_proj(m_velocity);
 	//
 	// Add external force
 	inject_external_force(m_velocity);
@@ -87,7 +87,7 @@ void macbackwardflipsmoke2::idle() {
 	add_buoyancy_force (m_velocity,m_density,dt);
 	//
 	// Add source
-	shared_array2<float> density_added(m_shape);
+	shared_array2<Real> density_added(m_shape);
 	add_source(m_velocity,density_added(),m_timestepper->get_current_time(),dt);
 	//
 	// Project
@@ -101,7 +101,7 @@ void macbackwardflipsmoke2::idle() {
 	} else {
 		//
 		// Put buffer with one layer
-		shared_macarray2<float> g(m_velocity);
+		shared_macarray2<Real> g(m_velocity);
 		g() -= velocity_b4_proj();
 		//
 		m_backwardflip->register_buffer(m_velocity,velocity0(),&velocity_reconstructed(),&g(),

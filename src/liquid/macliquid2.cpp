@@ -100,7 +100,7 @@ void macliquid2::post_initialize () {
 	// Compute the initial volume
 	m_initial_volume = m_gridutility->get_area(m_solid,m_fluid);
 	//
-	shared_macarray2<float> velocity_actives(m_velocity.type());
+	shared_macarray2<Real> velocity_actives(m_velocity.type());
 	for( int dim : DIMS2 ) {
 		velocity_actives()[dim].activate_inside_as(m_fluid);
 		velocity_actives()[dim].activate_inside_as(m_fluid,vec2i(dim==0,dim==1));
@@ -115,11 +115,11 @@ void macliquid2::post_initialize () {
 		m_macproject->project(CFL*m_dx/max_u,m_velocity,m_solid,m_fluid);
 	}
 	//
-	m_camera->set_bounding_box(vec2d().v,m_shape.box(m_dx).v,true);
+	m_camera->set_bounding_box(vec2d().v,m_shape.box(m_dx).v);
 	//
 	if( m_param.show_graph ) {
 		m_graphplotter->clear();
-		m_graph_lists[0] = m_graphplotter->create_entry("Gravitational Energy");
+		if( m_param.gravity.norm2() ) m_graph_lists[0] = m_graphplotter->create_entry("Gravitational Energy");
 		m_graph_lists[1] = m_graphplotter->create_entry("Kinetic Energy");
 		if( m_param.surftens_k ) m_graph_lists[2] = m_graphplotter->create_entry("Surface Area Energy");
 		m_graph_lists[3] = m_graphplotter->create_entry("Total Energy");
@@ -133,7 +133,7 @@ void macliquid2::drag( double x, double y, double z, double u, double v, double 
 	m_force_exist = true;
 }
 //
-void macliquid2::inject_external_force( macarray2<float> &m_velocity, double dt ) {
+void macliquid2::inject_external_force( macarray2<Real> &m_velocity, double dt ) {
 	//
 	if( m_force_exist ) {
 		m_velocity += m_external_force;
@@ -164,7 +164,7 @@ void macliquid2::set_volume_correction( macproject2_interface *macproject ) {
 void macliquid2::extend_both( int w ) {
 	//
 	unsigned width = w+m_timestepper->get_current_CFL();
-	macarray_extrapolator2::extrapolate<float>(m_velocity,width);
+	macarray_extrapolator2::extrapolate<Real>(m_velocity,width);
 	m_macutility->constrain_velocity(m_solid,m_velocity);
 	m_fluid.dilate(width);
 }
@@ -184,7 +184,7 @@ void macliquid2::idle() {
 	m_macsurfacetracker->advect(m_fluid,m_solid,m_velocity,dt);
 	//
 	// Advect velocity
-	shared_macarray2<float> velocity_save(m_velocity);
+	shared_macarray2<Real> velocity_save(m_velocity);
 	m_macadvection->advect_vector(m_velocity,velocity_save(),m_fluid,dt);
 	//
 	// Add external force
@@ -194,7 +194,7 @@ void macliquid2::idle() {
 	set_volume_correction(m_macproject.get());
 	//
 	// Project
-	m_macproject->project(dt,m_velocity,m_solid,m_fluid);
+	m_macproject->project(dt,m_velocity,m_solid,m_fluid,m_param.surftens_k);
 	//
 	// Report stats
 	m_macstats->dump_stats(m_solid,m_fluid,m_velocity,m_timestepper.get());
@@ -210,7 +210,7 @@ void macliquid2::add_to_graph() {
 		const double total_energy = std::get<0>(energy_list)+std::get<1>(energy_list)+std::get<2>(energy_list);
 		//
 		// Add to graph
-		m_graphplotter->add_point(m_graph_lists[0],time,std::get<0>(energy_list));
+		if( m_param.gravity.norm2() ) m_graphplotter->add_point(m_graph_lists[0],time,std::get<0>(energy_list));
 		m_graphplotter->add_point(m_graph_lists[1],time,std::get<1>(energy_list));
 		if( m_param.surftens_k ) m_graphplotter->add_point(m_graph_lists[2],time,std::get<2>(energy_list));
 		m_graphplotter->add_point(m_graph_lists[3],time,total_energy);

@@ -36,7 +36,6 @@ public:
 	//
 	macflipliquid3();
 	LONG_NAME("MAC FLIP Liquid 3D")
-	MODULE_NAME("macflipliquid3")
 	//
 protected:
 	//

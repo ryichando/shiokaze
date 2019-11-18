@@ -43,8 +43,6 @@ SHKZ_BEGIN_NAMESPACE
 		return unique_alloc_module<CLASS_T>(config,ARG_NAME,name,DESCRIPTION); \
 	}
 //
-#define MODULE_NAME(name) virtual std::string get_module_name() const override { return name; }
-//
 /// \~english @brief Module class.
 /// \~japanese @brief モジュールクラス。
 class module : public credit {

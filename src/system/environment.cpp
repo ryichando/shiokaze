@@ -60,8 +60,6 @@ static ::std::string run( const char *format, ...) {
 class environment : public environment_interface {
 protected:
 	//
-	MODULE_NAME("environment")
-	//
 	virtual std::string today_UTC() const override {
 		ptime now = second_clock::universal_time();
 		return boost::posix_time::to_simple_string(now);

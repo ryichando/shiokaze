@@ -31,6 +31,7 @@
 //
 #include "bitarray2.h"
 #include "bitmacarray2.h"
+#include "shared_array_core2.h"
 //
 SHKZ_BEGIN_NAMESPACE
 //

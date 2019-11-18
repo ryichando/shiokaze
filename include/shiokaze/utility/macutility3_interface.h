@@ -46,7 +46,7 @@ public:
 	 @param[in] velocity 速度場。
 	 @return 最大速度の絶対値。
 	 */
-	virtual double compute_max_u ( const macarray3<float> &velocity ) const = 0;
+	virtual double compute_max_u ( const macarray3<Real> &velocity ) const = 0;
 	/**
 	 \~english @brief Remove the solid normal component of velocity inside the solid.
 	 @param[in] solid Solid level set.
@@ -55,7 +55,7 @@ public:
 	 @param[in] solid 壁のレベルセット。
 	 @param[in] velocity 速度場。
 	 */
-	virtual void constrain_velocity( const array3<float> &solid, macarray3<float> &velocity ) const = 0;
+	virtual void constrain_velocity( const array3<Real> &solid, macarray3<Real> &velocity ) const = 0;
 	/**
 	 \~english @brief Extrapolate velocity field toward solid and call constrain_velocity routine.
 	 @param[in] solid Solid level set.
@@ -66,7 +66,7 @@ public:
 	 @param[in] velocity 速度場。
 	 @param[in] extrapolate_width 外挿の幅。
 	 */
-	virtual void extrapolate_and_constrain_velocity( const array3<float> &solid, macarray3<float> &velocity, int extrapolate_width ) const = 0;
+	virtual void extrapolate_and_constrain_velocity( const array3<Real> &solid, macarray3<Real> &velocity, int extrapolate_width ) const = 0;
 	/**
 	 \~english @brief Compute area fraction of solid level set.
 	 @param[in] solid Solid level set.
@@ -75,7 +75,7 @@ public:
 	 @param[in] solid 壁のレベルセット。
 	 @param[out] areas 面の壁の占める割合。
 	 */
-	virtual void compute_area_fraction( const array3<float> &solid, macarray3<float> &areas ) const = 0;
+	virtual void compute_area_fraction( const array3<Real> &solid, macarray3<Real> &areas ) const = 0;
 	/**
 	 \~english @brief Compute fraction between cells of fluid level set.
 	 @param[in] fluid Fluid level set.
@@ -84,7 +84,7 @@ public:
 	 @param[in] fluid 水のレベルセット。
 	 @param[out] rhos セルの中心間に占める水の割合。
 	 */
-	virtual void compute_fluid_fraction( const array3<float> &fluid, macarray3<float> &rhos ) const = 0;
+	virtual void compute_fluid_fraction( const array3<Real> &fluid, macarray3<Real> &rhos ) const = 0;
 	/**
 	 \~english @brief Compute fraction between cells of fluid level set, considering interference by solid level set.
 	 @param[in] solid Solid level set.
@@ -95,7 +95,7 @@ public:
 	 @param[in] fluid 水のレベルセット。
 	 @param[out] density セルの中心間に占める水の割合。
 	 */
-	virtual void compute_face_density( const array3<float> &solid, const array3<float> &fluid, macarray3<float> &density ) const = 0;
+	virtual void compute_face_density( const array3<Real> &solid, const array3<Real> &fluid, macarray3<Real> &density ) const = 0;
 	/**
 	 \~english @brief Get the kinetic energy.
 	 @param[in] solid Solid level set.
@@ -108,7 +108,7 @@ public:
 	 @param[in] velocity 速度場。
 	 @return 運動エネルギー。
 	 */
-	virtual double get_kinetic_energy( const array3<float> &solid, const array3<float> &fluid, const macarray3<float> &velocity ) const = 0;
+	virtual double get_kinetic_energy( const array3<Real> &solid, const array3<Real> &fluid, const macarray3<Real> &velocity ) const = 0;
 	/**
 	 \~english @brief Get the gravitational potential energy.
 	 @param[in] solid Solid level set.
@@ -123,7 +123,7 @@ public:
 	 @param[in] gravity 重力加速度ベクトル。
 	 @return 重力ポテンシャルエネルギー。
 	 */
-	virtual double get_gravitational_potential_energy( const array3<float> &solid, const array3<float> &fluid, vec3d gravity ) const = 0;
+	virtual double get_gravitational_potential_energy( const array3<Real> &solid, const array3<Real> &fluid, vec3d gravity ) const = 0;
 	/**
 	 \~english @brief Get the surface tension potential energy.
 	 @param[in] solid Solid level set.
@@ -138,7 +138,7 @@ public:
 	 @param[in] velocity 速度場。
 	 @return 表面張力ポテンシャルエネルギー。
 	 */
-	virtual double get_surfacetension_potential_energy( const array3<float> &solid, const array3<float> &fluid, double tension_coeff ) const = 0;
+	virtual double get_surfacetension_potential_energy( const array3<Real> &solid, const array3<Real> &fluid, double tension_coeff ) const = 0;
 	/**
 	 \~english @brief Get the total energy.
 	 @param[in] solid Solid level set.
@@ -155,7 +155,7 @@ public:
 	 @param[in] tension_coeff 表面張力の係数。
 	 @return 全エネルギー。
 	 */
-	virtual double get_total_energy( const array3<float> &solid, const array3<float> &fluid, const macarray3<float> &velocity, vec3d gravity, double tension_coeff ) const = 0;
+	virtual double get_total_energy( const array3<Real> &solid, const array3<Real> &fluid, const macarray3<Real> &velocity, vec3d gravity, double tension_coeff ) const = 0;
 	/**
 	 \~english @brief Get all kinds of energy.
 	 @param[in] solid Solid level set.
@@ -172,7 +172,7 @@ public:
 	 @param[in] tension_coeff 表面張力の係数。
 	 @return それぞれのエネルギーの種類。{位置エネルギー、運動エネルギー、表面積エネルギー}
 	 */
-	virtual std::tuple<double,double,double> get_all_kinds_of_energy( const array3<float> &solid, const array3<float> &fluid, const macarray3<float> &velocity, vec3d gravity, double tension_coeff ) const = 0;
+	virtual std::tuple<double,double,double> get_all_kinds_of_energy( const array3<Real> &solid, const array3<Real> &fluid, const macarray3<Real> &velocity, vec3d gravity, double tension_coeff ) const = 0;
 	/**
 	 \~english @brief Get the jacobian of a velocity.
 	 @param[in] p Position in physical space.
@@ -183,7 +183,7 @@ public:
 	 @param[in] velocity 速度場。
 	 @param[out] jacobian 出力のヤコビアン。
 	 */
-	virtual void get_velocity_jacobian( const vec3d &p, const macarray3<float> &velocity, vec3f jacobian[DIM3] ) const = 0;
+	virtual void get_velocity_jacobian( const vec3d &p, const macarray3<Real> &velocity, vec3r jacobian[DIM3] ) const = 0;
 	/**
 	 \~english @brief Assign initial velocity field, solid level set, fluid level set, density field from the dynamic library.
 	 @param[in] dylib Reference to an instance of dynamic library.
@@ -197,8 +197,8 @@ public:
 	 @param[out] fluid 初期の流体のレベルセット。
 	 @param[out] density 初期の密度場。
 	 */
-	virtual void assign_initial_variables( const dylibloader &dylib, macarray3<float> &velocity,
-									array3<float> *solid=nullptr, array3<float> *fluid=nullptr,array3<float> *density=nullptr ) const = 0;
+	virtual void assign_initial_variables( const dylibloader &dylib, macarray3<Real> &velocity,
+									array3<Real> *solid=nullptr, array3<Real> *fluid=nullptr,array3<Real> *density=nullptr ) const = 0;
 	/**
 	 \~english @brief Add force to the velocity field.
 	 @param[in] p Position in physical space.
@@ -209,7 +209,7 @@ public:
 	 @param[in] f 外力。
 	 @param[in-out] external_force 外力が加えられるベクトル場。
 	 */
-	virtual void add_force( vec3d p, vec3d f, macarray3<float> &external_force ) const = 0;
+	virtual void add_force( vec3d p, vec3d f, macarray3<Real> &external_force ) const = 0;
 	//
 private:
 	virtual void initialize( const shape3 &gn, double dx ) = 0;

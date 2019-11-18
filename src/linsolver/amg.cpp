@@ -41,7 +41,6 @@ protected:
 	LONG_NAME("Algebraic Multigrid Solver")
 	AUTHOR_NAME("Denis Demidov")
 	ARGUMENT_NAME("AMG")
-	MODULE_NAME("amg_solver")
 	//
 	typedef amgcl::amg<
 		amgcl::backend::builtin<T>,

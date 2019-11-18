@@ -302,34 +302,34 @@ public:
 	 */
 	void set_default_double( std::string name, double value );
 	/**
-	 \~english @brief Get the parameter of float type.
+	 \~english @brief Get the parameter of Real type.
 	 @param[in] name Name of the parameter.
 	 @param[out] value Output value.
 	 @param[in] description Description of the parameter.
-	 \~japanese @brief float 型のパラメータを得る。
+	 \~japanese @brief Real 型のパラメータを得る。
 	 @param[in] name パラメータの名前。
 	 @param[out] value 出力値。
 	 @param[in] description パラメータの説明。
 	 */
-	bool get_float( std::string name, float &value, std::string description=std::string() );
+	bool get_real( std::string name, Real &value, std::string description=std::string() );
 	/**
-	 \~english @brief Set the parameter of float type.
+	 \~english @brief Set the parameter of Real type.
 	 @param[in] name Name of the parameter.
 	 @param[in] value Value to set.
-	 \~japanese @brief float 型のパラメータを設定する。
+	 \~japanese @brief Real 型のパラメータを設定する。
 	 @param[in] name パラメータの名前。
 	 @param[in] value 設定する値。
 	 */
-	void set_float( std::string name, float value );
+	void set_real( std::string name, Real value );
 	/**
-	 \~english @brief Set default parameter of float type.
+	 \~english @brief Set default parameter of Real type.
 	 @param[in] name Name of the parameter.
 	 @param[in] value Value to set.
-	 \~japanese @brief float 型の初期パラメータを設定する。
+	 \~japanese @brief Real 型の初期パラメータを設定する。
 	 @param[in] name パラメータの名前。
 	 @param[in] value 設定する値。
 	 */
-	void set_default_float( std::string name, float value );
+	void set_default_real( std::string name, Real value );
 	/**
 	 \~english @brief Get the parameter of vec2i type.
 	 @param[in] name Name of the parameter.
@@ -533,7 +533,7 @@ private:
 	std::map<std::string,unsigned> default_unsigned;
 	std::map<std::string,bool> default_bool;
 	std::map<std::string,double> default_double;
-	std::map<std::string,float> default_float;
+	std::map<std::string,Real> default_real;
 	std::map<std::string,double2> default_vec2d;
 	std::map<std::string,double3> default_vec3d;
 	std::map<std::string,double4> default_vec4d;

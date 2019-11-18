@@ -27,7 +27,7 @@
 //
 #include <shiokaze/array/array_core3.h>
 #include <shiokaze/utility/utility.h>
-#include <shiokaze/array/shape.h>
+#include <shiokaze/math/shape.h>
 #include <vector>
 #include <cmath>
 #include <functional>
@@ -1039,7 +1039,6 @@ public:
 	//
 	LONG_NAME("Tree Array 3D")
 	ARGUMENT_NAME("TreeArray")
-	MODULE_NAME("treearray3")
 	//
 	virtual ~treearray3() {
 		dealloc();

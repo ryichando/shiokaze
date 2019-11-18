@@ -30,8 +30,6 @@ SHKZ_USING_NAMESPACE
 class image_io : public image_io_interface {
 public:
 	//
-	MODULE_NAME("image_io")
-	//
 	image_io() = default;
 	//
 protected:

@@ -55,7 +55,7 @@ private:
 		//
 		const double vs (m_view_scale);
 		const double gap (0.05);
-		m_camera->set_bounding_box(vec2d().v,vec2d(vs,vs).v,true);
+		m_camera->set_bounding_box(vec2d().v,vec2d(vs,vs).v);
 		//
 		rg2::attribution2 wall_attribute = { "wall", 0.0, 1.0, 0.5, true, nullptr };
 		rigidworld2_utility::add_container_wall(m_world.get(),wall_attribute,vec2d(gap,gap),vec2d(vs-gap,vs-gap));

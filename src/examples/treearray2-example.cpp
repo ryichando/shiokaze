@@ -44,9 +44,9 @@ private:
 			m_array.set(2147483647-1-i,143792334-1-j,i+j+2.0);
 		}
 		//
-		float error (0.0);
+		Real error (0.0);
 		for( int i=0; i<100; ++i ) for( int j=0; j<100; ++j ) {
-			error = std::max(error,(float)std::abs(m_array(2147483647-1-i,143792334-1-j)-(i+j+2.0)));
+			error = std::max(error,(Real)std::abs(m_array(2147483647-1-i,143792334-1-j)-(i+j+2.0)));
 		}
 		console::dump( "error = %f, count = %u\n", error, m_array.count());
 		//
@@ -61,7 +61,7 @@ private:
 		console::dump( "new count = %u\n", m_array.count());
 	}
 	//
-	array2<float> m_array {this,"TargetArray:treearray2"};
+	array2<Real> m_array {this,"TargetArray:treearray2"};
 };
 //
 extern "C" module * create_instance() {

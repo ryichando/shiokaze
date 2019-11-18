@@ -33,24 +33,24 @@ SHKZ_USING_NAMESPACE
 class camera3 : public camera3_interface {
 protected:
 	//
-	MODULE_NAME("camera3")
-	//
 	virtual void configure ( configuration &config ) override {
 		//
 		config.get_double("ScrollSpeed",m_param.scroll_speed,"Scroll speed");
 		config.get_double("MinScale",m_param.min_scale,"Minimal scale");
 		config.get_double("RotateSpeed",m_param.rotate_speed,"Rotation speed");
+		config.get_bool("ResetView",m_param.reset_view,"Reset view");
 	}
 	//
 	virtual void initialize( const environment_map &environment ) override {
 		//
-		m_target = vec3d(0.5,0.2,0.5);
-		m_position = vec3d(-0.4,1.6,-3.0);
-		m_up = vec3d(0.0,1.0,0.0);
-		m_fov = 35.0;
-		m_near = 0.1;
-		m_far = 10.0;
-		m_bounding_box_set = false;
+		if( ! m_bounding_box_set || m_param.reset_view ) {
+			m_target = vec3d(0.5,0.2,0.5);
+			m_position = vec3d(-0.4,1.6,-3.0);
+			m_up = vec3d(0.0,1.0,0.0);
+			m_fov = 35.0;
+			m_near = 0.1;
+			m_far = 10.0;
+		}
 	}
 	//
 	virtual void resize( int width, int height ) override {
@@ -82,13 +82,12 @@ protected:
 		m_far = (1.0+margin)*m_far;
 	}
 	//
-	virtual void set_bounding_box( const double *p0, const double *p1, bool reset_view ) override {
+	virtual void set_bounding_box( const double *p0, const double *p1 ) override {
 		//
 		m_bb0 = vec3d(p0);
 		m_bb1 = vec3d(p1);
-		m_bounding_box_set = true;
 		//
-		if( reset_view ) {
+		if( ! m_bounding_box_set || m_param.reset_view ) {
 			//
 			double w = m_bb1[0]-m_bb0[0];
 			double h = m_bb1[1]-m_bb0[1];
@@ -100,7 +99,11 @@ protected:
 			double fov (35.0), near(0.1), far(10.0);
 			look_at(target.v,position.v,up.v,fov);
 			set_distance(2.75*m);
+		} else {
+			update_clipping();
 		}
+		//
+		m_bounding_box_set = true;
 	}
 	//
 	virtual void look_at( const double *target, const double *position, const double *up, double fov ) override {
@@ -272,6 +275,7 @@ protected:
 		double scroll_speed {0.01};
 		double rotate_speed {0.001};
 		double min_scale {0.01};
+		bool reset_view {false};
 	};
 	Parameters m_param;
 	//

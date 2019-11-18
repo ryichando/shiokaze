@@ -82,8 +82,6 @@ static int face_cb(p_ply_argument argument) {
 class polygon3 : public polygon3_interface {
 protected:
 	//
-	MODULE_NAME("polygon3")
-	//
 	virtual bool load_mesh( std::string path ) override {
 		//
 		mesh3 mesh;

@@ -40,7 +40,6 @@ public:
 	//
 	LONG_NAME("Tiled Array 2D")
 	ARGUMENT_NAME("TiledArray")
-	MODULE_NAME("tiledarray2")
 	//
 	tiledarray2 () = default;
 	virtual ~tiledarray2() {

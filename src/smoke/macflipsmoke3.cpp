@@ -55,7 +55,7 @@ void macflipsmoke3::post_initialize () {
 	scoped_timer timer(this);
 	timer.tick(); console::dump( ">>> Started FLIP initialization\n" );
 	//
-	shared_array3<float> fluid(m_shape);
+	shared_array3<Real> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
 	m_flip->seed(fluid(),[&](const vec3d &p){ return interpolate_solid(p); },m_velocity);
 	//
@@ -85,7 +85,7 @@ void macflipsmoke3::idle() {
 	m_flip->correct([&](const vec3d &p){ return -1.0; },m_velocity);
 	//
 	// Reseed particles
-	shared_array3<float> fluid(m_shape);
+	shared_array3<Real> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
 	m_flip->seed(m_fluid,
 		[&](const vec3d &p){ return interpolate_solid(p); },
@@ -114,7 +114,7 @@ void macflipsmoke3::idle() {
 	});
 	//
 	// Save the current velocity
-	shared_macarray3<float> save_velocity(m_velocity);
+	shared_macarray3<Real> save_velocity(m_velocity);
 	//
 	// Add external force
 	inject_external_force(m_velocity);

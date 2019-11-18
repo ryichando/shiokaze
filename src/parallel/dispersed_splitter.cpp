@@ -33,7 +33,6 @@ class dispersed_splitter : public loop_splitter {
 protected:
 	//
 	LONG_NAME("Dispersed Loop Splitter")
-	MODULE_NAME("dispersed_splitter")
 	//
 	virtual const void* new_context ( size_t size, int num_threads ) const override {
 		assert( num_threads <= size );

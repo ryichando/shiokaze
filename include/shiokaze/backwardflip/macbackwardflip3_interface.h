@@ -48,21 +48,21 @@ public:
 	 @param[in] solid 壁面のレベルセット。
 	 @param[in] fluid 流体のレベルセット。
 	 */
-	virtual bool backtrace( const array3<float> &solid, const array3<float> &fluid ) = 0;
+	virtual bool backtrace( const array3<Real> &solid, const array3<Real> &fluid ) = 0;
 	/**
 	 \~english @brief Get the reconstructed velocity field after the long-term backtrace.
 	 @param[out] u_reconstructed Reconstructed velocity.
 	 \~japanese @brief バックトレース後に再構築された速度場を得る。
 	 @param[out] u_reconstructed 再構築された速度場。
 	 */
-	virtual bool fetch( macarray3<float> &u_reconstructed ) const = 0;
+	virtual bool fetch( macarray3<Real> &u_reconstructed ) const = 0;
 	/**
 	 \~english @brief Get the reconstructed density field after the long-term backtrace.
 	 @param[out] density_reconstructed Reconstructed density.
 	 \~japanese @brief バックトレース後に再構築された密度場を得る。
 	 @param[out] density_reconstructed 再構築された密度場。
 	 */
-	virtual bool fetch( array3<float> &density_reconstructed ) const = 0;
+	virtual bool fetch( array3<Real> &density_reconstructed ) const = 0;
 	/**
 	 \~english @brief Add a layer of velocity field.
 	 @param[in] u1 Velocity at the end of the step.
@@ -84,13 +84,13 @@ public:
 	 @param[in] dt 現在のタイムステップ幅。
 	 */
 	virtual void register_buffer(
-						const macarray3<float> &u1,				// Velocity at the end of the step
-						const macarray3<float> &u0,				// Velocity at the beggining of the step
-						const macarray3<float> *u_reconstructed,	// Reconstructed dirty velocity of the beggining of the step - can be nullptr
-						const macarray3<float> *g,					// Pressure gradient and the external forces (scaled by dt) - can be nullptr
-						const array3<float> *d1,					// Density field of the end of the step - can be nullptr
-						const array3<float> *d0,					// Density field of the beggining of the step - can be nullptr
-						const array3<float> *d_added,				// Density field source of the current step - can be nullptr
+						const macarray3<Real> &u1,				// Velocity at the end of the step
+						const macarray3<Real> &u0,				// Velocity at the beggining of the step
+						const macarray3<Real> *u_reconstructed,	// Reconstructed dirty velocity of the beggining of the step - can be nullptr
+						const macarray3<Real> *g,					// Pressure gradient and the external forces (scaled by dt) - can be nullptr
+						const array3<Real> *d1,					// Density field of the end of the step - can be nullptr
+						const array3<Real> *d0,					// Density field of the beggining of the step - can be nullptr
+						const array3<Real> *d_added,				// Density field source of the current step - can be nullptr
 						double dt ) = 0;							// Time-step size of the current step
 	/**
 	 \~english @brief Draw simulation information for debugging.

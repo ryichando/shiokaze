@@ -50,7 +50,6 @@ class macstreamfuncsolver3 : public macproject3_interface {
 protected:
 	//
 	LONG_NAME("MAC Streamfunction Solver 3D")
-	MODULE_NAME("macstreamfuncsolver3")
 	//
 	virtual void set_target_volume( double current_volume, double target_volume ) override {
 		m_current_volume = current_volume;
@@ -58,18 +57,19 @@ protected:
 	}
 	//
 	virtual void project( double dt,
-				macarray3<float> &velocity,
-				const array3<float> &solid,
-				const array3<float> &fluid,
+				macarray3<Real> &velocity,
+				const array3<Real> &solid,
+				const array3<Real> &fluid,
+				double surface_tension,
 				const std::vector<signed_rigidbody3_interface *> *rigidbodies) override {
 		//
 		scoped_timer timer(this);
 		//
 		timer.tick(); console::dump( ">>> Streamfunc projection started (%dx%dx%d)...\n", m_shape[0], m_shape[1], m_shape[2] );
 		//
-		shared_macarray3<float> areas(m_shape);
-		shared_macarray3<float> rhos(m_shape);
-		shared_macarray3<float> E_array(m_shape);
+		shared_macarray3<Real> areas(m_shape);
+		shared_macarray3<Real> rhos(m_shape);
+		shared_macarray3<Real> E_array(m_shape);
 		shared_array3<char> visited(m_shape.nodal());
 		shared_array3<char> corner_remap(m_shape.nodal());
 		shared_array3<char> fixed(m_shape.nodal());
@@ -103,12 +103,12 @@ protected:
 		console::dump( "Done. Took %s\n", timer.stock("solid_fluid_fractions").c_str());
 		//
 		// Compute curvature and substitute to the right hand side for the surface tension force
-		if( m_param.surftens_k ) {
-			timer.tick(); console::dump( "Computing surface tension force (%.2e)...\n", m_param.surftens_k );
-			double kappa = m_param.surftens_k;
+		if( surface_tension ) {
+			timer.tick(); console::dump( "Computing surface tension force (%.2e)...\n", surface_tension );
+			double kappa = surface_tension;
 			//
 			// Compute curvature and store them into an array
-			shared_array3<float> curvature(fluid.shape());
+			shared_array3<Real> curvature(fluid.shape());
 			curvature->parallel_op([&]( int i, int j, int k, auto &it, int tn ) {
 				double value = (
 					+fluid(m_shape.clamp(i-1,j,k))+fluid(m_shape.clamp(i+1,j,k))
@@ -186,7 +186,7 @@ protected:
 		//
 		// This function computes facet diagonal mass term [A]
 		auto face_area_matrix = [&]() {
-			std::vector<float> A(face_size,0.0);
+			std::vector<Real> A(face_size,0.0);
 			for( int dim : DIMS3 ) {
 				m_parallel.for_each(areas()[dim].shape(),[&]( int i, int j, int k, int tn ) {
 					unsigned row = Xf(i,j,k,dim,vec3i(0,1,2));
@@ -198,8 +198,8 @@ protected:
 		};
 		//
 		// This function computes the inverse of facet diagonal mass term [iA]
-		auto inverse_face_area_matrix = [&]( const std::vector<float> &A ) {
-			std::vector<float> iA(face_size,0.0);
+		auto inverse_face_area_matrix = [&]( const std::vector<Real> &A ) {
+			std::vector<Real> iA(face_size,0.0);
 			m_parallel.for_each(face_size,[&]( size_t row ) {
 				if( A[row] ) iA[row] = 1.0/A[row];
 			});
@@ -208,7 +208,7 @@ protected:
 		//
 		// This function computes facet diagonal mass term [F]
 		auto face_mass_matrix = [&]() {
-			std::vector<float> F(face_size,0.0);
+			std::vector<Real> F(face_size,0.0);
 			for( int dim : DIMS3 ) {
 				m_parallel.for_each(areas()[dim].shape(),[&]( int i, int j, int k, int tn ) {
 					unsigned row = Xf(i,j,k,dim,vec3i(0,1,2));
@@ -219,12 +219,12 @@ protected:
 		};
 		//
 		// This function computes edge diagonal mass term [E]
-		auto edge_mass_matrix = [&]( const std::vector<float> &F ) {
+		auto edge_mass_matrix = [&]( const std::vector<Real> &F ) {
 			E_array->parallel_all([&](int dim, int i, int j, int k, auto &it, int tn) {
 				it.set(F[Xf(i,j,k,dim,vec3i(0,1,2))]);
 			});
 			//
-			std::vector<float> E(Lhs_size,0.0);
+			std::vector<Real> E(Lhs_size,0.0);
 			m_parallel.for_each(DIM3,[&]( size_t dim ) {
 				vec3i mp((dim+1)%DIM3,(dim+2)%DIM3,dim); // Let's pretend that we are solving for z
 				vec3i pm = inv_permutation(mp);
@@ -233,7 +233,7 @@ protected:
 					double rho_sum(0.0);
 					double sum(0.0);
 					for( int dir=-1; dir<=0; ++dir ) for( int dim=0; dim<2; ++dim ) {
-						double rho = permute_clamp<float>(E_array(),mp[1-dim],i+dir*(dim==0),j+dir*(dim==1),k,pm);
+						double rho = permute_clamp<Real>(E_array(),mp[1-dim],i+dir*(dim==0),j+dir*(dim==1),k,pm);
 						rho_sum += rho;
 						sum ++;
 					}
@@ -246,8 +246,8 @@ protected:
 		};
 		//
 		// This function computes corner diagonal mass term [V]
-		auto corner_mass_matrix = [&]( const std::vector<float> &E ) {
-			std::vector<float> V(corner_size,0.0);
+		auto corner_mass_matrix = [&]( const std::vector<Real> &E ) {
+			std::vector<Real> V(corner_size,0.0);
 			m_parallel.for_each(m_shape.nodal(),[&](int i, int j, int k) {
 				unsigned row = X(i,j,k,m_shape[0]+1,m_shape[1]+1);
 				double rho_sum(0.0);
@@ -269,7 +269,7 @@ protected:
 		};
 		//
 		// This function computes the curl matrix [C]
-		auto curl_matrix = [&]( const std::vector<float> &A ) {
+		auto curl_matrix = [&]( const std::vector<Real> &A ) {
 			//
 			auto C = m_factory->allocate_matrix(face_size,Lhs_size);
 			m_parallel.for_each(DIM3,[&]( size_t dim ) {
@@ -297,7 +297,7 @@ protected:
 				auto remappable = [&]( unsigned i, unsigned j, unsigned k ) {
 					return ! corner_remap()(i,j,k) && solid(i,j,k) > -sqrt(DIM3)*m_dx;
 				};
-				areas().const_serial_all([&]( int dim, int i, int j, int k, const array3<float>::const_iterator &it ) {
+				areas().const_serial_all([&]( int dim, int i, int j, int k, const array3<Real>::const_iterator &it ) {
 					if( it() == 0.0 ) {
 						if( dim == 0 ) {
 							if( remappable(i,j,k)) corner_remap->set(i,j,k,1);
@@ -415,27 +415,27 @@ protected:
 		// Build face area matrix
 		timer.tick(); console::dump( "Computing [A] and [iA]...");
 		//
-		std::vector<float> A = face_area_matrix();
-		std::vector<float> iA = inverse_face_area_matrix(A);
+		std::vector<Real> A = face_area_matrix();
+		std::vector<Real> iA = inverse_face_area_matrix(A);
 		//
 		console::dump( "Done. Sum=%.4e. Took %s\n", std::accumulate(A.begin(),A.end(),0.0),
 			timer.stock("buildmatrix_matrices_A_and_iA").c_str());
 		//
 		// Build face mass matrix
 		timer.tick(); console::dump( "Computing [F]...");
-		std::vector<float> F = face_mass_matrix();
+		std::vector<Real> F = face_mass_matrix();
 		console::dump( "Done. Avge=%.4e. Took %s\n", std::accumulate(F.begin(),F.end(),0.0),
 			timer.stock("buildmatrix_matrices_F").c_str());
 		//
 		// Build edge mass matrix
 		timer.tick(); console::dump( "Computing [E]...");
-		std::vector<float> E = edge_mass_matrix(F);
+		std::vector<Real> E = edge_mass_matrix(F);
 		console::dump( "Done. Avge=%.4e. Took %s\n", std::accumulate(E.begin(),E.end(),0.0),
 			timer.stock("buildmatrix_matrices_E").c_str());
 		//
 		// Build corner mass matrix
 		timer.tick(); console::dump( "Computing [V]...");
-		std::vector<float> V = corner_mass_matrix(E);
+		std::vector<Real> V = corner_mass_matrix(E);
 		console::dump( "Done. Avge=%.4e. Took %s\n", std::accumulate(V.begin(),V.end(),0.0),
 			timer.stock("buildmatrix_matrices_V").c_str());
 		//
@@ -496,8 +496,8 @@ protected:
 		}
 		//
 		timer.tick(); console::dump( "Computing [iAF] and [iV]...");
-		std::vector<float> iAF (face_size);
-		std::vector<float> iV (corner_size);
+		std::vector<Real> iAF (face_size);
+		std::vector<Real> iV (corner_size);
 		m_parallel.for_each(face_size,[&]( size_t row ) {
 			iAF[row] = iA[row]*F[row]-1.0;
 		});
@@ -509,7 +509,7 @@ protected:
 		//
 		// Hacked matrix operations
 		auto hacked_multiply = [&]( const RCMatrix_ptr<size_t,double> At, const RCMatrix_ptr<size_t,double> A,
-			const std::vector<float> &diag, const std::vector<char> &invalidated, RCMatrix_ptr<size_t,double> result ) {
+			const std::vector<Real> &diag, const std::vector<char> &invalidated, RCMatrix_ptr<size_t,double> result ) {
 			//
 			assert(diag.size()==A->rows());
 			result->initialize(At->rows(),A->columns());
@@ -585,7 +585,7 @@ protected:
 		//
 		// Compute intermediate full vorticity
 		timer.tick(); console::dump( "Building [pu] = [rho][u]...");
-		std::vector<float> pu_vector(m_CZ_t->columns());
+		std::vector<Real> pu_vector(m_CZ_t->columns());
 		m_parallel.for_each(DIM3,[&]( size_t dim ) {
 			 m_parallel.for_each(rhos()[dim].shape(),[&]( int i, int j, int k, int tn ) {
 				unsigned row = Xf(i,j,k,dim,vec3i(0,1,2));
@@ -599,7 +599,7 @@ protected:
 		//
 		// Build right hand side vector
 		timer.tick(); console::dump( "Building right hand side [rhs~] = [CZ]^T[pu]...");
-		std::vector<float> rhs = m_CZ_t->multiply(pu_vector);
+		std::vector<Real> rhs = m_CZ_t->multiply(pu_vector);
 		//
 		console::dump("Done. Took %s\n", timer.stock("rhs_full").c_str());
 		console::dump("<<< Done. Took %s\n", timer.stock("build_linsystem").c_str());
@@ -638,7 +638,7 @@ protected:
 			console::write(get_argument_name()+"_clear_cache_solid", cleared[1]);
 			//
 			timer.tick(); console::dump( "Building the difference of the right hand side [rhs] = [rhs~]-[Lhs][x~]...");
-			std::vector<float> rhs_diff = Lhs->multiply(m_vecpotential);
+			std::vector<Real> rhs_diff = Lhs->multiply(m_vecpotential);
 			m_parallel.for_each(Lhs->rows(),[&]( size_t row ) {
 				rhs[row] -= rhs_diff[row];
 			});
@@ -725,18 +725,18 @@ protected:
 		}
 	}
 	void volume_correct(double dt,
-						macarray3<float> &velocity,
-						const array3<float> &solid,
-						const array3<float> &fluid,
-						const macarray3<float> &areas,
-						const macarray3<float> &rhos) {
+						macarray3<Real> &velocity,
+						const array3<Real> &solid,
+						const array3<Real> &fluid,
+						const macarray3<Real> &areas,
+						const macarray3<Real> &rhos) {
 		//
 		//
 		scoped_timer timer(this);
 		//
 		timer.tick(); console::dump( ">>> Volume Corrective Projection started...\n" );
 		//
-		shared_array3<float> pressure(m_shape);
+		shared_array3<Real> pressure(m_shape);
 		//
 		// The target linear system to build
 		timer.tick(); console::dump( "Building the high-res linear system [Lhs] and [rhs]..." );
@@ -879,7 +879,6 @@ protected:
 		//
 		config.get_bool("SecondOrderAccurateFluid",m_param.second_order_accurate_fluid,"Whether to enforce second order accuracy");
 		config.get_bool("SecondOrderAccurateSolid",m_param.second_order_accurate_solid,"Whether to enforce second order accuracy for solid surfaces");
-		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tension force coefficient");
 		config.get_double("CorrectionGain",m_param.gain,"Volume correctino gain");
 		config.get_bool("DiffSolve",m_param.diff_solve,"Whether we should perform difference-based linear system solve");
 	}
@@ -896,13 +895,12 @@ protected:
 		m_target_volume = m_current_volume = m_y_prev = 0.0;
 	}
 	//
-	virtual const array3<float> * get_pressure() const override {
+	virtual const array3<Real> * get_pressure() const override {
 		return nullptr;
 	}
 	//
 	struct Parameters {
 		//
-		double surftens_k {0.0};
 		double gain {1.0};
 		bool diff_solve {true};
 		bool second_order_accurate_fluid {true};
@@ -916,7 +914,7 @@ protected:
 	//
 	shape3 m_shape;
 	double m_dx {0.0};
-	std::vector<float> m_vecpotential;
+	std::vector<Real> m_vecpotential;
 	//
 	macutility3_driver m_macutility{this,"macutility3"};
 	parallel_driver m_parallel{this};

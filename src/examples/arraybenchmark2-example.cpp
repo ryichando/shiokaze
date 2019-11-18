@@ -61,7 +61,7 @@ private:
 		auto levelset_func = [&]( const vec2d &p ) {
 			double r (0.225);
 			double w (0.25);
-			vec2f center(0.5,0.5);
+			vec2r center(0.5,0.5);
 			return (p-center).len()-r;
 		};
 		//
@@ -124,7 +124,7 @@ private:
 		console::dump( "Done. Took %s\n", timer.stock("sequntial_write").c_str());
 	}
 	//
-	array2<float> m_array {this,"treearray2"};
+	array2<Real> m_array {this,"treearray2"};
 	parallel_driver m_parallel{this};
 	shape2 m_shape {2048,2048};
 	double m_dx;

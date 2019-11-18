@@ -22,10 +22,9 @@ class marchingcubes : public cellmesher3_interface {
 protected:
 	//
 	LONG_NAME("Marching Cubes Mesh Generator 3D")
-	MODULE_NAME("marchingcubes")
 	AUTHOR_NAME("Cory Bloyd")
 	//
-	virtual void generate_mesh( const array3<float> &levelset, std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) const override {
+	virtual void generate_mesh( const array3<Real> &levelset, std::vector<vec3d> &vertices, std::vector<std::vector<size_t> > &faces ) const override {
 		//
 		assert(m_dx);
 		vec3d global_origin = levelset.shape()==m_shape.nodal() ? vec3d() : m_dx * vec3d(0.5,0.5,0.5);

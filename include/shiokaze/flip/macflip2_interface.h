@@ -28,6 +28,7 @@
 #include <shiokaze/graphics/graphics_engine.h>
 #include <shiokaze/core/recursive_configurable_module.h>
 #include <shiokaze/math/vec.h>
+#include <shiokaze/array/bitarray2.h>
 #include <shiokaze/array/macarray2.h>
 #include <functional>
 //
@@ -50,19 +51,19 @@ public:
 	 @param[in] solid 壁のレベルセット関数。
 	 @param[in] velocity 初期速度場を与えるための速度関数。
 	 */
-	virtual size_t seed( const array2<float> &fluid,
+	virtual size_t seed( const array2<Real> &fluid,
 						 std::function<double(const vec2d &p)> solid,
-						 const macarray2<float> &velocity ) = 0;
+						 const macarray2<Real> &velocity ) = 0;
 	//
 	/// \~english @brief Structure for mass and momentum.
 	/// \~japanese @brief 質量と運動量の構造体。
 	struct mass_momentum2 {
 		/// \~english @brief Mass.
 		/// \~japanese @brief 質量。
-		float mass;
+		Real mass;
 		/// \~english @brief Momentum.
 		/// \~japanese @brief 運動量。
-		float momentum;
+		Real momentum;
 	};
 	/**
 	 \~english @brief Splat FLIP momentum and mass onto the grids.
@@ -105,7 +106,7 @@ public:
 	 @param[in] fluid 液体のレベルセット関数。
 	 @param[in] velocity 速度場。
 	 */
-	virtual void correct( std::function<double(const vec2d &p)> fluid, const macarray2<float> &velocity ) = 0;
+	virtual void correct( std::function<double(const vec2d &p)> fluid, const macarray2<Real> &velocity ) = 0;
 	/**
 	 \~english @brief Update fluid level set.
 	 @param[in] fluid Liquid level set.
@@ -114,7 +115,7 @@ public:
 	 @param[in] fluid 液体のレベルセット。
 	 @param[in] solid 壁のレベルセット関数。
 	 */
-	virtual void update( std::function<double(const vec2d &p)> solid, array2<float> &fluid ) = 0;
+	virtual void update( std::function<double(const vec2d &p)> solid, array2<Real> &fluid ) = 0;
 	/**
 	 \~english @brief Update momentum of FLIP particles.
 	 @param[in] prev_velocity Velocity before the pressure projection.
@@ -129,8 +130,8 @@ public:
 	 @param[in] gravity 重力定数。
 	 @param[in] PICFLIP PIC と FLIP を補間する定数。1.0 なら FLIP を、0.0 なら PIC となる。もし APIC が使用される時、このパラメータは無視される。
 	 */
-	virtual void update( const macarray2<float> &prev_velocity,
-						 const macarray2<float> &new_velocity,
+	virtual void update( const macarray2<Real> &prev_velocity,
+						 const macarray2<Real> &new_velocity,
 						 double dt, vec2d gravity, double PICFLIP ) = 0;
 	/**
 	 \~english @brief Directly update momentum of FLIP particles.
@@ -138,14 +139,14 @@ public:
 	 \~japanese @brief FLIP 粒子の運動量を直接更新する。
 	 @param[in] func 新しい運動量を指定する関数。
 	 */
-	virtual void update( std::function<void(const vec2f &p, vec2f &velocity, float &mass, bool bullet )> func ) = 0;
+	virtual void update( std::function<void(const vec2r &p, vec2r &velocity, Real &mass, bool bullet )> func ) = 0;
 	/**
 	 \~english @brief Delete particles where the function test passes.
 	 @param[in] test_function Test function.
 	 \~japanese @brief テスト関数をパスする粒子を削除する。
 	 @param[in] test_function テスト関数。
 	 */
-	virtual size_t remove(std::function<double(const vec2f &p, bool bullet)> test_function ) = 0;
+	virtual size_t remove(std::function<double(const vec2r &p, bool bullet)> test_function ) = 0;
 	/**
 	 \~english @brief Draw FLIP particles.
 	 @param[in] g Graphics engine.
@@ -170,17 +171,17 @@ public:
 		 \~english @brief Position.
 		 \~japanese @brief 位置。
 		 */
-		vec2f p;
+		vec2r p;
 		/**
 		 \~english @brief Radius.
 		 \~japanese @brief 半径。
 		 */
-		float r;
+		Real r;
 		/**
 		 \~english @brief Value of sizing function.
 		 \~japanese @brief サイズ関数の値。
 		 */
-		float sizing_value;
+		Real sizing_value;
 		/**
 		 \~english @brief Whether the particle is ballistic.
 		 \~japanese @brief 弾丸粒子か。
@@ -190,7 +191,7 @@ public:
 		 \~english @brief Time when bullet is marked.
 		 \~japanese @brief 弾丸粒子にマーキングされた時の時間
 		 */
-		float bullet_time;
+		Real bullet_time;
 	};
 	/**
 	 \~english @brief Get all the FLIP particles.
@@ -203,7 +204,7 @@ public:
 protected:
 	//
 	// Compute sizing function
-	virtual void compute_sizing_func( const array2<float> &fluid, const bitarray2 &mask, const macarray2<float> &velocity, array2<float> &sizing_array ) const {
+	virtual void compute_sizing_func( const array2<Real> &fluid, const bitarray2 &mask, const macarray2<Real> &velocity, array2<Real> &sizing_array ) const {
 		sizing_array.clear(1.0);
 	}
 	//

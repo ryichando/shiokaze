@@ -45,7 +45,7 @@ public:
 	 @param[in-out] phi_array レベルセットグリッド。
 	 @param[in] width 再初期化を行う半分のバンド幅 (セル幅)。
 	 */
-	virtual void redistance( array3<float> &phi_array, unsigned width ) = 0;
+	virtual void redistance( array3<Real> &phi_array, unsigned width ) = 0;
 	//
 private:
 	virtual void initialize( const shape3 &shape, double dx ) {};

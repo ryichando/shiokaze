@@ -50,7 +50,7 @@ void macflipsmoke2::post_initialize () {
 	//
 	macsmoke2::post_initialize();
 	//
-	shared_array2<float> fluid(m_shape);
+	shared_array2<Real> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
 	m_flip->seed(fluid(),[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
 }
@@ -73,7 +73,7 @@ void macflipsmoke2::idle() {
 	m_flip->correct([&](const vec2d &p){ return -1.0; },m_velocity);
 	//
 	// Reseed particles
-	shared_array2<float> fluid(m_shape);
+	shared_array2<Real> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
 	m_flip->seed(m_fluid,
 		[&](const vec2d &p){ return interpolate_solid(p); },
@@ -102,7 +102,7 @@ void macflipsmoke2::idle() {
 	});
 	//
 	// Save the current velocity
-	shared_macarray2<float> save_velocity(m_velocity);
+	shared_macarray2<Real> save_velocity(m_velocity);
 	//
 	// Add external force
 	inject_external_force(m_velocity);

@@ -77,7 +77,7 @@ private:
 		m_array.set_as_levelset(2.0*m_dx);
 		m_time = 0.0;
 		fill(m_time);
-		m_camera->set_bounding_box(vec3d().v,m_shape.box(m_dx).v,true);
+		m_camera->set_bounding_box(vec3d().v,m_shape.box(m_dx).v);
 	}
 	//
 	virtual void idle() override {
@@ -108,7 +108,7 @@ private:
 	}
 	//
 	bool m_mode {false};
-	array3<float> m_array {this};
+	array3<Real> m_array {this};
 	shape3 m_shape {32,32,32};
 	double m_dx, m_time {0.0};
 	gridvisualizer3_driver m_gridvisualizer{this,"gridvisualizer3"};

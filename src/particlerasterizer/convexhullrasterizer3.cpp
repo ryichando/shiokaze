@@ -31,10 +31,9 @@ class convexhullrasterizer3 : public particlerasterizer3_interface {
 protected:
 	//
 	LONG_NAME("Convex Hull Rasterizer 3D")
-	MODULE_NAME("convexhullrasterizer3")
 	ARGUMENT_NAME("ConvexHullRasterizer")
 	//
-	virtual void build_levelset( array3<float> &fluid, const bitarray3 &mask, const std::vector<Particle3> &particles ) const override {
+	virtual void build_levelset( array3<Real> &fluid, const bitarray3 &mask, const std::vector<Particle3> &particles ) const override {
 		//
 		auto sqr = [](double x) { return x*x; };
 		auto getParticleConvextHullLevelsetSphere = [&]( const vec3d p, const Particle3 &p0 ) {
@@ -202,14 +201,14 @@ protected:
 			return min_phi;
 		};
 		//
-		std::vector<vec3f> points(particles.size());
+		std::vector<vec3r> points(particles.size());
 		for( size_t n=0; n<points.size(); ++n ) {
 			points[n] = particles[n].p;
 		}
 		const_cast<pointgridhash3_driver &>(m_pointgridhash)->sort_points(points);
 		//
 		fluid.clear();
-		fluid.activate_as(mask);
+		fluid.activate_as_bit(mask);
 		fluid.parallel_actives( [&](int i, int j, int k, auto &it ) {
 			std::vector<size_t> neighbors = m_pointgridhash->get_cell_neighbors(vec3i(i,j,k),pointgridhash3_interface::USE_NODAL);
 			it.set(getConvexhullLevelset(m_dx*vec3i(i,j,k).cell(),neighbors));

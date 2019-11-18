@@ -37,7 +37,6 @@ public:
 protected:
 	//
 	LONG_NAME("MAC Backward FLIP Smoke 3D")
-	MODULE_NAME("macbackwardflipsmoke3")
 	//
 	virtual void idle() override;
 	virtual void draw( graphics_engine &g ) const override;

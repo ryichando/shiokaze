@@ -47,8 +47,6 @@ public:
 	}
 private:
 	//
-	MODULE_NAME("graphplotter")
-	//
 	virtual void clear() override {
 		//
 		m_entries.clear();

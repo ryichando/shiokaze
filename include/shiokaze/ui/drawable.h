@@ -32,6 +32,8 @@
 #include <shiokaze/ui/camera3_interface.h>
 #elif SPATIAL_DIM == 2
 #include <shiokaze/ui/camera2_interface.h>
+#else
+#error DSPATIAL_DIM must be defined either 2 or 3.
 #endif
 //
 SHKZ_BEGIN_NAMESPACE
@@ -60,11 +62,15 @@ public:
 	 @param[in] イベントの情報。
 	 */
 	virtual bool handle_event( const event_structure &event ) override {
+#ifdef SPATIAL_DIM
 		bool handled = m_camera->handle_event(event);
 		if( ! handled && m_camera->relay_event(event)) {
 			return UI_interface::handle_event(m_camera->convert(event));
 		}
 		return handled;
+#else
+		return UI_interface::handle_event(event);
+#endif
 	}
 	/**
 	 \~english @brief Re-initialize instance.
@@ -110,7 +116,11 @@ public:
 	 @return 現在のアイコン。
 	 */
 	virtual UI_interface::CURSOR_TYPE get_current_cursor() const override {
+#ifdef SPATIAL_DIM
 		return m_camera->get_current_cursor();
+#else
+		return UI_interface::ARROW_CURSOR;
+#endif
 	}
 	//
 protected:

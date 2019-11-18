@@ -25,7 +25,7 @@
 #ifndef SHKZ_SHARED_ARRAY_CORE3_H
 #define SHKZ_SHARED_ARRAY_CORE3_H
 //
-#include <shiokaze/array/shape.h>
+#include <shiokaze/math/shape.h>
 #include <functional>
 //
 SHKZ_BEGIN_NAMESPACE

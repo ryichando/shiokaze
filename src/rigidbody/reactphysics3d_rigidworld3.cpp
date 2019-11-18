@@ -58,10 +58,12 @@ public:
 	virtual velocity3 get_velocity() const override {
 		return m_velocity;
 	}
-	virtual void getOpenGLMatrix( float m[16] ) const override {
+	virtual void getOpenGLMatrix( Real m[16] ) const override {
 		rp3d::Transform transform = m_body->getTransform();
+		rp3d::decimal _m[16];
 		transform.setPosition( transform.getPosition() / m_scale );
-		transform.getOpenGLMatrix(m);
+		transform.getOpenGLMatrix(_m);
+		for( int n=0; n<16; ++n ) m[n] = _m[n];
 	}
 	//
 	std::vector<polyshape3> m_polyshapes;
@@ -74,7 +76,7 @@ public:
 	//
 	struct mesh_data {
 		std::vector<int> triangle_array;
-		std::vector<float> vertices_array;
+		std::vector<Real> vertices_array;
 		std::vector<rp3d::PolygonVertexArray::PolygonFace> polyfaces;
 		rp3d::PolygonVertexArray *polygon_vertex_array {nullptr};
 		rp3d::PolyhedronMesh *polyhedron_mesh {nullptr};
@@ -88,7 +90,6 @@ class reactphysics3d_rigidworld3 : public rigidworld3_interface {
 protected:
 	//
 	LONG_NAME("Reactphysics 3D Rigidbody Engine")
-	MODULE_NAME("reactphysics3d_rigidworld3")
 	AUTHOR_NAME("Daniel Chappuis")
 	//
 	virtual ~reactphysics3d_rigidworld3() {
@@ -189,7 +190,7 @@ protected:
 			rigidbody.m_mesh_data_array.push_back(mesh_data);
 			//
 			std::vector<int> &triangle_array = mesh_data->triangle_array;
-			std::vector<float> &vertices_array = mesh_data->vertices_array;
+			std::vector<Real> &vertices_array = mesh_data->vertices_array;
 			//
 			vec3d approx_center;
 			double sum (0.0);
@@ -221,7 +222,7 @@ protected:
 				}
 				//
 				mesh_data->polygon_vertex_array = new rp3d::PolygonVertexArray(
-					vertices.size(), vertices_array.data() , 3*sizeof(float), triangle_array.data() , sizeof(int), faces.size(), polyfaces.data(),
+					vertices.size(), vertices_array.data() , 3*sizeof(Real), triangle_array.data() , sizeof(int), faces.size(), polyfaces.data(),
 					rp3d::PolygonVertexArray::VertexDataType::VERTEX_FLOAT_TYPE,
 					rp3d::PolygonVertexArray::IndexDataType::INDEX_INTEGER_TYPE
 				);
@@ -234,7 +235,7 @@ protected:
 				assert( attribute.density == 0.0 );
 				//
 				rp3d::TriangleVertexArray* triangle_soup = new rp3d::TriangleVertexArray(
-					vertices.size(), vertices_array.data(), 3*sizeof(float), faces.size(), triangle_array.data() , 3*sizeof(int),
+					vertices.size(), vertices_array.data(), 3*sizeof(Real), faces.size(), triangle_array.data() , 3*sizeof(int),
 					rp3d::TriangleVertexArray::VertexDataType::VERTEX_FLOAT_TYPE,
 					rp3d::TriangleVertexArray::IndexDataType::INDEX_INTEGER_TYPE
 				);
@@ -294,7 +295,7 @@ protected:
 			//
 			if( rigidbody.m_attribute.drawable ) {
 				//
-				float m[16];
+				Real m[16];
 				rigidbody.getOpenGLMatrix(m);
 				//
 				if( rigidbody.m_attribute.density == 0.0 ) {

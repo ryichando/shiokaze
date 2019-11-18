@@ -35,7 +35,6 @@ class sequential_splitter : public loop_splitter {
 protected:
 	//
 	LONG_NAME("Sequential Loop Splitter")
-	MODULE_NAME("sequential_splitter")
 	//
 	virtual const void* new_context ( size_t size, int num_threads ) const override {
 		//

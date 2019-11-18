@@ -37,9 +37,9 @@ class unstructured_fastmarch2 {
 public:
 	//
 	static void fastmarch(
-					std::function<vec2f( size_t i )> position_func,
+					std::function<vec2r( size_t i )> position_func,
 					std::function<void( size_t i, std::function<void( size_t j )> func )> iterate_connections,
-					std::vector<float> &levelset,
+					std::vector<Real> &levelset,
 					std::vector<char> &fixed,
 					double distance,
 					const parallel_driver &parallel,
@@ -71,7 +71,7 @@ public:
 			for( const auto &e : min_dx_slot ) front_distance = std::min(front_distance,e);
 			//
 			std::vector<char> fixed_save (fixed);
-			std::vector<float> levelset_save (levelset);
+			std::vector<Real> levelset_save (levelset);
 			parallel.for_each(fixed.size(),[&](size_t n) {
 				//
 				if( ! fixed_save[n] ) {
@@ -104,7 +104,7 @@ public:
 						});
 						//
 						// Levelset extrapolation
-						float sgn = levelset_save[n] > 0.0 ? 1 : -1;
+						Real sgn = levelset_save[n] > 0.0 ? 1 : -1;
 						if( num_valid > 2 ) {
 							//
 							// Compute shape function if necessary
@@ -145,8 +145,8 @@ public:
 						fixed[n] = true;
 						//
 						// Clamp
-						float levelset_min (1.0);
-						float levelset_max (-1.0);
+						Real levelset_min (1.0);
+						Real levelset_max (-1.0);
 						for( unsigned n=1; n<tri.size(); ++n ) {
 							levelset_min = std::min(levelset_min,levelset_save[tri[n]]);
 							levelset_max = std::max(levelset_max,levelset_save[tri[n]]);

@@ -49,12 +49,12 @@ void macbackwardflipsmoke3::idle() {
 	timer.tick(); console::dump( ">>> %s step (dt=%.2e,CFL=%.2f) started...\n", dt, CFL, console::nth(step).c_str());
 	//
 	// Set of variables
-	shared_macarray3<float> velocity_reconstructed(m_shape);
-	shared_macarray3<float> u_reconstructed(m_shape);
+	shared_macarray3<Real> velocity_reconstructed(m_shape);
+	shared_macarray3<Real> u_reconstructed(m_shape);
 	//
 	// Save the current density and velocity
-	shared_array3<float> density0 (m_density);
-	shared_macarray3<float> velocity0(m_velocity);
+	shared_array3<Real> density0 (m_density);
+	shared_macarray3<Real> velocity0(m_velocity);
 	//
 	// Backtrace the velocity back in time
 	m_backwardflip->backtrace(m_solid,m_fluid);
@@ -67,7 +67,7 @@ void macbackwardflipsmoke3::idle() {
 		m_macutility->extrapolate_and_constrain_velocity(m_solid,velocity_reconstructed(),extrapolated_width);
 		//
 		// Compute the dirty velocity
-		shared_macarray3<float> u(velocity_reconstructed());
+		shared_macarray3<Real> u(velocity_reconstructed());
 		m_macadvection->advect_vector(u(),m_velocity,m_fluid,dt);
 		m_velocity.copy(u());
 		//
@@ -86,7 +86,7 @@ void macbackwardflipsmoke3::idle() {
 	}
 	//
 	// Save the velocity before projection
-	shared_macarray3<float> velocity_b4_proj(m_velocity);
+	shared_macarray3<Real> velocity_b4_proj(m_velocity);
 	//
 	// Add external force
 	inject_external_force (m_velocity);
@@ -95,7 +95,7 @@ void macbackwardflipsmoke3::idle() {
 	add_buoyancy_force (m_velocity,m_density,dt);
 	//
 	// Add source
-	shared_array3<float> density_added(m_shape.cell());
+	shared_array3<Real> density_added(m_shape.cell());
 	add_source(m_velocity,density_added(),m_timestepper->get_current_time(),dt);
 	//
 	// Project
@@ -106,7 +106,7 @@ void macbackwardflipsmoke3::idle() {
 	} else {
 		//
 		// Put buffer with one layer
-		shared_macarray3<float> g(m_velocity);
+		shared_macarray3<Real> g(m_velocity);
 		g() -= velocity_b4_proj();
 		m_backwardflip->register_buffer(m_velocity,velocity0(),&velocity_reconstructed(),&g(),&m_density,&density0(),&density_added(),dt);
 	}

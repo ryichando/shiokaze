@@ -25,12 +25,19 @@
 #ifndef SHKZ_ARRAY3_H
 #define SHKZ_ARRAY3_H
 //
-#include "bitarray3.h"
+#include <shiokaze/math/vec.h>
+#include <shiokaze/parallel/parallel_driver.h>
+#include <cassert>
+#include <cstdio>
+#include <algorithm>
+#include <utility>
+#include <shiokaze/math/shape.h>
+#include "array_core3.h"
 //
 SHKZ_BEGIN_NAMESPACE
 //
 /** @file */
-/// \~english @brief Three dimensional grid class designed to be defined as instance member in recursive_configurable class.
+/// \~english @brief Three dimensional array class designed to be defined as instance member in recursive_configurable class.
 /// \~japanese @brief recursive_configurable インスタンスのメンバーインスタンスとして定義可能な3次元配列クラス。
 template<class T> class array3 : public recursive_configurable {
 public:
@@ -400,8 +407,8 @@ public:
 	 @param[in] array 目標となるグリッド。
 	 @param[in] offset 目標となるグリッドに適用されるオフセット。
 	 */
-	void activate_as( const bitarray3 &array, const vec3i &offset=vec3i() ) {
-		array.const_serial_actives([&](int i, int j, int k, const auto &it) {
+	template <class Y> void activate_as_bit( Y &array, const vec3i &offset=vec3i() ) {
+		array.const_serial_actives([&](int i, int j, int k) {
 			const vec3i &pi = vec3i(i,j,k) + offset;
 			if( ! this->shape().out_of_bounds(pi) && ! this->active(pi)) {
 				this->set(pi,(*this)(pi));
@@ -1606,9 +1613,9 @@ public:
 	 \~japanese @brief 塗りつぶされた全てのセルを読み込み可能に限定してシリアルに処理する。
 	 @param[in] func それぞれのセルを処理する関数。\c true を返すと、ループを中断する。
 	 */
-	void interruptible_const_serial_inside( std::function<bool(int i, int j, int k, iterator& it)> func ) {
+	void interruptible_const_serial_inside( std::function<bool(int i, int j, int k, const const_iterator& it)> func ) const {
 		m_core->const_serial_inside([&](int i, int j, int k, const void *value_ptr, const bool &active ){
-			iterator it(value_ptr,active,true,m_fill_value);
+			const_iterator it(value_ptr,active,true,m_fill_value);
 			return func(i,j,k,it);
 		});
 	}
@@ -1751,6 +1758,20 @@ public:
 		 \~japanese @brief 演算子によるグリッド操作がアクティブセルだけに影響を与えるべきか。
 		 */
 		bool touch_only_actives;
+		/**
+		 \~english @brief Comparison operator.
+		 \~japanese @brief 比較オペラータ。
+		 */
+		bool operator==(const type3 &rhs) const {
+			return 
+				core_name == rhs.core_name &&
+				shape == rhs.shape &&
+				background_value == rhs.background_value &&
+				fill_value && rhs.fill_value &&
+				is_fillable == rhs.is_fillable &&
+				is_levelset == rhs.is_levelset &&
+				touch_only_actives == rhs.touch_only_actives;
+		}
 	};
 	/**
 	 \~english @brief Get the type of this grid.

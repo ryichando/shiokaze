@@ -94,7 +94,7 @@ public:
 	//https://stackoverflow.com/questions/983999/simple-3x3-matrix-inverse-code-c
 	static bool getInverseOpenGLMatrix( const rigidbody2_interface *rigidbody, double inv[9] ) {
 		//
-		float m[9];
+		Real m[9];
 		rigidbody->getOpenGLMatrix(m);
 		//
 		double det = m[0]*(m[1+3*1]*m[2+3*2]-m[1+3*2]*m[2+3*1])

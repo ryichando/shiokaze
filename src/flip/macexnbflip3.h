@@ -33,10 +33,9 @@ class macexnbflip3 : public macnbflip3 {
 protected:
 	//
 	LONG_NAME("MAC Extended Narrowband FLIP 3D")
-	MODULE_NAME("macexnbflip3")
 	//
 	virtual void configure( configuration &config ) override;
-	virtual void compute_sizing_func( const array3<float> &fluid, const bitarray3 &mask, const macarray3<float> &velocity, array3<float> &sizing_array ) const override;
+	virtual void compute_sizing_func( const array3<Real> &fluid, const bitarray3 &mask, const macarray3<Real> &velocity, array3<Real> &sizing_array ) const override;
 	//
 	struct Parameters {
 		unsigned diffuse_count {4};
@@ -52,10 +51,10 @@ protected:
 	//
 private:
 	//
-	virtual void internal_sizing_func(array3<float> &sizing_array,
+	virtual void internal_sizing_func(array3<Real> &sizing_array,
 							const bitarray3 &mask,
-							const array3<float> &fluid,
-							const macarray3<float> &velocity ) const;
+							const array3<Real> &fluid,
+							const macarray3<Real> &velocity ) const;
 };
 //
 SHKZ_END_NAMESPACE

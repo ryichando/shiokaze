@@ -119,13 +119,6 @@ public:
 		m_object->send_message(message,ptr);
 	}
 	/**
-	 \~english @brief Get the module name
-	 @return module name
-	 \~japanese @brief モジュールの名前を得る
-	 @return モジュールの名前
-	 */
-	std::string get_module_name() const { return m_object->get_module_name(); }
-	/**
 	 \~english @brief Set name.
 	 @param[in] long_name Module name.
 	 @param[in] argname Argument name for this instance.

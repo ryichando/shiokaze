@@ -30,9 +30,7 @@ SHKZ_USING_NAMESPACE
 class macvisualizer3 : public macvisualizer3_interface {
 protected:
 	//
-	MODULE_NAME("macvisualizer3")
-	//
-	virtual void draw_velocity( graphics_engine &g, const macarray3<float> &velocity ) const override {
+	virtual void draw_velocity( graphics_engine &g, const macarray3<Real> &velocity ) const override {
 		if( m_param.draw_velocity ) {
 			for( int dim : DIMS3 ) {
 				if( dim == 0 ) g.color4(0.5,0.5,1.0,0.75);
@@ -51,7 +49,7 @@ protected:
 		}
 	}
 	//
-	virtual void visualize_scalar( graphics_engine &g, const macarray3<float> &array ) const override {
+	virtual void visualize_scalar( graphics_engine &g, const macarray3<Real> &array ) const override {
 		// TO BE IMPLEMENTED
 	}
 	//

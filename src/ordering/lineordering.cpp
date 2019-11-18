@@ -33,7 +33,6 @@ class lineordering : public ordering_core {
 protected:
 	//
 	LONG_NAME("Line Ordering Encoder/Decoder")
-	MODULE_NAME("lineordering")
 	//
 	virtual const void* new_context( const shape2& shape ) const override {
 		context *cx = new context;

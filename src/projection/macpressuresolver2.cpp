@@ -39,7 +39,6 @@ class macpressuresolver2 : public macproject2_interface {
 protected:
 	//
 	LONG_NAME("MAC Pressure Solver 2D")
-	MODULE_NAME("macpressuresolver2")
 	//
 	virtual void set_target_volume( double current_volume, double target_volume ) override {
 		m_current_volume = current_volume;
@@ -47,13 +46,14 @@ protected:
 	}
 	//
 	virtual void project(double dt,
-						macarray2<float> &velocity,
-						const array2<float> &solid,
-						const array2<float> &fluid,
+						macarray2<Real> &velocity,
+						const array2<Real> &solid,
+						const array2<Real> &fluid,
+						double surface_tension,
 						const std::vector<signed_rigidbody2_interface *> *rigidbodies ) override {
 		//
-		shared_macarray2<float> areas(velocity.shape());
-		shared_macarray2<float> rhos(velocity.shape());
+		shared_macarray2<Real> areas(velocity.shape());
+		shared_macarray2<Real> rhos(velocity.shape());
 		//
 		// Compute fractions
 		m_macutility->compute_area_fraction(solid,areas());
@@ -73,10 +73,10 @@ protected:
 		}
 		//
 		// Compute curvature and substitute to the right hand side for the surface tension force
-		if( m_param.surftens_k ) {
+		if( surface_tension ) {
 			//
 			// Compute curvature and store them into an array
-			shared_array2<float> curvature(fluid.shape());
+			shared_array2<Real> curvature(fluid.shape());
 			curvature->activate_as(fluid);
 	 		curvature->parallel_actives([&](int i, int j, auto &it, int tn ) {
 				double value = (
@@ -89,7 +89,7 @@ protected:
 				it.set(value);
 			});
 			//
-			double kappa = m_param.surftens_k;
+			double kappa = surface_tension;
 			velocity.parallel_actives([&](int dim, int i, int j, auto &it, int tn ) {
 				double rho = rhos()[dim](i,j);
 				//
@@ -237,7 +237,7 @@ protected:
 		});
 	}
 	//
-	virtual const array2<float> * get_pressure() const override {
+	virtual const array2<Real> * get_pressure() const override {
 		return &m_pressure;
 	}
 	//
@@ -253,7 +253,6 @@ protected:
 		config.get_bool("SecondOrderAccurateFluid",m_param.second_order_accurate_fluid,"Whether to enforce second order accuracy for free surfaces");
 		config.get_bool("SecondOrderAccurateSolid",m_param.second_order_accurate_solid,"Whether to enforce second order accuracy for solid surfaces");
 		config.get_bool("DrawPressure",m_param.draw_pressure,"Whether to draw pressure");
-		config.get_double("SurfaceTension",m_param.surftens_k,"Surface tenstion coefficient");
 		config.get_double("Gain",m_param.gain,"Rate for volume correction");
 		config.get_bool("WarmStart",m_param.warm_start,"Start from the solution of previous pressure");
 		config.set_default_bool("ReportProgress",false);
@@ -273,7 +272,6 @@ protected:
 	//
 	struct Parameters {
 		//
-		double surftens_k {0.0};
 		double gain {1.0};
 		bool ignore_solid {false};
 		bool draw_pressure {true};
@@ -285,7 +283,7 @@ protected:
 	//
 	shape2 m_shape;
 	double m_dx {0.0};
-	array2<float> m_pressure{this};
+	array2<Real> m_pressure{this};
 	//
 	macutility2_driver m_macutility{this,"macutility2"};
 	gridvisualizer2_driver m_gridvisualizer{this,"gridvisualizer2"};

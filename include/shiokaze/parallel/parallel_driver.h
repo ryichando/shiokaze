@@ -29,7 +29,7 @@
 #include <vector>
 #include <shiokaze/core/credit.h>
 #include <shiokaze/core/configurable.h>
-#include <shiokaze/array/shape.h>
+#include <shiokaze/math/shape.h>
 #include "parallel_core.h"
 #include "loop_splitter.h"
 //
@@ -68,7 +68,9 @@ public:
 	 @param[in] parallel_name 並列化エンジンのコア名前。"stdthread" がデフォルトとして設定される。
 	 @param[in] splitter_name 並列化分散コアの名前。"sequential_splitter" がデフォルトとして設定される。
 	 */
-	parallel_driver ( std::string parallel_name=shkz_default_parallel_name, std::string splitter_name=shkz_default_splitter_name ) : parallel_driver(nullptr,parallel_name,splitter_name) {}
+	parallel_driver ( std::string parallel_name=shkz_default_parallel_name, std::string splitter_name=shkz_default_splitter_name ) : parallel_driver(nullptr,parallel_name,splitter_name) {
+		setup_now();
+	}
 	/**
 	 \~english @brief Get the number of maximal threads set.
 	 @return Number of threads set.

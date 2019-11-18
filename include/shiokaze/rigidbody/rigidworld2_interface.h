@@ -151,7 +151,7 @@ public:
 	 \~japanese @brief OpenGL の行列情報を得る。
 	 @param[out] m OpenGL フォーマットの行列。
 	 */
-	void getOpenGLMatrix( float m[9] ) const {
+	void getOpenGLMatrix( Real m[9] ) const {
 		position2 position = get_position();
 		m[0] = cos(position.angle); m[3] = -sin(position.angle); m[6] = position.center[0];
 		m[1] = sin(position.angle); m[4] = cos(position.angle); m[7] = position.center[1];

@@ -47,21 +47,21 @@ public:
 	 @param[in] solid 壁面のレベルセット。
 	 @param[in] fluid 流体のレベルセット。
 	 */
-	virtual bool backtrace( const array2<float> &solid, const array2<float> &fluid ) = 0;
+	virtual bool backtrace( const array2<Real> &solid, const array2<Real> &fluid ) = 0;
 	/**
 	 \~english @brief Get the reconstructed velocity field after the long-term backtrace.
 	 @param[out] u_reconstructed Reconstructed velocity.
 	 \~japanese @brief バックトレース後に再構築された速度場を得る。
 	 @param[out] u_reconstructed 再構築された速度場。
 	 */
-	virtual bool fetch( macarray2<float> &u_reconstructed ) const = 0;
+	virtual bool fetch( macarray2<Real> &u_reconstructed ) const = 0;
 	/**
 	 \~english @brief Get the reconstructed density field after the long-term backtrace.
 	 @param[out] density_reconstructed Reconstructed density.
 	 \~japanese @brief バックトレース後に再構築された密度場を得る。
 	 @param[out] density_reconstructed 再構築された密度場。
 	 */
-	virtual bool fetch( array2<float> &density_reconstructed ) const = 0;
+	virtual bool fetch( array2<Real> &density_reconstructed ) const = 0;
 	/**
 	 \~english @brief Add a layer of velocity field.
 	 @param[in] u1 Velocity at the end of the step.
@@ -83,13 +83,13 @@ public:
 	 @param[in] dt 現在のタイムステップ幅。
 	 */
 	virtual void register_buffer(
-						const macarray2<float> &u1,
-						const macarray2<float> &u0,
-						const macarray2<float> *u_reconstructed,
-						const macarray2<float> *g,
-						const array2<float> *d1,
-						const array2<float> *d0,
-						const array2<float> *d_added,
+						const macarray2<Real> &u1,
+						const macarray2<Real> &u0,
+						const macarray2<Real> *u_reconstructed,
+						const macarray2<Real> *g,
+						const array2<Real> *d1,
+						const array2<Real> *d0,
+						const array2<Real> *d_added,
 						double dt ) = 0;
 	/**
 	 \~english @brief Draw simulation information for debugging.
