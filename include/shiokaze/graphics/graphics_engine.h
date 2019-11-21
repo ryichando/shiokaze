@@ -58,6 +58,13 @@ public:
 		/// \~japanese @brief 3次元投影を行えるか
 		_3D
 	};
+	/**
+	 \~english @brief Get if the feature is supported.
+	 @param[in] feature Feature to examine.
+	 @return \c true if suppported \c false otherwise.
+	 \~japanese @brief 機能がサポートされているか得る。
+	 @return もしサポートされていれば \c true が、そうでなければ \c false が返る。
+	**/
 	virtual bool get_supported ( FEATURE feature ) const = 0;
 	/**
 	 \~english @brief Set view port.
