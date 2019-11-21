@@ -59,10 +59,11 @@ public:
 		_3D
 	};
 	/**
-	 \~english @brief Get if the feature is supported.
+	 \~english @brief Get if a specified feature is supported.
 	 @param[in] feature Feature to examine.
 	 @return \c true if suppported \c false otherwise.
-	 \~japanese @brief 機能がサポートされているか得る。
+	 \~japanese @brief 指定された機能がサポートされているか得る。
+	 @param[in] feature サポートされているか確認したい機能
 	 @return もしサポートされていれば \c true が、そうでなければ \c false が返る。
 	**/
 	virtual bool get_supported ( FEATURE feature ) const = 0;
