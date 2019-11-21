@@ -31,6 +31,7 @@
 #include <iostream>
 #include <memory>
 #include <cassert>
+#include "messageable.h"
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -45,7 +46,7 @@ SHKZ_BEGIN_NAMESPACE
 //
 /// \~english @brief Module class.
 /// \~japanese @brief モジュールクラス。
-class module : public credit {
+class module : public credit, public messageable {
 public:
 	/**
 	 \~english @brief Default constructor for module.
@@ -57,24 +58,6 @@ public:
 	 \~japanese @brief モジュールのデフォルトデストラクタ。
 	 */
 	virtual ~module();
-	/**
-	 \~english @brief Send a message to the core module.
-	 @param[in] message Message
-	 @param[in] ptr Pointer to some value.
-	 \~japanese @brief コアモジュールにメッセージを送る
-	 @param[in] message メッセージ
-	 @param[in] ptr あるポインターの値
-	 */
-	virtual void send_message( unsigned message, void *ptr ) {}
-	/**
-	 \~english @brief Send a message to the core module.
-	 @param[in] message Message
-	 @param[in] ptr Pointer to some value.
-	 \~japanese @brief コアモジュールにメッセージを送る
-	 @param[in] message メッセージ
-	 @param[in] ptr あるポインターの値
-	 */
-	virtual void send_message( unsigned message, void *ptr ) const {}
 	/**
 	 \~english @brief Get the module name
 	 @return module name

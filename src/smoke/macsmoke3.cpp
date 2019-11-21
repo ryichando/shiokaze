@@ -446,7 +446,7 @@ void macsmoke3::render_density( int frame ) const {
 		}
 	}
 	//
-	std::string render_command = console::format_str("cd %s; python render.py %d %d %g %s",
+	std::string render_command = console::format_str("cd %s; /usr/bin/python render.py %d %d %g %s",
 				mitsuba_path.c_str(),frame,m_param.render_sample_count,m_param.volume_scale,"img");
 	//
 	console::dump("Running command: %s\n", render_command.c_str());

@@ -1,7 +1,7 @@
 #ifndef ARRAY3_H
 #define ARRAY3_H
 
-#include "array1.h"
+#include "sdfarray1.h"
 #include <algorithm>
 #include <cassert>
 #include <vector>

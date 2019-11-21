@@ -59,15 +59,15 @@ private:
 		config.set_default_bool("VolumeCorrection",false);
 	}
 	//
-	static Real green_function( const vec2d &p, Real r ) {
+	static double green_function( const vec2d &p, double r ) {
 		//
 		double d = (p-vec2d(0.5,0.5)).len();
 		return -1.0/(2.0*M_PI) * (log(d)-log(r));
 	}
 	//
-	static vec2r derivative_green_function( const vec2d &p ) {
+	static vec2d derivative_green_function( const vec2d &p ) {
 		//
-		vec2r r = vec2d(0.5,0.5)-p;
+		vec2d r = vec2d(0.5,0.5)-p;
 		return 1.0/(2.0*M_PI) * r / r.norm2();
 	}
 	//
@@ -112,7 +112,7 @@ private:
 		inf_norm /= sum;
 		//
 		if( m_prev_norm ) {
-			printf( "inf_norm = %.2e (factor=%.2e)\n", inf_norm, m_prev_norm/inf_norm );
+			printf( "inf_norm = %.2e (factor=%.2e)\n", inf_norm, log(m_prev_norm/inf_norm)/log(2) );
 		} else {
 			printf( "inf_norm = %.2e\n", inf_norm );
 		}
@@ -158,7 +158,7 @@ private:
 	//
 	shape2 m_shape {8,8};
 	double m_dx;
-	double m_r {0.25+0.125};
+	double m_r {0.35};
 	double m_prev_norm {0.0};
 	//
 	gridvisualizer2_driver m_gridvisualizer{this,"gridvisualizer2"};

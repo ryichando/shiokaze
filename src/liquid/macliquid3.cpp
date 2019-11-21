@@ -315,7 +315,7 @@ void macliquid3::render_mesh( unsigned frame ) const {
 		}
 	}
 	//
-	std::string render_command = console::format_str("cd %s; python render.py %d %d %g %g %g %g %g %g %s",
+	std::string render_command = console::format_str("cd %s; /usr/bin/python render.py %d %d %g %g %g %g %g %g %s",
 				mitsuba_path.c_str(),
 				frame,
 				m_param.render_sample_count,
@@ -327,7 +327,7 @@ void macliquid3::render_mesh( unsigned frame ) const {
 	//
 	if( m_param.render_transparent ) {
 		//
-		std::string render_command = console::format_str("cd %s; python render.py %d %d %g %g %g %g %g %g %s",
+		std::string render_command = console::format_str("cd %s; /usr/bin/python render.py %d %d %g %g %g %g %g %g %s",
 				mitsuba_path.c_str(),
 				frame,
 				m_param.render_transparent_sample_count,

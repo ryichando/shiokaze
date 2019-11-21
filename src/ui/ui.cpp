@@ -412,7 +412,7 @@ void ui::run () {
 		}
 		//
 		// Call draw
-		ge.clear(nullptr);
+		ge.clear();
 		::glfwGetFramebufferSize(window,&width,&height);
 		UI_interface::event_structure event;
 		event.type = UI_interface::event_structure::DRAW;

@@ -266,6 +266,17 @@ template <class T, unsigned D> struct vec {
 		return result;
 	}
 	/**
+	 \~english @brief Compute L-inf norm.
+	 @return L-inf norm.
+	 \~japanese @brief L-inf ノルムを計算する。
+	 @return L-inf ノルム。
+	 */
+	double norm_inf() const {
+		double result = T();
+		for( unsigned dim=0; dim<D; ++dim ) result = std::max(result,(double)std::abs(this->v[dim]));
+		return result;
+	}
+	/**
 	 \~english @brief Compute L1 norm.
 	 @return L1 norm.
 	 \~japanese @brief L1 ノルムを計算する。

@@ -34,7 +34,7 @@ SHKZ_BEGIN_NAMESPACE
 /** @file */
 /// \~english @brief Two dimensional staggered bit grid class designed to be defined as instance member in recursive_configurable class.
 /// \~japanese @brief recursive_configurable インスタンスのメンバーインスタンスとして定義可能なスタッガードビット2次元配列クラス。
-class bitmacarray2 : public recursive_configurable {
+class bitmacarray2 : public recursive_configurable, public messageable {
 public:
 	/**
 	 \~english @brief Constructor for bitmacarray2.
@@ -88,25 +88,33 @@ public:
 	 \~english @brief Send a message to the core module.
 	 @param[in] message Message
 	 @param[in] ptr Pointer to some value.
+	 @return \c true if handled \c false otherwise.
 	 \~japanese @brief コアモジュールにメッセージを送る
 	 @param[in] message メッセージ
 	 @param[in] ptr あるポインターの値
+	 @return もし処理されたら \c true を、処理されなかったら \c false
 	 */
-	void send_message( unsigned message, void *ptr ) {
-		m_array_0.send_message(message,ptr);
-		m_array_1.send_message(message,ptr);
+	virtual bool send_message( std::string message, void *ptr ) override {
+		bool handled (false);
+		if(m_array_0.send_message(message,ptr)) handled = true;
+		if(m_array_1.send_message(message,ptr)) handled = true;
+		return handled;
 	}
 	/**
 	 \~english @brief Send a message to the core module.
 	 @param[in] message Message
 	 @param[in] ptr Pointer to some value.
+	 @return \c true if handled \c false otherwise.
 	 \~japanese @brief コアモジュールにメッセージを送る
 	 @param[in] message メッセージ
 	 @param[in] ptr あるポインターの値
+	 @return もし処理されたら \c true を、処理されなかったら \c false
 	 */
-	void send_message( unsigned message, void *ptr ) const {
-		m_array_0.send_message(message,ptr);
-		m_array_1.send_message(message,ptr);
+	virtual bool const_send_message( std::string message, void *ptr ) const override {
+		bool handled (false);
+		if(m_array_0.const_send_message(message,ptr)) handled = true;
+		if(m_array_1.const_send_message(message,ptr)) handled = true;
+		return handled;
 	}
 	/**
 	 \~english @brief Deep copy operation for bitmacarray2.

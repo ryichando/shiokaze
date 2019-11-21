@@ -27,6 +27,7 @@
 //
 #include <shiokaze/core/common.h>
 #include <string>
+#include <map>
 #include <functional>
 //
 SHKZ_BEGIN_NAMESPACE
@@ -45,7 +46,19 @@ public:
 	 \~english @brief Initialize graphics engine.
 	 \~japanese @brief グラフィックスエンジンを初期化する。
 	 */
-	virtual void setup_graphics () = 0;
+	virtual void setup_graphics ( std::map<std::string,const void *> params=std::map<std::string,const void *>() ) = 0;
+	//
+	/// \~english @brief List of features that can be specified to get_supported().
+	/// \~japanese @brief get_supported() で指定出来る機能一覧
+	enum class FEATURE {
+		/// \~english @brief Support for opacity (alpha) drawing
+		/// \~japanese @brief 透明描画を行えるか
+		OPACITY,
+		/// \~english @brief Support for 3D perspective.
+		/// \~japanese @brief 3次元投影を行えるか
+		_3D
+	};
+	virtual bool get_supported ( FEATURE feature ) const = 0;
 	/**
 	 \~english @brief Set view port.
 	 \~japanese @brief ビューポートを設定する。
@@ -88,11 +101,19 @@ public:
 	virtual void look_at( const double target[3], const double position[3], const double up[3], double fov, double near, double far ) = 0;
 	/**
 	 \~english @brief Clear out the canvas.
-	 @param[in] v Clear color (4 channels).
 	 \~japanese @brief キャンバスをクリアする。
-	 @param[in] v クリアカラー (4チャンネル)。
 	 */
-	virtual void clear( const double *v ) = 0;
+	virtual void clear() = 0;
+	/**
+	 \~english @brief Get the background color.
+	 \~japanese @brief 背景色を得る。
+	 */
+	virtual void get_background_color( double color[3] ) const = 0;
+	/**
+	 \~english @brief Get the foreground color.
+	 \~japanese @brief 前景色を得る。
+	 */
+	virtual void get_foreground_color( double color[3] ) const = 0;
 	/**
 	 \~english @brief Equivalebt to glColor. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml
 	 \~japanese @brief glColor と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml を参照。
@@ -197,7 +218,7 @@ public:
 	 @param[in] p 位置。
 	 @param[in] str 文字列。
 	 */
-	virtual void draw_string( const double *v, std::string str ) const = 0;
+	virtual void draw_string( const double *v, std::string str ) = 0;
 };
 //
 SHKZ_END_NAMESPACE

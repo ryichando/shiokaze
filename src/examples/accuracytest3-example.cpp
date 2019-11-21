@@ -60,15 +60,15 @@ private:
 		config.set_default_bool("VolumeCorrection",false);
 	}
 	//
-	static Real green_function( const vec3d &p, Real r ) {
+	static double green_function( const vec3d &p, double r ) {
 		//
 		double d = (p-vec3d(0.5,0.5,0.5)).len();
 		return 1.0/(4.0*M_PI*d)-1.0/(4.0*M_PI*r);
 	}
 	//
-	static vec3r derivative_green_function( const vec3d &p ) {
+	static vec3d derivative_green_function( const vec3d &p ) {
 		//
-		vec3r r = vec3d(0.5,0.5,0.5)-p;
+		vec3d r = vec3d(0.5,0.5,0.5)-p;
 		return 1.0/(4.0*M_PI) * r.normal() / r.norm2();
 	}
 	//
@@ -113,7 +113,7 @@ private:
 		inf_norm /= sum;
 		//
 		if( m_prev_norm ) {
-			printf( "inf_norm = %.2e (factor=%.2e)\n", inf_norm, m_prev_norm/inf_norm );
+			printf( "inf_norm = %.2e (factor=%.2e)\n", inf_norm, log(m_prev_norm/inf_norm)/log(2) );
 		} else {
 			printf( "inf_norm = %.2e\n", inf_norm );
 		}
@@ -159,7 +159,7 @@ private:
 	//
 	shape3 m_shape {8,8,8};
 	double m_dx;
-	double m_r {0.25+0.125};
+	double m_r {0.35};
 	double m_prev_norm {0.0};
 	//
 	gridvisualizer3_driver m_gridvisualizer{this,"gridvisualizer3"};

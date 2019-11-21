@@ -92,9 +92,8 @@ public:
 	 \~english @brief Run load - configure - initialize processes.
 	 \~japanese @brief load - configure - initialize のプロセスを呼ぶ。
 	 */
-	virtual void setup_now() {
+	virtual void setup_now( configuration& config=get_global_configuration() ) {
 		assert(not_recursive());
-		configuration& config = get_global_configuration();
 		load(config);
 		configure(config);
 		initialize(environment_map());
@@ -225,8 +224,7 @@ public:
 	 \~english @brief Run recursive_load - recursive_configure - recursive_initialize processes.
 	 \~japanese @brief recursive_load - recursive_configure - recursive_initialize のプロセスを呼ぶ。
 	 */
-	virtual void setup_now() override {
-		configuration& config = get_global_configuration();
+	virtual void setup_now( configuration& config=get_global_configuration() ) override {
 		recursive_load(config);
 		recursive_configure(config);
 		recursive_initialize();

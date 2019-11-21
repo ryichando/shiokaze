@@ -2,7 +2,7 @@
 #define HASHGRID_H
 
 #include "hashtable.h"
-#include "vec.h"
+#include "sdfvec.h"
 
 //========================================================= first do 2D ============================
 

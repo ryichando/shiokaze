@@ -1,8 +1,8 @@
 #ifndef MAKELEVELSET3_H
 #define MAKELEVELSET3_H
 
-#include "array3.h"
-#include "vec.h"
+#include "sdfarray3.h"
+#include "sdfvec.h"
 
 // tri is a list of triangles in the mesh, and x is the positions of the vertices
 // absolute distances will be nearly correct for triangle soup, but a closed mesh is

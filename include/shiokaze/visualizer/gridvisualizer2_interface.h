@@ -87,11 +87,13 @@ public:
 	 \~english @brief Draw level set grid.
 	 @param[in] g Graphics engine.
 	 @param[in] levelset Level set grid.
+	 @param[in] draw_contour Draw contour.
 	 \~japanese @brief レベルセットグリッドを描く。
 	 @param[in] g グラフィックスエンジン。
 	 @param[in] levelset レベルセットグリッド。
+	 @param[in] draw_contour 輪郭を描くか。
 	 */
-	virtual void draw_levelset( graphics_engine &g, const array2<Real> &levelset ) const = 0;
+	virtual void draw_levelset( graphics_engine &g, const array2<Real> &levelset, bool draw_contour=true ) const = 0;
 	/**
 	 \~english @brief Draw level set of solid.
 	 @param[in] g Graphics engine.

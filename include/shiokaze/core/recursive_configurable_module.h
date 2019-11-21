@@ -73,7 +73,7 @@ public:
  \~english @brief Class that encapsulates recursive_configurable class.
  \~japanese @brief recursive_configurable のクラスを抱擁するクラス。
  */
-template <class T> class recursive_configurable_driver : public configurable {
+template <class T> class recursive_configurable_driver : public configurable, public messageable {
 public:
 	/**
 	 \~english @brief Constructor for recursive_configurable_driver.
@@ -95,28 +95,6 @@ public:
 	recursive_configurable_driver ( recursive_configurable *parent, std::string name ) : m_name(name) {
 		assert(parent);
 		parent->add_child(this);
-	}
-	/**
-	 \~english @brief Send a message to the core module.
-	 @param[in] message Message
-	 @param[in] ptr Pointer to some value.
-	 \~japanese @brief コアモジュールにメッセージを送る
-	 @param[in] message メッセージ
-	 @param[in] ptr あるポインターの値
-	 */
-	void send_message( unsigned message, void *ptr ) {
-		m_object->send_message(message,ptr);
-	}
-	/**
-	 \~english @brief Send a message to the core module.
-	 @param[in] message Message
-	 @param[in] ptr Pointer to some value.
-	 \~japanese @brief コアモジュールにメッセージを送る
-	 @param[in] message メッセージ
-	 @param[in] ptr あるポインターの値
-	 */
-	void send_message( unsigned message, void *ptr ) const {
-		m_object->send_message(message,ptr);
 	}
 	/**
 	 \~english @brief Set name.

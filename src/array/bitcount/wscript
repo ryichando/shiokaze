@@ -2,8 +2,8 @@
 #
 #   array/bitcount/wscript
 #
-#   This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-#   Created by Ryoichi Ando <rand@nii.ac.jp> on March 7, 2018.
+#	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
+#	Created by Ryoichi Ando <rand@nii.ac.jp> on March 7, 2018.
 #
 #	Permission is hereby granted, free of charge, to any person obtaining a copy of
 #	this software and associated documentation files (the "Software"), to deal in

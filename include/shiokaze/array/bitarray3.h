@@ -40,7 +40,7 @@ template <class T> class array3;
 /** @file */
 /// \~english @brief Three dimensional bit grid class designed to be defined as instance member in recursive_configurable class.
 /// \~japanese @brief recursive_configurable インスタンスのメンバーインスタンスとして定義可能な3次元ビット配列クラス。
-class bitarray3 : public recursive_configurable {
+class bitarray3 : public recursive_configurable, public messageable {
 public:
 	/**
 	 \~english @brief Constructor for bitarray3.
@@ -113,23 +113,27 @@ public:
 	 \~english @brief Send a message to the core module.
 	 @param[in] message Message
 	 @param[in] ptr Pointer to some value.
+	 @return \c true if handled \c false otherwise.
 	 \~japanese @brief コアモジュールにメッセージを送る
 	 @param[in] message メッセージ
 	 @param[in] ptr あるポインターの値
+	 @return もし処理されたら \c true を、処理されなかったら \c false
 	 */
-	void send_message( unsigned message, void *ptr ) {
-		get_core()->send_message(message,ptr);
+	virtual bool send_message( std::string message, void *ptr ) override {
+		return get_core()->send_message(message,ptr);
 	}
 	/**
 	 \~english @brief Send a message to the core module.
 	 @param[in] message Message
 	 @param[in] ptr Pointer to some value.
+	 @return \c true if handled \c false otherwise.
 	 \~japanese @brief コアモジュールにメッセージを送る
 	 @param[in] message メッセージ
 	 @param[in] ptr あるポインターの値
+	 @return もし処理されたら \c true を、処理されなかったら \c false
 	 */
-	void send_message( unsigned message, void *ptr ) const {
-		get_core()->send_message(message,ptr);
+	virtual bool const_send_message( std::string message, void *ptr ) const override {
+		return get_core()->const_send_message(message,ptr);
 	}
 	/**
 	 \~english @brief Copy constructor for bitarray3.

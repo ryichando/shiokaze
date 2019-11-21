@@ -64,7 +64,8 @@ protected:
 	}
 	virtual void draw_grid( graphics_engine &g ) const override {
 		if( m_param.draw_grid ) {
-			g.color4(1.0,1.0,1.0,0.4);
+			double fgc[4]; g.get_foreground_color(fgc);
+			g.color4(fgc[0],fgc[1],fgc[2],0.4);
 			g.begin(graphics_engine::MODE::LINES);
 			double width (m_dx * m_shape.w);
 			double height (m_dx * m_shape.h);
@@ -95,7 +96,8 @@ protected:
 	virtual void draw_velocity( graphics_engine &g, const array2<vec2r> &velocity ) const override {
 		if( m_param.draw_velocity ) {
 			//
-			g.color4(1.0,1.0,1.0,0.5);
+			double fgc[4]; g.get_foreground_color(fgc);
+			g.color4(fgc[0],fgc[1],fgc[2],0.5);
 			velocity.const_serial_actives([&](int i, int j, const auto &it) {
 				vec2d p0 = m_dx*vec2i(i,j).cell();
 				vec2d p1 = p0+m_dx*it();
@@ -103,7 +105,7 @@ protected:
 			});
 		}
 	}
-	virtual void draw_levelset( graphics_engine &g, const array2<Real> &levelset ) const override {
+	virtual void draw_levelset( graphics_engine &g, const array2<Real> &levelset, bool draw_contour=true ) const override {
 		//
 		// Cell Centered
 		vec2d origin;
@@ -129,44 +131,49 @@ protected:
 				g.end();
 			}
 		});
-#if 0
 		//
-		// Draw contour
-		(levelset.shape()-shape2(1,1)).for_each([&](int i, int j) {
+		if( draw_contour ) {
+#if 0
 			//
-			int count (0);
-			for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
-				if(levelset.filled(i+ni,j+nj) || levelset.active(i+ni,j+nj)) count ++;
-			}
-			if( count == 4 ) {
+			// Draw contour
+			(levelset.shape()-shape2(1,1)).for_each([&](int i, int j) {
 				//
-				// Check the nearst possible surfaces
-				vec2d lines[8];	int pnum; double v[2][2]; vec2d vertices[2][2];
+				int count (0);
 				for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
-					v[ni][nj] = levelset(i+ni,j+nj);
-					vertices[ni][nj] = m_dx*vec2d(i+ni,j+nj);
+					if(levelset.filled(i+ni,j+nj) || levelset.active(i+ni,j+nj)) count ++;
 				}
-				m_meshutility->march_points(v,vertices,lines,pnum,false);
-				g.color4(1.0,1.0,1.0,1.0);
+				if( count == 4 ) {
+					//
+					// Check the nearst possible surfaces
+					vec2d lines[8];	int pnum; double v[2][2]; vec2d vertices[2][2];
+					for( int ni=0; ni<2; ni++ ) for( int nj=0; nj<2; nj++ ) {
+						v[ni][nj] = levelset(i+ni,j+nj);
+						vertices[ni][nj] = m_dx*vec2d(i+ni,j+nj);
+					}
+					m_meshutility->march_points(v,vertices,lines,pnum,false);
+					g.color4(1.0,1.0,1.0,1.0);
+					g.begin(graphics_engine::MODE::LINES);
+					for( int m=0; m<pnum; m++ ) {
+						g.vertex2v((lines[m]+origin).v);
+					}
+					g.end();
+				}
+			});
+#else
+			std::vector<vec2d> vertices;
+			std::vector<std::vector<size_t> > faces;
+			m_mesher->generate_contour(levelset,vertices,faces);
+			//
+			double fgc[4]; g.get_foreground_color(fgc);
+			g.color4(fgc[0],fgc[1],fgc[2],1.0);
+			//
+			for( size_t i=0; i<faces.size(); i++ ) {
 				g.begin(graphics_engine::MODE::LINES);
-				for( int m=0; m<pnum; m++ ) {
-					g.vertex2v((lines[m]+origin).v);
-				}
+				for( unsigned j=0; j<faces[i].size(); j++ ) g.vertex2v(vertices[faces[i][j]].v);
 				g.end();
 			}
-		});
-#else
-		std::vector<vec2d> vertices;
-		std::vector<std::vector<size_t> > faces;
-		m_mesher->generate_contour(levelset,vertices,faces);
-		//
-		for( size_t i=0; i<faces.size(); i++ ) {
-			g.color4(1.0,1.0,1.0,1.0);
-			g.begin(graphics_engine::MODE::LINES);
-			for( unsigned j=0; j<faces[i].size(); j++ ) g.vertex2v(vertices[faces[i][j]].v);
-			g.end();
-		}
 #endif
+		}
 	}
 	virtual void draw_solid( graphics_engine &g, const array2<Real> &solid ) const override {
 		if( m_param.draw_solid ) {

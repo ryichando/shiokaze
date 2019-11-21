@@ -44,12 +44,15 @@ public:
 	//
 	graphics_gl ();
 	//
-	virtual void setup_graphics () override;
+	virtual void setup_graphics ( std::map<std::string,const void *> params=std::map<std::string,const void *>() ) override;
+	virtual bool get_supported ( FEATURE feature ) const override;
 	virtual void set_viewport( unsigned x, unsigned y, unsigned width, unsigned height ) override;
 	virtual void get_viewport( unsigned &x, unsigned &y, unsigned &width, unsigned &height ) const override;
 	virtual void set_2D_coordinate( double left, double right, double bottom, double top ) override;
 	virtual void look_at( const double target[3], const double position[3], const double up[3], double fov, double near, double far ) override;
-	virtual void clear( const double *v ) override;
+	virtual void clear() override;
+	virtual void get_background_color( double color[3] ) const override;
+	virtual void get_foreground_color( double color[3] ) const override;
 	//
 	virtual void color4v( const double *v ) override;
 	virtual void vertex3v( const double *v ) override;
@@ -60,7 +63,7 @@ public:
 	virtual void point_size( double size ) override;
 	virtual void line_width( double width ) override;
 	//
-	virtual void draw_string( const double *v, std::string str ) const override;
+	virtual void draw_string( const double *v, std::string str ) override;
 	//
 	void set_HiDPI_scaling_factor( double factor );
 	double get_HiDPI_scaling_factor() const;

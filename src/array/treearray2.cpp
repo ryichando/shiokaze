@@ -1113,11 +1113,13 @@ protected:
 		}
 	}
 	//
-	virtual void send_message( unsigned message, void *ptr ) override {
+	virtual bool send_message( std::string message, void *ptr ) override {
 		//
-		if( message == 'DEBG') {
+		if( message == "debug" ) {
 			m_host.param.debug = ptr == (void *)1;
+			return true;
 		}
+		return false;
 	}
 	//
 	virtual void get( unsigned &nx, unsigned &ny, unsigned &element_bytes ) const override {

@@ -39,7 +39,7 @@ void graphics_gl::set_HiDPI_scaling_factor( double factor ) {
 	m_HiDPI_factor = factor;
 }
 //
-void graphics_gl::setup_graphics () {
+void graphics_gl::setup_graphics ( std::map<std::string,const void *> params ) {
 	//
 	glClearColor(0.0,0.0,0.0,0.0);
 	glEnable(GL_BLEND);
@@ -50,6 +50,16 @@ void graphics_gl::setup_graphics () {
 	glHint(GL_POLYGON_SMOOTH_HINT,GL_NICEST);
 	point_size(1.0);
 	line_width(1.0);
+}
+//
+bool graphics_gl::get_supported ( FEATURE feature ) const {
+	//
+	if( feature == FEATURE::OPACITY ) {
+		return true;
+	} else if( feature == FEATURE::_3D ) {
+		return true;
+	}
+	return false;
 }
 //
 void graphics_gl::set_2D_coordinate( double left, double right, double bottom, double top ) {
@@ -86,9 +96,16 @@ void graphics_gl::look_at( const double target[3], const double position[3], con
 	gluLookAt( position[0], position[1], position[2], target[0], target[1], target[2], up[0], up[1], up[2] );
 }
 //
-void graphics_gl::clear( const double *v ) {
-	if( v ) glClearColor(v[0],v[1],v[2],v[3]);
+void graphics_gl::clear() {
 	glClear(GL_COLOR_BUFFER_BIT);
+}
+//
+void graphics_gl::get_background_color( double color[3] ) const {
+	color[0] = color[1] = color[2] = 0.0;
+}
+//
+void graphics_gl::get_foreground_color( double color[3] ) const {
+	color[0] = color[1] = color[2] = 1.0;
 }
 //
 void graphics_gl::color4v( const double *v ) {
@@ -135,7 +152,7 @@ void graphics_gl::vertex3v( const double *v ) {
 	glVertex3dv(v);
 }
 //
-void graphics_gl::draw_string( const double *v, std::string str ) const {
+void graphics_gl::draw_string( const double *v, std::string str ) {
 	const char *str_ptr = str.c_str();
 	glRasterPos3dv(v);
 	auto font = GLUT_BITMAP_HELVETICA_10;

@@ -271,7 +271,7 @@ void macflipliquid3::render_mesh( unsigned frame ) const {
 		}
 	}
 	//
-	std::string render_command = console::format_str("cd %s; python render.py %d mesh %g %g %g %d %g %g %g %g %g %g",
+	std::string render_command = console::format_str("cd %s; /usr/bin/python render.py %d mesh %g %g %g %d %g %g %g %g %g %g",
 				mitsuba_path.c_str(),
 				frame,
 				0.5, 0.5, 1.0,
@@ -284,7 +284,7 @@ void macflipliquid3::render_mesh( unsigned frame ) const {
 	//
 	if( (macliquid3::m_param).render_transparent ) {
 		//
-		std::string render_command = console::format_str("cd %s; python render.py %d transparent %g %g %g %d %g %g %g %g %g %g",
+		std::string render_command = console::format_str("cd %s; /usr/bin/python render.py %d transparent %g %g %g %d %g %g %g %g %g %g",
 				mitsuba_path.c_str(),
 				frame,
 				0.5, 0.5, 1.0,
