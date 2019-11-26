@@ -2,7 +2,7 @@
 **	waterdrop2.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on June 20, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on June 20, 2017.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -29,35 +29,30 @@
 //
 SHKZ_USING_NAMESPACE
 //
-static bool noSolid (false);
-static double radius (0.5);
-static double water_height (0.37);
-static double water_radius (0.075);
-static double water_level (0.245);
+static bool g_no_solid (false);
+static double g_radius (0.5);
+static double g_water_height (0.37);
+static double g_water_radius (0.075);
+static double g_water_level (0.245);
 //
 extern "C" void configure( configuration &config ) {
 	configuration::auto_group group(config,"Waterdrop Scene 2D","Waterdrop");
-	config.get_bool("NoSolid",noSolid,"Should remove solids");
-	config.get_double("ContainerRadius",radius,"Solid container radius");
-	config.get_double("Radius",water_radius,"Radius of water");
-	config.get_double("WaterLevel",water_level,"Water level");
-	config.get_double("WaterHeight",water_height,"Water height");
-}
-//
-extern "C" std::map<std::string,std::string> get_default_parameters() {
-	std::map<std::string,std::string> dictionary;
-	return dictionary;
+	config.get_bool("NoSolid",g_no_solid,"Should remove solids");
+	config.get_double("ContainerRadius",g_radius,"Solid container radius");
+	config.get_double("Radius",g_water_radius,"Radius of water");
+	config.get_double("WaterLevel",g_water_level,"Water level");
+	config.get_double("WaterHeight",g_water_height,"Water height");
 }
 //
 extern "C" double fluid( const vec2d &p ) {
-	return std::min(p[1]-water_level,(p-vec2d(0.5,water_height)).len()-water_radius);
+	return std::min(p[1]-g_water_level,(p-vec2d(0.5,g_water_height)).len()-g_water_radius);
 }
 //
 extern "C" double solid( const vec2d &p ) {
-	if( noSolid ) {
+	if( g_no_solid ) {
 		return 1.0;
 	} else {
-		return radius-(p-vec2d(0.5,0.5)).len();
+		return g_radius-(p-vec2d(0.5,0.5)).len();
 	}
 }
 //

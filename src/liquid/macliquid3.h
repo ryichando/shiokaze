@@ -126,6 +126,7 @@ protected:
 	//
 	virtual void inject_external_force( macarray3<Real> &velocity, double dt );
 	virtual void inject_external_fluid( array3<Real> &fluid, macarray3<Real> &velocity, double dt );
+	virtual size_t do_inject_external_fluid( array3<Real> &fluid, macarray3<Real> &velocity, double dt, double time, unsigned step );
 	virtual void set_volume_correction( macproject3_interface *macproject );
 	virtual void extend_both( int w=2 );
 	virtual void export_mesh() const;

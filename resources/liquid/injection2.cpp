@@ -1,8 +1,8 @@
 /*
-**	glugging2.cpp
+**	injection2.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on July 6, 2018.
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on November 26, 2019.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -22,42 +22,50 @@
 **	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 //
-#include <shiokaze/utility/utility.h>
 #include <shiokaze/math/vec.h>
 #include <shiokaze/core/configuration.h>
 #include <string>
 #include <cmath>
+#include <random>
 //
 SHKZ_USING_NAMESPACE
 //
-static unsigned default_gn (64);
+static double g_water_radius (0.025);
+static double g_water_level (0.1);
+static double g_inject_height (0.4);
+static double g_inject_speed (1.0);
+static bool g_fix_volume (false);
+static vec2d g_inject_center (0.1,0.4);
 //
-extern "C" std::map<std::string,std::string> get_default_parameters() {
-	std::map<std::string,std::string> dictionary;
-	//
-	dictionary["ResolutionX"] = std::to_string(default_gn);
-	dictionary["ResolutionY"] = std::to_string(default_gn);
-	dictionary["Projection"] = "macstreamfuncsolver2";
-	dictionary["VolumeCorrection"] = "No";
-	return dictionary;
+extern "C" void configure( configuration &config ) {
+	configuration::auto_group group(config,"Injection Scene 2D","Injection");
+	config.get_double("Radius",g_water_radius,"Radius of water");
+	config.get_double("WaterLevel",g_water_level,"Water level");
+	config.get_double("InjectHeight",g_inject_height,"Injection height");
+	config.get_double("InjectSpeed",g_inject_speed,"Injection speed");
+	config.get_bool("FixVolume",g_fix_volume,"Fix total volume");
 }
 //
 extern "C" double fluid( const vec2d &p ) {
-	double value = 1e9;
-	double r = 0.12;
-	value = std::min(value,std::abs(p[1]-0.5-r)-r);
-	return value;
+	return p[1]-g_water_level;
 }
 //
-extern "C" double solid( const vec2d &p ) {
-	double value = 1e9;
-	double r = 0.23;
-	value = std::min(value,(p-vec2d(0.5,0.75)).len()-r);
-	value = std::min(value,(p-vec2d(0.5,0.25)).len()-r);
-	value = std::min(value,utility::box(p,vec2d(0.45,0.45),vec2d(0.55,0.55)));
-	return -value;
+extern "C" bool check_inject( double dx, double dt, double time, unsigned step ) {
+	return time < 5.0;
+}
+//
+extern "C" bool inject( const vec2d &p, double dx, double dt, double time, unsigned step, double &fluid, vec2d &velocity ) {
+	//
+	fluid = (p-g_inject_center).len()-g_water_radius;
+	velocity = vec2d(g_inject_speed,0.0);
+	return true;
+}
+//
+extern "C" void post_inject( double dx, double dt, double time, unsigned step, double &volume_change ) {
+	if( g_fix_volume ) volume_change = 0.0;
 }
 //
 extern "C" const char *license() {
 	return "MIT";
 }
+//

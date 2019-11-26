@@ -66,6 +66,13 @@ void macflipliquid2::post_initialize () {
 	m_flip->seed(m_fluid,[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
 }
 //
+size_t macflipliquid2::do_inject_external_fluid( array2<Real> &fluid, macarray2<Real> &velocity, double dt, double time, unsigned step ) {
+	//
+	size_t count = macliquid2::do_inject_external_fluid(fluid,velocity,dt,time,step);
+	m_flip->seed(m_fluid,[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
+	return count;
+}
+//
 void macflipliquid2::idle() {
 	//
 	// Add to graph
@@ -135,6 +142,9 @@ void macflipliquid2::idle() {
 	//
 	// Add external force
 	inject_external_force(m_velocity,dt);
+	//
+	// Inject external fluid
+	inject_external_fluid(m_fluid,m_velocity,dt);
 	//
 	// Set volume correction
 	set_volume_correction(m_macproject.get());

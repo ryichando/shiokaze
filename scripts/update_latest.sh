@@ -24,3 +24,4 @@
 #
 cp -rf ../shiokaze-private/src .
 cp -rf ../shiokaze-private/include .
+cp -rf ../shiokaze-private/resources .

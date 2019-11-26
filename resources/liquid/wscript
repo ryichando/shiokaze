@@ -93,3 +93,13 @@ def build(bld):
 			target = bld.get_lib_name(bld,'filmliquid3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'injection2.cpp',
+			target = bld.get_lib_name(bld,'injection2'),
+			cxxflags = ['-Wno-return-type-c-linkage'],
+			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'injection3.cpp',
+			target = bld.get_lib_name(bld,'injection3'),
+			cxxflags = ['-Wno-return-type-c-linkage'],
+			use = bld.get_target_name(bld,'core'))

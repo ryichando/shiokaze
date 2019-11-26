@@ -39,6 +39,7 @@ public:
 	//
 protected:
 	//
+	virtual size_t do_inject_external_fluid( array2<Real> &fluid, macarray2<Real> &velocity, double dt, double time, unsigned step ) override;
 	virtual void idle() override;
 	virtual void draw( graphics_engine &g ) const override;
 	//

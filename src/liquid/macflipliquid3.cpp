@@ -78,6 +78,13 @@ void macflipliquid3::post_initialize () {
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
 }
 //
+size_t macflipliquid3::do_inject_external_fluid( array3<Real> &fluid, macarray3<Real> &velocity, double dt, double time, unsigned step ) {
+	//
+	size_t count = macliquid3::do_inject_external_fluid(fluid,velocity,dt,time,step);
+	m_flip->seed(m_fluid,[&](const vec3d &p){ return interpolate_solid(p); },m_velocity);
+	return count;
+}
+//
 void macflipliquid3::idle() {
 	//
 	scoped_timer timer(this);
@@ -156,6 +163,9 @@ void macflipliquid3::idle() {
 	//
 	// Add external force
 	inject_external_force(m_velocity,dt);
+	//
+	// Inject external fluid
+	inject_external_fluid(m_fluid,m_velocity,dt);
 	//
 	// Set volume correction
 	set_volume_correction(m_macproject.get());
