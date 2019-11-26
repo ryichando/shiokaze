@@ -2,7 +2,7 @@
 **	timestepper.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on April 11, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on April 11, 2017.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -76,13 +76,13 @@ protected:
 				dt = m_min_dt;
 			}
 			//
-			assert( m_accumulated_time < 1.0 / m_FPS );	
+			assert( m_accumulated_time < 1.0 / m_FPS );
 			if( m_accumulated_time+dt >= 1.0 / m_FPS ) {
-				dt = 1.0 / m_FPS - m_accumulated_time;
+				dt = 1.0/m_FPS-m_accumulated_time;
 				if( dt < m_min_dt ) {
 					double odd = m_min_dt - dt;
 					dt = m_min_dt;
-					m_accumulated_time = odd;
+					m_accumulated_time = std::max(0.0,odd);
 				} else {
 					m_accumulated_time = 0.0;
 				}
@@ -106,7 +106,7 @@ protected:
 		console::write("timestepper_time_per_step",get_simulation_time_per_step());
 		//
 		m_time += dt;
-		m_current_CFL = std::ceil(dt * max_unit_u);
+		m_current_CFL = dt * max_unit_u;
 		++ m_step;
 		//
 		console::write("timestepper_dt",dt);

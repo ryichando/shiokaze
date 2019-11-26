@@ -26,8 +26,11 @@
 #define SHKZ_UI_INTERFACE_H
 //
 #include <shiokaze/graphics/graphics_engine.h>
+#include <dlfcn.h>
 //
 SHKZ_BEGIN_NAMESPACE
+//
+static bool *g_shkz_has_graphical_interface {nullptr};
 //
 /** @file */
 /// \~english @brief Interface for input APIs.
@@ -233,6 +236,19 @@ public:
 	 */
 	virtual CURSOR_TYPE get_current_cursor() const {
 		return ARROW_CURSOR;
+	}
+	/**
+	 \~english @brief Get if a graphical interface is available.
+	 @param[in] value Boolean value to set force single thread.
+	 \~japanese @brief 強制的にシングルスレッドにするか設定する。
+	 @param[in] value シングルスレッドにするか指定する値。
+	 */
+	static bool has_graphical_interface() {
+		if( ! g_shkz_has_graphical_interface ) {
+			g_shkz_has_graphical_interface = static_cast<bool *>(::dlsym(RTLD_DEFAULT,"g_shkz_has_graphical_interface"));
+			assert(g_shkz_has_graphical_interface);
+		}
+		return *g_shkz_has_graphical_interface;
 	}
 	//
 protected:

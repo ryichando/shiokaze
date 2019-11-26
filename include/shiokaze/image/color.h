@@ -2,7 +2,7 @@
 **	color.h
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on Feb 7, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on Feb 7, 2017.
 **
 **	Transformed from:
 **	https://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both

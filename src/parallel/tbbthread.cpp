@@ -2,7 +2,7 @@
 **	stdthread.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on Feb 1, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on Feb 1, 2017.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -43,23 +43,35 @@ protected:
 		std::function<bool(size_t &n, int thread_index)> iterator_advance,
 		int num_threads ) const override {
 		//
-		assert( num_threads );
-		std::vector<tbb::tbb_thread> threads(num_threads);
-		for( int q=0; q<num_threads; ++q ) {
-			threads[q] = tbb::tbb_thread([&]( int q ){
+		if( g_shkz_force_single_thread && *g_shkz_force_single_thread ) {
+			for( int q=0; q<num_threads; ++q ) {
 				size_t n = iterator_start(q);
 				do { func(n,q); } while( iterator_advance(n,q));
-			},q);
+			}
+		} else {
+			assert( num_threads );
+			std::vector<tbb::tbb_thread> threads(num_threads);
+			for( int q=0; q<num_threads; ++q ) {
+				threads[q] = tbb::tbb_thread([&]( int q ){
+					size_t n = iterator_start(q);
+					do { func(n,q); } while( iterator_advance(n,q));
+				},q);
+			}
+			for( auto& thread : threads ) thread.join();
 		}
-		for( auto& thread : threads ) thread.join();
 	}
 	//
 	virtual void run( const std::vector<std::function<void()> > &functions ) const override {
-		std::vector<tbb::tbb_thread> threads(functions.size());
-		for( int q=0; q<threads.size(); ++q ) {
-			threads[q] = tbb::tbb_thread([&](int q) { functions[q](); },q);
+		//
+		if( g_shkz_force_single_thread && *g_shkz_force_single_thread ) {
+			for( auto f : functions ) f();
+		} else {
+			std::vector<tbb::tbb_thread> threads(functions.size());
+			for( int q=0; q<threads.size(); ++q ) {
+				threads[q] = tbb::tbb_thread([&](int q) { functions[q](); },q);
+			}
+			for( auto& thread : threads ) thread.join();
 		}
-		for( auto& thread : threads ) thread.join();
 	}
 	//
 };

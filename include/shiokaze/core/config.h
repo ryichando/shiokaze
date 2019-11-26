@@ -28,8 +28,8 @@
 //
 SHKZ_BEGIN_NAMESPACE
 /**
- \~english @brief Precision of the Realing point.
- \~japanese @brief 浮動小数点の精度。
+ \~english @brief Precision of the general floating point number. You may change here to double to increase the precision.
+ \~japanese @brief 一般的に使われる浮動小数点の精度。ここの定義を double に変えて、精度を高められる。
  */
 using Real = float;
 /**

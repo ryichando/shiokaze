@@ -2,7 +2,7 @@
 **	parallel_core.h
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on Feb 1, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on Feb 1, 2017.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -28,8 +28,11 @@
 #include <shiokaze/core/recursive_configurable_module.h>
 #include <functional>
 #include <vector>
+#include <dlfcn.h>
 //
 SHKZ_BEGIN_NAMESPACE
+//
+static bool *g_shkz_force_single_thread {nullptr};
 //
 /** @file */
 /// \~english @brief Abstract class that handles parallel operations. Used with loop_splitter. "stdthread" and "tbbthread" are provided as implementations.
@@ -60,6 +63,20 @@ public:
 	 @param[in] functions 並列に行う処理関数のリスト。
 	 */
 	virtual void run( const std::vector<std::function<void()> > &functions ) const = 0;
+	/**
+	 \~english @brief Set if force single thread.
+	 @param[in] value Boolean value to set force single thread.
+	 \~japanese @brief 強制的にシングルスレッドにするか設定する。
+	 @param[in] value シングルスレッドにするか指定する値。
+	 */
+	static void force_single_thread( bool value ) {
+		if( ! g_shkz_force_single_thread ) {
+			g_shkz_force_single_thread = static_cast<bool *>(::dlsym(RTLD_DEFAULT,"g_shkz_force_single_thread"));
+			assert(g_shkz_force_single_thread);
+		}
+		*g_shkz_force_single_thread = value;
+	}
+private:
 };
 //
 using parallel_ptr = std::unique_ptr<parallel_core>;

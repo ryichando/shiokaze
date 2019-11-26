@@ -207,23 +207,28 @@ void configuration::print_splash() const {
 //
 void configuration::check_touched () const {
 	std::lock_guard<std::mutex> guard(config_mutex);
-	auto find_name = [&]( std::string name ) {
-		bool found (false);
-		for( auto git=m_groups.cbegin(); git!=m_groups.cend(); ++git ) {
-			const auto &entries = git->second.entries;
-			for( auto eit=entries.cbegin(); eit!=entries.cend(); ++eit ) {
-				if( eit->first == name || git->first.argument_name + "." + eit->first == name ) {
-					found = true;
-				}
-			}
-		}
-		return found;
-	};
 	for( auto ait=m_dictionary.cbegin(); ait!=m_dictionary.cend(); ++ait ) {
-		if( ! find_name(ait->first) ) {
+		if( ! check_set(ait->first) ) {
 			console::dump("<Light_Red>WARNING: Argument \"%s\" was not touched!<Default>\n", ait->first.c_str());
 		}
 	}
+}
+//
+bool configuration::is_parameter_set ( std::string name ) const {
+	return m_dictionary.find(name) != m_dictionary.end();
+}
+//
+bool configuration::check_set ( std::string name ) const {
+	bool found (false);
+	for( auto git=m_groups.cbegin(); git!=m_groups.cend(); ++git ) {
+		const auto &entries = git->second.entries;
+		for( auto eit=entries.cbegin(); eit!=entries.cend(); ++eit ) {
+			if( eit->first == name || git->first.argument_name + "." + eit->first == name ) {
+				found = true;
+			}
+		}
+	}
+	return found;
 }
 //
 std::string configuration::get_current_group_name( bool argument_name ) const {

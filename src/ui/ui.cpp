@@ -2,7 +2,7 @@
 **	ui.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on Jan 31, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on Jan 31, 2017.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -619,8 +619,12 @@ int ui::run ( int argc, const char* argv[] ) {
 	sysstats_ptr stats = sysstats_interface::quick_load_module(config,"sysstats");
 	config.pop_group();
 	//
+	bool *has_graphical_flag = static_cast<bool *>(::dlsym(RTLD_DEFAULT,"g_shkz_has_graphical_interface"));
+	assert( has_graphical_flag );
+	//
 	if( use_OpenGL && drawable_instance ) {
 		//
+		*has_graphical_flag = true;
 		ui userinterface(drawable_instance);
 		userinterface.load(config);
 		//
@@ -652,6 +656,7 @@ int ui::run ( int argc, const char* argv[] ) {
 		//
 	} else {
 		//
+		*has_graphical_flag = false;
 		stats->recursive_configure(config);
 		{
 			configuration::auto_group group(config,root_credit);

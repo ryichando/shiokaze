@@ -217,6 +217,19 @@ public:
 		});
 	}
 	/**
+	 \~english @brief Activate cells at the same positons where an input array is active with an offset.
+	 @param[in] array Target array.
+	 @param[in] offset Offset applied to the target array.
+	 \~japanese @brief 入力のグリッドのアクティブセルと同じ場所のセルを offset だけずらして、アクティブにする。
+	 @param[in] array 目標となるグリッド。
+	 @param[in] offset 目標となるグリッドに適用されるオフセット。
+	 */
+	template <class Y> void activate_as_bit( const Y &array, const std::array<vec2i,DIM2> &offsets={vec2i(),vec2i()} ) {
+		m_parallel.for_each( DIM2, [&]( size_t dim ) {
+			(*this)[dim].activate_as_bit(array[dim],offsets[dim]);
+		});
+	}
+	/**
 	 \~english @brief Activate cells at the same positons where an input array is filled with an offset.
 	 @param[in] array Target array.
 	 @param[in] offset Offset applied to the target array.

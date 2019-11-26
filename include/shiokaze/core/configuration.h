@@ -2,7 +2,7 @@
 **	configuration.h
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on July 19, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on July 19, 2017.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -72,6 +72,24 @@ public:
 	 @return もし設定されたパラメータが全て読み込まれていれば \c true を返し、そうでなけば \c false を返す。
 	 */
 	void check_touched () const;
+	/**
+	 \~english @brief Check if a parameter with the name is set via command line.
+	 @param[in] name Name of parameter.
+	 @return \c true if all the name with parameter is set. \c false otherwise.
+	 \~japanese @brief 設定された名前のパラメータがコマンドラインで指定されているか確認する。
+	 @param[in] name パラメータの名前。
+	 @return もし設定されたパラメータ名があれば \c true を返し、そうでなけば \c false を返す。
+	 */
+	bool is_parameter_set ( std::string name ) const;
+	/**
+	 \~english @brief Check if a parameter with the name is set.
+	 @param[in] name Name of parameter.
+	 @return \c true if all the name with parameter is set. \c false otherwise.
+	 \~japanese @brief 設定された名前のパラメータが存在するか確認する。
+	 @param[in] name パラメータの名前。
+	 @return もし設定されたパラメータ名があれば \c true を返し、そうでなけば \c false を返す。
+	 */
+	bool check_set ( std::string name ) const;
 	/**
 	 \~english @brief Print the input message surrounded by -----.
 	 \~japanese @brief 入力のメッセージを ----- で囲んで出力する。

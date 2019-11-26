@@ -233,8 +233,8 @@ public:
 	 @param[in] array 目標となるグリッド。
 	 @param[in] offset 目標となるグリッドに適用されるオフセット。
 	 */
-	void activate_as( const bitarray3 &array, const vec3i &offset=vec3i() ) {
-		array.const_serial_actives([&](int i, int j, int k) {
+	template <class Y> void activate_as( const array3<Y> &array, const vec3i &offset=vec3i() ) {
+		array.const_serial_actives([&](int i, int j, int k, const auto &it) {
 			const vec3i &pi = vec3i(i,j,k) + offset;
 			if( ! this->shape().out_of_bounds(pi) && ! (*this)(pi)) {
 				this->set(pi);
@@ -249,8 +249,24 @@ public:
 	 @param[in] array 目標となるグリッド。
 	 @param[in] offset 目標となるグリッドに適用されるオフセット。
 	 */
-	template <class Y> void activate_as( const array3<Y> &array, const vec3i &offset=vec3i() ) {
-		array.const_serial_actives([&](int i, int j, int k, const auto &it ) {
+	template <class Y> void activate_as_bit( const Y &array, const vec3i &offset=vec3i() ) {
+		array.const_serial_actives([&](int i, int j, int k) {
+			const vec3i &pi = vec3i(i,j,k) + offset;
+			if( ! this->shape().out_of_bounds(pi) && ! (*this)(pi)) {
+				this->set(pi);
+			}
+		});
+	}
+	/**
+	 \~english @brief Activate cells at the same positons where an input array is filled with an offset.
+	 @param[in] array Target array.
+	 @param[in] offset Offset applied to the target array.
+	 \~japanese @brief 入力のグリッドの塗りつぶされたセルと同じ場所のセルを offset だけずらして、アクティブにする。
+	 @param[in] array 目標となるグリッド。
+	 @param[in] offset 目標となるグリッドに適用されるオフセット。
+	 */
+	template <class Y> void activate_inside_as( const array3<Y> &array, const vec3i &offset=vec3i() ) {
+		array.const_serial_inside([&](int i, int j, int k, const auto &it) {
 			const vec3i &pi = vec3i(i,j,k) + offset;
 			if( ! this->shape().out_of_bounds(pi) && ! (*this)(pi)) {
 				this->set(pi);
@@ -283,7 +299,7 @@ public:
 				}
 			}
 		});
-		activate_as(array,offset);
+		activate_as_bit(array,offset);
 	}
 	/**
 	 \~english @brief Clear out the grid.

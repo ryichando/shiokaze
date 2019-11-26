@@ -2,7 +2,7 @@
 **	macliquid3.h
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on April 18, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on April 18, 2017.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -42,6 +42,7 @@
 #include <shiokaze/core/dylibloader.h>
 #include <shiokaze/rigidbody/rigidworld3_interface.h>
 #include <shiokaze/utility/graphplotter_interface.h>
+#include <functional>
 //
 SHKZ_BEGIN_NAMESPACE
 //
@@ -82,6 +83,10 @@ protected:
 	unsigned m_prev_frame;
 	unsigned m_graph_lists[4];
 	//
+	std::function<bool( double dx, double dt, double time, unsigned step )> m_check_inject_func;
+	std::function<bool( const vec3d &p, double dx, double dt, double time, unsigned step, double &fluid, vec3d &velocity )> m_inject_func;
+	std::function<void( double dx, double dt, double time, unsigned step, double &volume_change )> m_post_inject_func;
+	//
 	environment_setter arg_shape{this,"shape",&m_shape};
 	environment_setter arg_dx{this,"dx",&m_dx};
 	//
@@ -120,6 +125,7 @@ protected:
 	Parameters m_param;
 	//
 	virtual void inject_external_force( macarray3<Real> &velocity, double dt );
+	virtual void inject_external_fluid( array3<Real> &fluid, macarray3<Real> &velocity, double dt );
 	virtual void set_volume_correction( macproject3_interface *macproject );
 	virtual void extend_both( int w=2 );
 	virtual void export_mesh() const;

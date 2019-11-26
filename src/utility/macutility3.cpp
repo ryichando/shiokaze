@@ -2,7 +2,7 @@
 **	macutility3.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on April 19, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on April 19, 2017.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -27,7 +27,7 @@
 #include <shiokaze/array/array_extrapolator3.h>
 #include <shiokaze/array/macarray_interpolator3.h>
 #include <shiokaze/array/macarray_extrapolator3.h>
-#include <shiokaze/array/shared_array3.h>
+#include <shiokaze/array/shared_bitarray3.h>
 #include <shiokaze/array/array_derivative3.h>
 #include <shiokaze/array/array_utility3.h>
 #include <shiokaze/cellmesher/cellmesher3_interface.h>
@@ -314,6 +314,7 @@ protected:
 		timer.tick(); console::dump( ">>> Assigining variables...\n" );
 		//
 		// Assign velocity
+		velocity.set_touch_only_actives(true);
 		const double sqrt3 = sqrt(3.0);
 		auto velocity_func = reinterpret_cast<vec3d(*)(const vec3d &)>(dylib.load_symbol("velocity"));
 		if( velocity_func ) {
@@ -371,6 +372,16 @@ protected:
 			}
 			fluid->set_as_levelset(sqrt3*m_dx);
 			fluid->flood_fill();
+			//
+			// Activate velocity inside fluid
+			shared_bitmacarray3 velocity_actives(velocity.shape());
+			for( int dim : DIMS3 ) {
+				velocity_actives()[dim].activate_inside_as(*fluid);
+				velocity_actives()[dim].activate_inside_as(*fluid,vec3i(dim==0,dim==1,dim==2));
+			}
+			velocity.activate_as_bit(velocity_actives());
+		} else {
+			velocity.activate_all();
 		}
 		//
 		// Assign density

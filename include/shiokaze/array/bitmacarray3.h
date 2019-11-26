@@ -197,7 +197,20 @@ public:
 	 @param[in] array 目標となるグリッド。
 	 @param[in] offset 目標となるグリッドに適用されるオフセット。
 	 */
-	void activate_as( const bitmacarray3 &array, const std::array<vec3i,DIM3> &offsets={vec3i(),vec3i(),vec3i()} ) {
+	void activate_as_bit( const bitmacarray3 &array, const std::array<vec3i,DIM3> &offsets={vec3i(),vec3i(),vec3i()} ) {
+		m_parallel.for_each( DIM3, [&]( size_t dim ) {
+			(*this)[dim].activate_as_bit(array[dim],offsets[dim]);
+		});
+	}
+	/**
+	 \~english @brief Activate cells at the same positons where an input array is active with an offset.
+	 @param[in] array Target array.
+	 @param[in] offset Offset applied to the target array.
+	 \~japanese @brief 入力のグリッドのアクティブセルと同じ場所のセルを offset だけずらして、アクティブにする。
+	 @param[in] array 目標となるグリッド。
+	 @param[in] offset 目標となるグリッドに適用されるオフセット。
+	 */
+	template <class Y> void activate_as( const Y &array, const std::array<vec3i,DIM3> &offsets={vec3i(),vec3i(),vec3i()} ) {
 		m_parallel.for_each( DIM3, [&]( size_t dim ) {
 			(*this)[dim].activate_as(array[dim],offsets[dim]);
 		});

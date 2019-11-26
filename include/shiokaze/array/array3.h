@@ -411,7 +411,7 @@ public:
 	 @param[in] array 目標となるグリッド。
 	 @param[in] offset 目標となるグリッドに適用されるオフセット。
 	 */
-	template <class Y> void activate_as_bit( Y &array, const vec3i &offset=vec3i() ) {
+	template <class Y> void activate_as_bit( const Y &array, const vec3i &offset=vec3i() ) {
 		array.const_serial_actives([&](int i, int j, int k) {
 			const vec3i &pi = vec3i(i,j,k) + offset;
 			if( ! this->shape().out_of_bounds(pi) && ! this->active(pi)) {

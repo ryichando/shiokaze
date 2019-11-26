@@ -2,7 +2,7 @@
 **	cg.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on July 1, 2018. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on July 1, 2018.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in

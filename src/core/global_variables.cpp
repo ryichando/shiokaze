@@ -1,8 +1,8 @@
 /*
-**	macbackwardflipsmoke2.h
+**	global_variables.cpp
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on June 8, 2017.
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on November 23, 2019.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -22,31 +22,12 @@
 **	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 //
-#ifndef SHKZ_BACKWARDFLIPSMOKE2_H
-#define SHKZ_BACKWARDFLIPSMOKE2_H
+#include <shiokaze/core/common.h>
 //
-#include "macsmoke2.h"
-#include <shiokaze/backwardflip/macbackwardflip2_interface.h>
+SHKZ_USING_NAMESPACE
 //
-SHKZ_BEGIN_NAMESPACE
-//
-class macbackwardflipsmoke2 : public macsmoke2 {
-public:
-	macbackwardflipsmoke2();
-	virtual ~macbackwardflipsmoke2() {}
-protected:
-	//
-	LONG_NAME("MAC Backward FLIP Smoke 2D")
-	//
-	virtual void idle() override;
-	virtual void draw( graphics_engine &g ) const override;
-	virtual void configure( configuration &config ) override;
-	//
-	bool m_use_regular_velocity_advection;
-	macbackwardflip2_driver m_backwardflip{this,"macbackwardflip2"};
-};
-//
-SHKZ_END_NAMESPACE
-//
-#endif
+extern "C" {
+	bool g_shkz_force_single_thread {false};
+	bool g_shkz_has_graphical_interface {false};
+}
 //

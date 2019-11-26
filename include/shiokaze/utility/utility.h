@@ -2,7 +2,7 @@
 **	utility.h
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on Feb 15, 2017. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on Feb 15, 2017.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <vector>
 #include <functional>
+#include <limits>
 //
 #include <shiokaze/math/vec.h>
 #include <shiokaze/math/vec.h>
@@ -150,15 +151,20 @@ public:
 	}
 	/**
 	 \~english @brief Get the fraction of the level set.
+	 @param[in] phi0 One side of level set value.
+	 @param[in] phi1 Another side of level set value.
 	 @return Fraction occupied by the level set.
+	 @param[in] phi0 片方のレベルセットの値。
+	 @param[in] phi1 もう片方のレベルセットの値。
 	 \~japanese @brief レベルセットの占める割合を取得する。
 	 @return レベルセットの占める割合を返す。
 	 */
-	static double fraction( double phi0, double phi1, double eps=1e-4 ) {
+	static double fraction( double phi0, double phi1 ) {
 		if( phi0*phi1 >= 0.0 ) {
 			if( phi0 < 0.0 || phi1 < 0.0 ) return 1.0;
 			return 0.0;
 		} else {
+			static constexpr double eps = std::numeric_limits<double>::min();
 			return -std::min(phi0,phi1)/std::max(std::abs(phi1-phi0),eps);
 		}
 	};

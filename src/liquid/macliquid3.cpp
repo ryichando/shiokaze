@@ -25,8 +25,10 @@
 #include "macliquid3.h"
 #include <shiokaze/core/filesystem.h>
 #include <shiokaze/array/shared_array3.h>
+#include <shiokaze/array/shared_bitarray3.h>
 #include <shiokaze/array/array_upsampler3.h>
 #include <shiokaze/array/macarray_extrapolator3.h>
+#include <shiokaze/array/macarray_interpolator3.h>
 #include <shiokaze/array/array_gradient3.h>
 #include <shiokaze/utility/utility.h>
 #include <shiokaze/array/array_utility3.h>
@@ -35,6 +37,7 @@
 #include <shiokaze/core/dylibloader.h>
 #include <shiokaze/core/filesystem.h>
 #include <cmath>
+#include <numeric>
 //
 SHKZ_USING_NAMESPACE
 //
@@ -115,18 +118,15 @@ void macliquid3::post_initialize() {
 	//
 	// Assign initial variables from script
 	m_macutility->assign_initial_variables(m_dylib,m_velocity,&m_solid,&m_fluid);
-	m_velocity.set_touch_only_actives(true);
 	//
 	// Compute the initial volume
 	timer.tick(); console::dump( "Computing the initial volume..." );
 	m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
 	//
-	shared_macarray3<Real> velocity_actives(m_velocity.type());
-	for( int dim : DIMS3 ) {
-		velocity_actives()[dim].activate_inside_as(m_fluid);
-		velocity_actives()[dim].activate_inside_as(m_fluid,vec3i(dim==0,dim==1,dim==2));
-	}
-	m_velocity.copy_active_as(velocity_actives());
+	// Get Injection function
+	m_check_inject_func = reinterpret_cast<bool(*)(double, double, double, unsigned)>(m_dylib.load_symbol("check_inject"));
+	m_inject_func = reinterpret_cast<bool(*)(const vec3d &, double, double, double, unsigned, double &, vec3d &)>(m_dylib.load_symbol("inject"));
+	m_post_inject_func = reinterpret_cast<double(*)(double, double, double, unsigned, double&)>(m_dylib.load_symbol("post_inject"));
 	//
 	console::dump( "Done. Volume = %.3f. Took %s.\n", m_initial_volume, timer.stock("initialize_compute_volume").c_str());
 	//
@@ -166,6 +166,9 @@ void macliquid3::drag( double x, double y, double z, double u, double v, double 
 //
 void macliquid3::inject_external_force( macarray3<Real> &velocity, double dt ) {
 	//
+	scoped_timer timer(this);
+	timer.tick(); console::dump( "Adding external forces..." );
+	//
 	if( m_force_exist ) {
 		velocity += m_external_force;
 		m_external_force.clear();
@@ -173,6 +176,77 @@ void macliquid3::inject_external_force( macarray3<Real> &velocity, double dt ) {
 	}
 	// Add gravity force
 	m_velocity += dt*m_param.gravity;
+	console::dump( "Done. Took %s\n", timer.stock("add_force").c_str());
+}
+//
+void macliquid3::inject_external_fluid( array3<Real> &fluid, macarray3<Real> &velocity, double dt ) {
+	//
+	scoped_timer timer(this);
+	unsigned step = m_timestepper->get_step_count();
+	double time = m_timestepper->get_current_time();
+	//
+	auto interp_vel = [&]( const vec3d &p ) {
+		return macarray_interpolator3::interpolate(velocity,vec3d(),m_dx,p);
+	};
+	if( m_check_inject_func && m_check_inject_func(m_dx,dt,time,step)) {
+		timer.tick(); console::dump( ">>> Liquid injection started...\n" );
+		size_t total_injected (0);
+		if( m_inject_func ) {
+			//
+			timer.tick(); console::dump( "Injecting liquid..." );
+			std::vector<size_t> inject_count(fluid.get_thread_num(),0);
+			fluid.parallel_all([&]( int i, int j, int k, auto &it, int tid ) {
+				//
+				vec3d p = m_dx*vec3i(i,j,k).cell();
+				double value (it()); vec3d u (interp_vel(p));
+				double old_value (value);
+				if( m_inject_func(p,m_dx,dt,time,step,value,u)) {
+					if( std::abs(value) < fluid.get_background_value() ||
+						(value < fluid.get_background_value() && it.active())) {
+						it.set(std::min(value,old_value));
+						if( old_value >= 0.0 && value < 0.0 ) {
+							inject_count[tid] ++;
+						}
+					}
+				}
+			});
+			fluid.flood_fill();
+			total_injected = std::accumulate(inject_count.begin(),inject_count.end(),0);
+			console::write("injected_count",total_injected);
+			console::dump( "Done. Count=%u. Took %s\n", total_injected, timer.stock("inject_fluid").c_str());
+			//
+			timer.tick(); console::dump( "Assigning velocity of injected liquid..." );
+			fluid.const_serial_inside([&]( int i, int j, int k, const auto &it ) {
+				double value; vec3d u;
+				if( m_inject_func(m_dx*vec3i(i,j,k).cell(),m_dx,dt,time,step,value,u)) {
+					if( value < 2.0 * fluid.get_background_value()) {
+						for( int dim : DIMS3 ) {
+							vec3d p0 = m_dx*vec3i(i,j,k).face(dim);
+							vec3d p1 = m_dx*vec3i(i+dim==0,j+dim==1,k+dim==2).face(dim);
+							value = it(); u = interp_vel(p0);
+							m_inject_func(p0,m_dx,dt,time,step,value,u);
+							velocity[dim].set(i,j,k,u[dim]);
+							value = it(); u = interp_vel(p1);
+							m_inject_func(p1,m_dx,dt,time,step,value,u);
+							velocity[dim].set(i+dim==0,j+dim==1,k+dim==2,u[dim]);
+						}
+					}
+				}
+			});
+			console::dump( "Done. Took %s\n", timer.stock("assign_injected_velocity").c_str());
+		}
+		if( m_post_inject_func ) {
+			timer.tick(); console::dump( "Computing volume change..." );
+			double volume_change = (m_dx*m_dx*m_dx) * total_injected;
+			m_post_inject_func(m_dx,dt,time,step,volume_change);
+			if( volume_change ) {
+				m_initial_volume += volume_change;
+			}
+			console::dump( "Done. Change=%e. Took %s\n", volume_change, timer.stock("compute_volume_change").c_str());
+			console::write("injection_volume_change",volume_change);
+		}
+		console::dump( "<<< Done. Took %s\n", timer.stock("total_liquid_injection").c_str());
+	}
 }
 //
 void macliquid3::set_volume_correction( macproject3_interface *m_macproject ) {
@@ -247,6 +321,9 @@ void macliquid3::idle() {
 	//
 	// Add external force
 	inject_external_force(m_velocity,dt);
+	//
+	// Inject liquid
+	inject_external_fluid(m_fluid,m_velocity,dt);
 	//
 	// Set volume correction
 	set_volume_correction(m_macproject.get());

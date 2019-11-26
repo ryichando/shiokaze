@@ -2,7 +2,7 @@
 **	graphics_engine.h
 **
 **	This is part of Shiokaze, a research-oriented fluid solver for computer graphics.
-**	Created by Ryoichi Ando <rand@nii.ac.jp> on Jan 13, 2018. 
+**	Created by Ryoichi Ando <rand@nii.ac.jp> on Jan 13, 2018.
 **
 **	Permission is hereby granted, free of charge, to any person obtaining a copy of
 **	this software and associated documentation files (the "Software"), to deal in
@@ -176,7 +176,31 @@ public:
 		vertex3v(v);
 	}\
 	//
-	enum class MODE { POINTS, LINES, LINE_STRIP, LINE_LOOP, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN };
+	/// \~english @brief List of drawing mode that is to be specified with begin() function. See https://www.khronos.org/opengl/wiki/Primitive for detail.
+	/// \~japanese @brief begin() 関数で指定出来る描画モード。詳しくは https://www.khronos.org/opengl/wiki/Primitive を参照。
+	enum class MODE {
+		/// \~english @brief Points.
+		/// \~japanese @brief 点群
+		POINTS,
+		/// \~english @brief Independent lines segmemts.
+		/// \~japanese @brief 独立した線セグメント
+		LINES,
+		/// \~english @brief Connected group of line segments.
+		/// \~japanese @brief 連続した線セグメント
+		LINE_STRIP,
+		/// \~english @brief Closed lines.
+		/// \~japanese @brief 閉じた線
+		LINE_LOOP,
+		/// \~english @brief Independent triangles.
+		/// \~japanese @brief 独立した三角形
+		TRIANGLES,
+		/// \~english @brief Connected group of triangles.
+		/// \~japanese @brief 連続した三角形
+		TRIANGLE_STRIP,
+		/// \~english @brief Connected group of triangles as fan.
+		/// \~japanese @brief 扇状に連続した三角形
+		TRIANGLE_FAN
+	};
 	/**
 	 \~english @brief Equivalebt to glBegin. See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glBegin.xml
 	 \~japanese @brief glBegin と同じ。https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glBegin.xml を参照。
