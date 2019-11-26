@@ -161,7 +161,7 @@ protected:
 		config.get_double("CFL",m_CFL,"Target CFL number");
 		config.get_unsigned("MaxSubsteps",m_maximal_substeps,"Maximal substeps");
 		config.get_unsigned("MaxFrame",m_maximal_frame,"Maximal video frame count");
-		m_min_dt = 1.0 / ((double)m_maximal_substeps * m_FPS);
+		m_min_dt = 1.0 / (static_cast<double>(m_maximal_substeps) * m_FPS);
 	}
 	//
 	virtual void post_initialize() override {
@@ -190,7 +190,7 @@ protected:
 	bool m_should_export_video {false};
 	int m_frame;
 	unsigned m_maximal_frame;
-	unsigned m_maximal_substeps {10};
+	unsigned m_maximal_substeps {100};
 	unsigned m_step;
 	//
 };
