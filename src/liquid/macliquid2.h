@@ -106,7 +106,7 @@ protected:
 	Parameters m_param;
 	//
 	virtual void inject_external_force( macarray2<Real> &velocity, double dt );
-	virtual void inject_external_fluid( array2<Real> &fluid, macarray2<Real> &velocity, double dt );
+	virtual void inject_external_fluid( array2<Real> &fluid, macarray2<Real> &velocity, double dt, double time );
 	virtual size_t do_inject_external_fluid( array2<Real> &fluid, macarray2<Real> &velocity, double dt, double time, unsigned step );
 	virtual void set_volume_correction( macproject2_interface *macproject );
 	virtual void extend_both( int w=2 );

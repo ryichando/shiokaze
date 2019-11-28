@@ -143,10 +143,9 @@ void macliquid2::inject_external_force( macarray2<Real> &m_velocity, double dt )
 	m_velocity += dt*m_param.gravity;
 }
 //
-void macliquid2::inject_external_fluid( array2<Real> &fluid, macarray2<Real> &velocity, double dt ) {
+void macliquid2::inject_external_fluid( array2<Real> &fluid, macarray2<Real> &velocity, double dt, double time ) {
 	//
-	unsigned step = m_timestepper->get_step_count();
-	double time = m_timestepper->get_current_time();
+	const unsigned step = m_timestepper->get_step_count();
 	//
 	if( m_check_inject_func && m_check_inject_func(m_dx,dt,time,step)) {
 		size_t total_injected (0);
@@ -248,6 +247,7 @@ void macliquid2::idle() {
 	add_to_graph();
 	//
 	// Compute the timestep size
+	const double time = m_timestepper->get_current_time();
 	const double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
 	//
 	// Extend both the velocity field and the level set
@@ -264,7 +264,7 @@ void macliquid2::idle() {
 	inject_external_force(m_velocity,dt);
 	//
 	// Inject external fluid
-	inject_external_fluid(m_fluid,m_velocity,dt);
+	inject_external_fluid(m_fluid,m_velocity,dt,time);
 	//
 	// Set volume correction
 	set_volume_correction(m_macproject.get());

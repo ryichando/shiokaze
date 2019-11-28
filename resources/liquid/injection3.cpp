@@ -25,6 +25,7 @@
 #include <shiokaze/math/vec.h>
 #include <shiokaze/core/configuration.h>
 #include <string>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <random>
 //
@@ -63,6 +64,14 @@ extern "C" bool inject( const vec3d &p, double dx, double dt, double time, unsig
 //
 extern "C" void post_inject( double dx, double dt, double time, unsigned step, double &volume_change ) {
 	if( g_fix_volume ) volume_change = 0.0;
+	else {
+		if( time > 0.0 ) {
+			const double area = M_PI * (g_water_radius*g_water_radius);
+			volume_change = dt * g_inject_speed * area;
+		} else {
+			volume_change = (4.0/3.0*M_PI) * (g_water_radius*g_water_radius*g_water_radius);
+		}
+	}
 }
 //
 extern "C" const char *license() {

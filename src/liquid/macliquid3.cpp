@@ -179,11 +179,10 @@ void macliquid3::inject_external_force( macarray3<Real> &velocity, double dt ) {
 	console::dump( "Done. Took %s\n", timer.stock("add_force").c_str());
 }
 //
-void macliquid3::inject_external_fluid( array3<Real> &fluid, macarray3<Real> &velocity, double dt ) {
+void macliquid3::inject_external_fluid( array3<Real> &fluid, macarray3<Real> &velocity, double dt, double time ) {
 	//
 	scoped_timer timer(this);
-	unsigned step = m_timestepper->get_step_count();
-	double time = m_timestepper->get_current_time();
+	const unsigned step = m_timestepper->get_step_count();
 	//
 	if( m_check_inject_func && m_check_inject_func(m_dx,dt,time,step)) {
 		timer.tick(); console::dump( ">>> Liquid injection started...\n" );
@@ -326,8 +325,9 @@ void macliquid3::idle() {
 	//
 	// Compute the timestep size
 	timer.tick(); console::dump( "Computing time step...");
-	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
-	double CFL = m_timestepper->get_current_CFL();
+	const double time = m_timestepper->get_current_CFL();
+	const double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
+	const double CFL = m_timestepper->get_current_CFL();
 	console::dump( "Done. dt=%.2e,CFL=%.2f. Took %s\n", dt, CFL, timer.stock("compute_timestep").c_str());
 	//
 	// Extend both the velocity field and the level set
@@ -344,7 +344,7 @@ void macliquid3::idle() {
 	inject_external_force(m_velocity,dt);
 	//
 	// Inject liquid
-	inject_external_fluid(m_fluid,m_velocity,dt);
+	inject_external_fluid(m_fluid,m_velocity,dt,time);
 	//
 	// Set volume correction
 	set_volume_correction(m_macproject.get());

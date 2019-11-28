@@ -30,9 +30,9 @@
 #include <shiokaze/projection/macproject2_interface.h>
 #include <shiokaze/visualizer/macvisualizer2_interface.h>
 #include <shiokaze/core/console.h>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <typeinfo>
-#define _USE_MATH_DEFINES
 //
 SHKZ_USING_NAMESPACE
 //

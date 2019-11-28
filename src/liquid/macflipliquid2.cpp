@@ -79,8 +79,9 @@ void macflipliquid2::idle() {
 	add_to_graph();
 	//
 	// Compute the timestep size
-	double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
-	unsigned step = m_timestepper->get_step_count();
+	const double time = m_timestepper->get_current_time();
+	const double dt = m_timestepper->advance(m_macutility->compute_max_u(m_velocity),m_dx);
+	const unsigned step = m_timestepper->get_step_count();
 	//
 	shared_macarray2<Real> face_density(m_shape);
 	shared_macarray2<Real> save_velocity(m_shape);
@@ -96,7 +97,7 @@ void macflipliquid2::idle() {
 	m_flip->advect(
 		[&](const vec2d &p){ return interpolate_solid(p); },
 		[&](const vec2d &p){ return interpolate_velocity(p); },
-		m_timestepper->get_current_time(),dt);
+		time,dt);
 	//
 	// Grid velocity advection
 	m_macadvection->advect_vector(m_velocity,m_velocity,m_fluid,dt);
@@ -105,7 +106,7 @@ void macflipliquid2::idle() {
 	m_flip->mark_bullet(
 		[&](const vec2d &p){ return interpolate_fluid(p); },
 		[&](const vec2d &p){ return interpolate_velocity(p); },
-		m_timestepper->get_current_time()
+		time
 	);
 	//
 	// Correct positions
@@ -144,7 +145,7 @@ void macflipliquid2::idle() {
 	inject_external_force(m_velocity,dt);
 	//
 	// Inject external fluid
-	inject_external_fluid(m_fluid,m_velocity,dt);
+	inject_external_fluid(m_fluid,m_velocity,dt,time);
 	//
 	// Set volume correction
 	set_volume_correction(m_macproject.get());
