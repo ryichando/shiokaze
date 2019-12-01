@@ -87,7 +87,7 @@ protected:
 	//
 	shape2 m_shape;
 	double m_dx;
-	double m_initial_volume;
+	double m_target_volume;
 	bool m_force_exist;
 	unsigned m_graph_lists[4];
 	//

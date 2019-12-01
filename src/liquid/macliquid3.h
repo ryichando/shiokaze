@@ -79,7 +79,7 @@ protected:
 	double m_half_dx;
 	//
 	bool m_force_exist;
-	double m_initial_volume;
+	double m_target_volume;
 	unsigned m_prev_frame;
 	unsigned m_graph_lists[4];
 	//

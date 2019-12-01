@@ -73,15 +73,18 @@ public:
 	 \~english @brief Report matrix properties.
 	 @param[in] matrix Matrix to examine.
 	 @param[in] name Name of the matrix used in the reporting text.
+	 @return \c if the matrix is symmetric and diagonals are all positive, \c false otherwise.
 	 \~japanese @brief 行列の性質について調べて報告する。
 	 @param[in] matrix 調べる行列。
 	 @param[in] name 報告文で使われる行列の名前。
+	 @return もし行列が対称行列で対角項が全て正なら、\c true を、そうでなければ \c false を返す。
 	 */
-	static void report( const RCMatrix_interface<N,T> *matrix, std::string name ) {
+	static bool report( const RCMatrix_interface<N,T> *matrix, std::string name ) {
 		//
 		N active(0), max_row(0), min_row(std::numeric_limits<N>::max()), active_rows(0);
 		T avg_row(0.0), max_diag(0.0), min_diag(std::numeric_limits<T>::max());
 		T diag_ratio(0.0);
+		bool symm_postive_diag (true);
 		bool has_nan (false);
 		for( N i=0; i<matrix->rows(); i++ ) {
 			if( ! matrix->empty(i) ) {
@@ -104,6 +107,7 @@ public:
 			}
 		}
 		if( active_rows ) avg_row /= (T)active_rows;
+		double symmetric_error = symmetricity_error(matrix);
 		console::dump( ">>> ==== Matrix [%s] analysis ====\n", name.c_str());
 		console::dump( "Matrix dimension = %dx%d\n", matrix->rows(), matrix->columns() );
 		console::dump( "Matrix active row size = %d\n", active_rows );
@@ -114,12 +118,15 @@ public:
 		console::dump( "Matrix max diag = %.2e\n", max_diag );
 		console::dump( "Matrix min diag = %.2e\n", min_diag );
 		console::dump( "Matrix worst max(non_diag) / diag = %.2e\n", diag_ratio );
-		console::dump( "Matrix max(symmetricity error) = %.2e\n", symmetricity_error(matrix) );
+		console::dump( "Matrix max(symmetricity error) = %.2e\n", symmetric_error );
 		console::dump( "Matrix has_NaN = %s\n", has_nan ? "Yes" : "No");
 		console::dump( "<<< =========================\n" );
 		if( min_diag < 0.0 ) {
 			console::dump( "WARNING: min_diag < 0.0\n");
+			symm_postive_diag = false;
 		}
+		if( symmetric_error ) symm_postive_diag = false;
+		return symm_postive_diag;
 	}
 	//
 };

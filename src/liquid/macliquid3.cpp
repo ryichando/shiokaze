@@ -121,14 +121,14 @@ void macliquid3::post_initialize() {
 	//
 	// Compute the initial volume
 	timer.tick(); console::dump( "Computing the initial volume..." );
-	m_initial_volume = m_gridutility->get_volume(m_solid,m_fluid);
+	m_target_volume = m_gridutility->get_volume(m_solid,m_fluid);
 	//
 	// Get Injection function
 	m_check_inject_func = reinterpret_cast<bool(*)(double, double, double, unsigned)>(m_dylib.load_symbol("check_inject"));
 	m_inject_func = reinterpret_cast<bool(*)(const vec3d &, double, double, double, unsigned, double &, vec3d &)>(m_dylib.load_symbol("inject"));
 	m_post_inject_func = reinterpret_cast<double(*)(double, double, double, unsigned, double&)>(m_dylib.load_symbol("post_inject"));
 	//
-	console::dump( "Done. Volume = %.3f. Took %s.\n", m_initial_volume, timer.stock("initialize_compute_volume").c_str());
+	console::dump( "Done. Volume = %.3f. Took %s.\n", m_target_volume, timer.stock("initialize_compute_volume").c_str());
 	//
 	double max_u = m_macutility->compute_max_u(m_velocity);
 	if( max_u ) {
@@ -195,7 +195,7 @@ void macliquid3::inject_external_fluid( array3<Real> &fluid, macarray3<Real> &ve
 			double volume_change = (m_dx*m_dx*m_dx) * total_injected;
 			m_post_inject_func(m_dx,dt,time,step,volume_change);
 			if( volume_change ) {
-				m_initial_volume += volume_change;
+				m_target_volume += volume_change;
 			}
 			console::dump( "Done. Change=%e. Took %s\n", volume_change, timer.stock("compute_volume_change").c_str());
 			console::write("injection_volume_change",volume_change);
@@ -275,25 +275,25 @@ void macliquid3::set_volume_correction( macproject3_interface *m_macproject ) {
 	scoped_timer timer(this);
 	timer.tick(); console::dump( "Computing volume..." );
 	double volume = m_gridutility->get_volume(m_solid,m_fluid);
-	console::dump( "Done. Volume = %.3f (Volume change: %.2f%%). Took %s\n", volume, 100.0*volume/m_initial_volume, timer.stock("compute_volume").c_str());
+	console::dump( "Done. Volume = %.3f (Volume change: %.2f%%). Took %s\n", volume, 100.0*volume/m_target_volume, timer.stock("compute_volume").c_str());
 	console::write("volume", volume);
-	console::write("volume_change", volume/m_initial_volume);
-	if( volume/m_initial_volume < 0.01 ) {
+	console::write("volume_change", volume/m_target_volume);
+	if( volume/m_target_volume < 0.01 ) {
 		console::dump( "Volume is nearly zero. Quitting...\n");
 		exit(0);
 	}
 	//
 	// Set volume correction if requested
 	if( m_param.volume_correction ) {
-		double change_ratio = std::abs(1.0-volume/m_initial_volume);
+		double change_ratio = std::abs(1.0-volume/m_target_volume);
 		if( change_ratio > m_param.volume_change_tol_ratio ) {
 			double target_volume;
-			if( volume > m_initial_volume ) {
-				target_volume = (1.0+m_param.volume_change_tol_ratio) * m_initial_volume;
+			if( volume > m_target_volume ) {
+				target_volume = (1.0+m_param.volume_change_tol_ratio) * m_target_volume;
 			} else {
-				target_volume = (1.0-m_param.volume_change_tol_ratio) * m_initial_volume;
+				target_volume = (1.0-m_param.volume_change_tol_ratio) * m_target_volume;
 			}
-			console::dump( "Report: volume correction is turned on. (target=%.3f, original=%.3f)\n", target_volume, m_initial_volume );
+			console::dump( "Report: volume correction is turned on. (target=%.3f, original=%.3f)\n", target_volume, m_target_volume );
 			m_macproject->set_target_volume(volume,target_volume);
 		} else {
 			console::dump( "Report: volume correction is not turned on (change ratio does not exceed %g but is only %.4f).\n", m_param.volume_change_tol_ratio, change_ratio);

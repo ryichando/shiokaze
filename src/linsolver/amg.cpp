@@ -30,7 +30,11 @@
 #include <amgcl/coarsening/smoothed_aggregation.hpp>
 #include <amgcl/relaxation/gauss_seidel.hpp>
 #include <amgcl/solver/cg.hpp>
-//
+#include <amgcl/solver/bicgstab.hpp>
+#include <amgcl/solver/bicgstabl.hpp>
+#include <amgcl/solver/gmres.hpp>
+#include <amgcl/solver/lgmres.hpp>
+#include <amgcl/solver/fgmres.hpp>
 #include <shiokaze/linsolver/RCMatrix_solver.h>
 //
 SHKZ_USING_NAMESPACE
@@ -51,6 +55,7 @@ protected:
 	virtual void configure( configuration &config ) override {
 		config.get_double("Residual",m_param.residual,"Tolerable residual");
 		config.get_unsigned("MaxIterations",m_param.max_iterations,"Maximal iteration count");
+		config.get_string("Solver",m_param.method,"Solver name");
 	}
 	virtual typename RCMatrix_solver_interface<N,T>::Result solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
 		//
@@ -79,17 +84,48 @@ protected:
 		std::vector<T> rhs;
 		std::vector<T> result(rows);
 		b->convert_to(rhs);
-		int iteration_count (0);
-		//
-		typedef amgcl::solver::cg<amgcl::backend::builtin<T> > Solver;
-		typename Solver::params param;
-		param.maxiter = m_param.max_iterations;
-		param.tol = m_param.residual;
-		Solver solve(rows,param);
-		//
-		// Solve the system. Returns number of iterations made and the achieved residual.
+		unsigned iteration_count (0);
 		double error;
-		std::tie(iteration_count,error) = solve(amg,rhs,result);
+		//
+		auto set_param = [&]( auto &param ) {
+			param.maxiter = m_param.max_iterations;
+			param.tol = m_param.residual;
+		};
+		//
+		if( m_param.method == "CG") {
+			typedef amgcl::solver::cg<amgcl::backend::builtin<T> > Solver;
+			typename Solver::params param; set_param(param);
+			Solver solve(rows,param);
+			std::tie(iteration_count,error) = solve(amg,rhs,result);
+		} else if( m_param.method == "BICGSTAB") {
+			typedef amgcl::solver::bicgstab<amgcl::backend::builtin<T> > Solver;
+			typename Solver::params param; set_param(param);
+			Solver solve(rows,param);
+			std::tie(iteration_count,error) = solve(amg,rhs,result);
+		} else if( m_param.method == "BICGSTABL") {
+			typedef amgcl::solver::bicgstabl<amgcl::backend::builtin<T> > Solver;
+			typename Solver::params param; set_param(param);
+			Solver solve(rows,param);
+			std::tie(iteration_count,error) = solve(amg,rhs,result);
+		} else if( m_param.method == "GMRES") {
+			typedef amgcl::solver::gmres<amgcl::backend::builtin<T> > Solver;
+			typename Solver::params param; set_param(param);
+			Solver solve(rows,param);
+			std::tie(iteration_count,error) = solve(amg,rhs,result);
+		} else if( m_param.method == "FGMRES") {
+			typedef amgcl::solver::fgmres<amgcl::backend::builtin<T> > Solver;
+			typename Solver::params param; set_param(param);
+			Solver solve(rows,param);
+			std::tie(iteration_count,error) = solve(amg,rhs,result);
+		} else if( m_param.method == "LGMRES") {
+			typedef amgcl::solver::lgmres<amgcl::backend::builtin<T> > Solver;
+			typename Solver::params param; set_param(param);
+			Solver solve(rows,param);
+			std::tie(iteration_count,error) = solve(amg,rhs,result);
+		} else {
+			printf( "Unknown solver %s\n", m_param.method.c_str());
+			exit(0);
+		}
 		//
 		x->convert_from(result);
 		return {(N)iteration_count,(T)error};
@@ -98,6 +134,7 @@ protected:
 	struct Parameters {
 		double residual {1e-4};
 		unsigned max_iterations {300};
+		std::string method {"CG"};
 	};
 	Parameters m_param;
 };

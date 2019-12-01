@@ -99,7 +99,7 @@ void macliquid2::post_initialize () {
 	m_macutility->assign_initial_variables(m_dylib,m_velocity,&m_solid,&m_fluid);
 	//
 	// Compute the initial volume
-	m_initial_volume = m_gridutility->get_area(m_solid,m_fluid);
+	m_target_volume = m_gridutility->get_area(m_solid,m_fluid);
 	//
 	// Get Injection function
 	m_check_inject_func = reinterpret_cast<bool(*)(double, double, double, unsigned)>(m_dylib.load_symbol("check_inject"));
@@ -156,7 +156,7 @@ void macliquid2::inject_external_fluid( array2<Real> &fluid, macarray2<Real> &ve
 			double volume_change = (m_dx*m_dx) * total_injected;
 			m_post_inject_func(m_dx,dt,time,step,volume_change);
 			if( volume_change ) {
-				m_initial_volume += volume_change;
+				m_target_volume += volume_change;
 			}
 		}
 	}
@@ -221,12 +221,12 @@ void macliquid2::set_volume_correction( macproject2_interface *macproject ) {
 	// Set volume correction if requested
 	if( m_param.volume_correction ) {
 		double volume = m_gridutility->get_area(m_solid,m_fluid);
-		if( std::abs(1.0-volume/m_initial_volume) > m_param.volume_change_tol_ratio ) {
+		if( std::abs(1.0-volume/m_target_volume) > m_param.volume_change_tol_ratio ) {
 			double target_volume;
-			if( volume > m_initial_volume ) {
-				target_volume = (1.0+m_param.volume_change_tol_ratio) * m_initial_volume;
+			if( volume > m_target_volume ) {
+				target_volume = (1.0+m_param.volume_change_tol_ratio) * m_target_volume;
 			} else {
-				target_volume = (1.0-m_param.volume_change_tol_ratio) * m_initial_volume;
+				target_volume = (1.0-m_param.volume_change_tol_ratio) * m_target_volume;
 			}
 			macproject->set_target_volume(volume,target_volume);
 		}
