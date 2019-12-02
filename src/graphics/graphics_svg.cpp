@@ -70,7 +70,7 @@ private:
 		//
 		m_viewport.p0 = m_coordsys.p0 = vec2d(0.0,0.0);
 		m_viewport.p1 = vec2d(m_canvas_width,m_canvas_height);
-		m_coordsys.p1 = vec2d(1.0,1.0);
+		m_coordsys.p1 = vec2d(1.0,m_canvas_height/(double)m_canvas_width);
 		m_scale = (m_viewport.p1-m_viewport.p0).norm_inf();
 	}
 	//

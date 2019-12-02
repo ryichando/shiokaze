@@ -251,12 +251,12 @@ void macflipliquid3::do_export_mesh( unsigned frame ) const {
 	size_t size = ballistic_points.size();
 	fwrite(&size,1,sizeof(unsigned),fp);
 	for( size_t n=0; n<size; ++n ) {
-		Real position[3] = { (Real)ballistic_points[n].p.v[0],
-							  (Real)ballistic_points[n].p.v[1],
-							  (Real)ballistic_points[n].p.v[2] };
-		Real radius = ballistic_points[n].r;
-		fwrite(position,3,sizeof(Real),fp);
-		fwrite(&radius,1,sizeof(Real),fp);
+		float position[3] = { (float)ballistic_points[n].p.v[0],
+							  (float)ballistic_points[n].p.v[1],
+							  (float)ballistic_points[n].p.v[2] };
+		float radius = ballistic_points[n].r;
+		fwrite(position,3,sizeof(float),fp);
+		fwrite(&radius,1,sizeof(float),fp);
 	}
 	fclose(fp);
 	console::dump( "Done. Size=%d. Took %s\n", size, timer.stock("write_ballistic").c_str());
