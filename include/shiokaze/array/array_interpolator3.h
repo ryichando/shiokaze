@@ -75,18 +75,30 @@ namespace array_interpolator3 {
 	 \~english @brief Interpolate a physical quantity.
 	 @param[in] array grid.
 	 @param[in] p Position in index space.
+	 @param[in] only_actives Sample only active values.
 	 @return Interpolation result.
 	 \~japanese @brief 補間を計算する。
 	 @param[in] array グリッド。
 	 @param[in] p インデックス空間での位置。
+	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @return 補間値。
 	 */
-	template<class T> T interpolate( const array3<T> &array, const vec3d &p ) {
+	template<class T> T interpolate( const array3<T> &array, const vec3d &p, bool only_actives=false ) {
 		T values[8]; vec3i indices[8]; double coef[8];
 		interpolate_coef(array.shape(),p,indices,coef);
-		for( int n=0; n<8; ++n ) values[n] = array(indices[n][0],indices[n][1],indices[n][2]);
 		T value = T();
-		for( unsigned n=0; n<8; ++n ) if( coef[n] ) value += values[n] * coef[n];
+		if( only_actives ) {
+			double w[8];
+			double sum (0.0);
+			for( int n=0; n<8; ++n ) w[n] = array.active(indices[n]) ? coef[n] : 0.0;
+			for( int n=0; n<8; ++n ) sum += w[n];
+			if( sum ) {
+				for( int n=0; n<8; ++n ) w[n] /= sum;
+				for( unsigned n=0; n<8; ++n ) if( w[n] ) value += array(indices[n]) * w[n];
+			}
+		} else {
+			for( unsigned n=0; n<8; ++n ) if( coef[n] ) value += array(indices[n]) * coef[n];
+		}
 		return value;
 	}
 	/**
@@ -95,16 +107,18 @@ namespace array_interpolator3 {
 	 @param[in] origin Origin.
 	 @param[in] dx Grid cell size
 	 @param[in] p Position in physical space.
+	 @param[in] only_actives Sample only active values.
 	 @param[out] result Interpolation result.
 	 \~japanese @brief 補間を計算する。
 	 @param[in] array グリッド。
 	 @param[in] origin 原点。
 	 @param[in] dx Grid 格子セルの大きさ。
 	 @param[in] p 物理空間での位置。
+	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @param[out] 補間値。
 	 */
-	template<class T> T interpolate( const array3<T> &array, const vec3d &origin, double dx, const vec3d &p ) {
-		return interpolate<T>(array,(p-origin)/dx);
+	template<class T> T interpolate( const array3<T> &array, const vec3d &origin, double dx, const vec3d &p, bool only_actives=false ) {
+		return interpolate<T>(array,(p-origin)/dx,only_actives);
 	}
 };
 //

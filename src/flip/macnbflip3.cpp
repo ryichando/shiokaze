@@ -305,8 +305,6 @@ void macnbflip3::update( std::function<double(const vec3d &p)> solid, array3<Rea
 		}
 		//
 		mask->dilate(2);
-		fluid.activate_as_bit(mask());
-		//
 		shared_array3<Real> particle_levelset(m_shape,1.0);
 		m_particlerasterizer->build_levelset(particle_levelset(),mask(),points);
 		//
@@ -543,7 +541,7 @@ size_t macnbflip3::seed(const array3<Real> &fluid,
 					}
 					if( sparse && solid(new_particle.p) > r ) {
 						new_particle.mass = default_mass;
-						new_particle.velocity = macarray_interpolator3::interpolate(velocity,vec3d(),m_dx,p);
+						new_particle.velocity = macarray_interpolator3::interpolate(velocity,vec3d(),m_dx,p,true);
 						new_particle.r = r;
 						new_particle.bullet = 0;
 						new_particle.bullet_time = 0.0;
@@ -648,7 +646,7 @@ void macnbflip3::update( const macarray3<Real> &prev_velocity, const macarray3<R
 				if( m_param.use_apic ) {
 					//
 					// Fetch grid velocity
-					particle.velocity = macarray_interpolator3::interpolate(new_velocity,vec3d(),m_dx,particle.p);
+					particle.velocity = macarray_interpolator3::interpolate(new_velocity,vec3d(),m_dx,particle.p,true);
 					//
 					// Update particle velocity derivative (APIC)
 					update_velocity_derivative(particle,new_velocity);
@@ -656,8 +654,8 @@ void macnbflip3::update( const macarray3<Real> &prev_velocity, const macarray3<R
 				} else {
 					//
 					// Fetch grid velocity
-					vec3d new_grid_velocity = macarray_interpolator3::interpolate(new_velocity,vec3d(),m_dx,particle.p);
-					vec3d old_grid_velocity = macarray_interpolator3::interpolate(prev_velocity,vec3d(),m_dx,particle.p);
+					vec3d new_grid_velocity = macarray_interpolator3::interpolate(new_velocity,vec3d(),m_dx,particle.p,true);
+					vec3d old_grid_velocity = macarray_interpolator3::interpolate(prev_velocity,vec3d(),m_dx,particle.p,true);
 					//
 					// Compute pure FLIP velocity
 					vec3d FLIP_velocity = particle.velocity + (new_grid_velocity-old_grid_velocity);
@@ -786,7 +784,7 @@ void macnbflip3::additionally_apply_velocity_derivative( macarray3<macflip3_inte
 }
 //
 double macnbflip3::interpolate_fluid( const array3<Real> &fluid, const vec3d &p ) const {
-	return array_interpolator3::interpolate(fluid,p/m_dx-vec3d(0.5,0.5,0.5));
+	return array_interpolator3::interpolate(fluid,p/m_dx-vec3d(0.5,0.5,0.5),true);
 }
 //
 vec3d macnbflip3::interpolate_fluid_gradient( std::function<double(const vec3d &p)> fluid, const vec3d &p ) const {

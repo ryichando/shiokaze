@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include <limits>
 #include <stdexcept>
 #include <cstddef>
+#include <array>
 
 #ifdef BOOST_VERSION
 #  include <boost/property_tree/ptree.hpp>

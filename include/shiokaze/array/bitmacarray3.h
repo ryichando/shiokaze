@@ -707,7 +707,7 @@ public:
 	 @param[in] count 拡張の回数。
 	 */
 	void dilate( std::function<void(int dim, int i, int j, int k, typename bitarray3::iterator& it, int thread_index)> func, int count=1 ) {
-		for( int n=0; n<count; ++n ) {
+		while( count -- ) {
 			m_parallel.for_each(DIM3,[&]( size_t dim ) {
 				operator[](dim).dilate([&](int i, int j, int k, typename bitarray3::iterator& it, int thread_index) {
 					func(dim,i,j,k,it,thread_index);
@@ -726,7 +726,7 @@ public:
 	void dilate( std::function<void(int dim, int i, int j, int k, typename bitarray3::iterator& it)> func, int count=1 ) {
 		dilate([&](int dim, int i, int j, int k, typename bitarray3::iterator& it, int thread_index) {
 			func(dim,i,j,k,it);
-		});
+		},count);
 	}
 	/**
 	 \~english @brief Dilate cells.
@@ -735,9 +735,46 @@ public:
 	 @param[in] count 拡張の回数。
 	 */
 	void dilate( int count=1 ) {
-		for( int n=0; n<count; ++n ) {
-			dilate([&](int dim, int i, int j, int k, typename bitarray3::iterator& it){ it.set(); });
+		dilate([&](int dim, int i, int j, int k, typename bitarray3::iterator& it){ it.set(); },count);
+	}
+	/**
+	 \~english @brief Erode cells.
+	 @param[in] func Function that specifies whether to inactivate the cell.
+	 @param[in] count Number of erode count.
+	 \~japanese @brief 縮小する。
+	 @param[in] func 拡張されたセルを非アクティブにするか指定する関数。
+	 @param[in] count 縮小の回数。
+	 */
+	void erode( std::function<bool(int dim, int i, int j, int k, int thread_index)> func, int count=1 ) {
+		while( count -- ) {
+			m_parallel.for_each(DIM3,[&]( size_t dim ) {
+				operator[](dim).erode([&](int i, int j, int k, int thread_index) {
+					return func(dim,i,j,k,thread_index);
+				});
+			});
 		}
+	}
+	/**
+	 \~english @brief Erode cells.
+	 @param[in] func Function that specifies whether to inactivate the cell.
+	 @param[in] count Number of erode count.
+	 \~japanese @brief 縮小する。
+	 @param[in] func 拡張されたセルを非アクティブにするか指定する関数。
+	 @param[in] count 縮小の回数。
+	 */
+	void erode( std::function<bool(int dim, int i, int j, int k)> func, int count=1 ) {
+		erode([&](int dim, int i, int j, int k, int thread_index) {
+			return func(dim,i,j,k);
+		},count);
+	}
+	/**
+	 \~english @brief Erode cells.
+	 @param[in] count Number of erode count.
+	 \~japanese @brief 縮小する。
+	 @param[in] count 縮小の回数。
+	 */
+	void erode( int count=1 ) {
+		return erode([&](int dim, int i, int j, int k){ return true; },count);
 	}
 	/**
 	 \~english @brief Get the core name of module of this grid.

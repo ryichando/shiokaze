@@ -178,7 +178,7 @@ protected:
 		console::set_time(0.0);
 	}
 	//
-	double m_time, m_FPS {60.0}, m_CFL {3.0}, m_min_dt {0.1/60.0};
+	double m_time, m_FPS {60.0}, m_CFL {2.0}, m_min_dt {1e-10};
 	double m_accumulated_time;
 	double m_simulation_time0;
 	double m_simulation_time_one_video_frame_prev;

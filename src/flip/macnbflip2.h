@@ -91,6 +91,14 @@ protected:
 	virtual void post_initialize() override;
 	virtual void configure( configuration &config ) override;
 	//
+	virtual bool const_send_message( std::string message, void *ptr=nullptr ) const override {
+		if( message == "narrowband") {
+			*static_cast<unsigned *>(ptr) = m_param.narrowband;
+			return true;
+		}
+		return false;
+	}
+	//
 	struct Parameters {
 		//
 		bool use_apic {true};

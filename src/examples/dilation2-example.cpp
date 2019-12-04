@@ -69,6 +69,8 @@ private:
 			} else if( key == UI_interface::KEY_P ) {
 				auto &config = configurable::get_global_configuration();
 				config.print_variables();
+			} else if( key == UI_interface::KEY_E ) {
+				m_array.erode();
 			}
 		}
 		return true;

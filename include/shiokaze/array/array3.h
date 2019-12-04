@@ -1632,7 +1632,7 @@ public:
 	 @param[in] count 拡張の回数。
 	 */
 	void dilate( std::function<void(int i, int j, int k, iterator& it, int thread_index )> func, int count=1 ) {
-		for( int n=0; n<count; ++n ) {
+		while( count -- ) {
 			m_core->dilate([&](int i, int j, int k, void *value_ptr, bool &active, const bool &filled, int thread_index) {
 				iterator it(value_ptr,active,filled,filled ? m_fill_value : m_background_value);
 				func(i,j,k,it,thread_index);
@@ -1650,7 +1650,7 @@ public:
 	void dilate( std::function<void(int i, int j, int k, iterator& it)> func, int count=1 ) {
 		dilate([&](int i, int j, int k, iterator& it, int thread_index) {
 			func(i,j,k,it);
-		});
+		},count);
 	}
 	/**
 	 \~english @brief Dilate cells.
@@ -1659,9 +1659,65 @@ public:
 	 @param[in] count 拡張の回数。
 	 */
 	void dilate( int count=1 ) {
-		for( int n=0; n<count; ++n ) {
-			dilate([&](int i, int j, int k, iterator& it){ it.set(it()); });
+		dilate([&](int i, int j, int k, iterator& it){ it.set(it()); },count);
+	}
+	/**
+	 \~english @brief Erode cells.
+	 @param[in] func Function that specifies whether to inactivate the cell.
+	 @param[in] count Number of erode count.
+	 \~japanese @brief 縮小する。
+	 @param[in] func 拡張されたセルを非アクティブにするか指定する関数。
+	 @param[in] count 縮小の回数。
+	 */
+	void erode( std::function<bool(int i, int j, int k, const const_iterator& it, int thread_index)> func, int count=1 ) {
+		//
+		std::vector<std::vector<vec3i> > off_positions(get_thread_num());
+		//
+		while( count -- ) {
+			const_parallel_actives([&](int i, int j, int k, const auto &it, int tn) {
+				bool exit_loop (false);
+				for( int dim : DIMS3 ) {
+					for( int dir=-1; dir<=1; dir+=2 ) {
+						const vec3i &pi = vec3i(i,j,k) + dir*vec3i(dim==0,dim==1,dim==2);
+						if( ! this->shape().out_of_bounds(pi) && ! this->active(pi)) {
+							if( func(i,j,k,it,tn)) {
+								off_positions[tn].push_back(vec3i(i,j,k));
+								exit_loop = true;
+								break;
+							}
+						}
+					}
+					if( exit_loop ) break;
+				}
+			});
+			for( const auto &bucket : off_positions ) for( const auto &pi : bucket ) {
+				set_off(pi);
+			}
 		}
+	}
+	/**
+	 \~english @brief Erode cells.
+	 @param[in] func Function that specifies whether to inactivate the cell.
+	 @param[in] count Number of erode count.
+	 \~japanese @brief 縮小する。
+	 @param[in] func 拡張されたセルを非アクティブにするか指定する関数。
+	 @param[in] count 縮小の回数。
+	 */
+	void erode( std::function<bool(int i, int j, int k, const const_iterator& it)> func, int count=1 ) {
+		erode([&](int i, int j, int k, const const_iterator& it, int thread_index) {
+			return func(i,j,it);
+		},count);
+	}
+	/**
+	 \~english @brief Erode cells.
+	 @param[in] count Number of erode count.
+	 \~japanese @brief 縮小する。
+	 @param[in] count 縮小の回数。
+	 */
+	void erode( int count=1 ) {
+		erode([&](int i, int j, int k, const const_iterator& it, int thread_index) {
+			return true;
+		},count);
 	}
 	/**
 	 \~english @brief Swap array.

@@ -269,8 +269,6 @@ void macnbflip2::update( std::function<double(const vec2d &p)> solid, array2<Rea
 		}
 		//
 		mask->dilate(2);
-		fluid.activate_as_bit(mask());
-		//
 		shared_array2<Real> particle_levelset(m_shape,1.0);
 		m_particlerasterizer->build_levelset(particle_levelset(),mask(),points);
 		//
@@ -487,7 +485,7 @@ size_t macnbflip2::seed(const array2<Real> &fluid,
 					}
 					if( sparse && solid(new_particle.p) > r ) {
 						new_particle.mass = default_mass;
-						new_particle.velocity = macarray_interpolator2::interpolate(velocity,vec2d(),m_dx,p);
+						new_particle.velocity = macarray_interpolator2::interpolate(velocity,vec2d(),m_dx,p,true);
 						new_particle.r = r;
 						new_particle.bullet = 0;
 						new_particle.bullet_time = 0.0;
@@ -575,7 +573,7 @@ void macnbflip2::update( const macarray2<Real> &prev_velocity, const macarray2<R
 				if( m_param.use_apic ) {
 					//
 					// Fetch grid velocity
-					particle.velocity = macarray_interpolator2::interpolate(new_velocity,vec2d(),m_dx,particle.p);
+					particle.velocity = macarray_interpolator2::interpolate(new_velocity,vec2d(),m_dx,particle.p,true);
 					//
 					// Update particle velocity derivative (APIC)
 					update_velocity_derivative(particle,new_velocity);
@@ -583,8 +581,8 @@ void macnbflip2::update( const macarray2<Real> &prev_velocity, const macarray2<R
 				} else {
 					//
 					// Fetch grid velocity
-					vec2d new_grid_velocity = macarray_interpolator2::interpolate(new_velocity,vec2d(),m_dx,particle.p);
-					vec2d old_grid_velocity = macarray_interpolator2::interpolate(prev_velocity,vec2d(),m_dx,particle.p);
+					vec2d new_grid_velocity = macarray_interpolator2::interpolate(new_velocity,vec2d(),m_dx,particle.p,true);
+					vec2d old_grid_velocity = macarray_interpolator2::interpolate(prev_velocity,vec2d(),m_dx,particle.p,true);
 					//
 					// Compute pure FLIP velocity
 					vec2d FLIP_velocity = particle.velocity + (new_grid_velocity-old_grid_velocity);
@@ -692,7 +690,7 @@ void macnbflip2::additionally_apply_velocity_derivative( macarray2<macflip2_inte
 }
 //
 double macnbflip2::interpolate_fluid( const array2<Real> &fluid, const vec2d &p ) const {
-	return array_interpolator2::interpolate(fluid,p/m_dx-vec2d(0.5,0.5));
+	return array_interpolator2::interpolate(fluid,p/m_dx-vec2d(0.5,0.5),true);
 }
 //
 vec2d macnbflip2::interpolate_fluid_gradient( std::function<double(const vec2d &p)> fluid, const vec2d &p ) const {

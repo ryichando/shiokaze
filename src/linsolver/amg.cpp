@@ -55,7 +55,6 @@ protected:
 	virtual void configure( configuration &config ) override {
 		config.get_double("Residual",m_param.residual,"Tolerable residual");
 		config.get_unsigned("MaxIterations",m_param.max_iterations,"Maximal iteration count");
-		config.get_unsigned("MinIterations",m_param.min_iterations,"Minimal iteration count");
 		config.get_string("Solver",m_param.method,"Solver name");
 	}
 	virtual typename RCMatrix_solver_interface<N,T>::Result solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
@@ -96,7 +95,6 @@ protected:
 		if( m_param.method == "CG") {
 			typedef amgcl::solver::cg<amgcl::backend::builtin<T> > Solver;
 			typename Solver::params param; set_param(param);
-			param.miniter = m_param.min_iterations;
 			Solver solve(rows,param);
 			std::tie(iteration_count,error) = solve(amg,rhs,result);
 		} else if( m_param.method == "BICGSTAB") {
@@ -107,7 +105,6 @@ protected:
 		} else if( m_param.method == "BICGSTABL") {
 			typedef amgcl::solver::bicgstabl<amgcl::backend::builtin<T> > Solver;
 			typename Solver::params param; set_param(param);
-			param.miniter = m_param.min_iterations;
 			Solver solve(rows,param);
 			std::tie(iteration_count,error) = solve(amg,rhs,result);
 		} else if( m_param.method == "GMRES") {
@@ -137,7 +134,6 @@ protected:
 	struct Parameters {
 		double residual {1e-4};
 		unsigned max_iterations {300};
-		unsigned min_iterations {0};
 		std::string method {"CG"};
 	};
 	Parameters m_param;

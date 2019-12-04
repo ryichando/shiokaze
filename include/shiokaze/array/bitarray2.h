@@ -920,7 +920,7 @@ public:
 	 @param[in] count 拡張の回数。
 	 */
 	void dilate( std::function<void(int i, int j, iterator& it, int thread_index)> func, int count=1 ) {
-		for( int n=0; n<count; ++n ) {
+		while( count -- ) {
 			m_core->dilate([&](int i, int j, void *value_ptr, bool &active, const bool &filled, int thread_index) {
 				iterator it(active);
 				func(i,j,it,thread_index);
@@ -938,7 +938,7 @@ public:
 	void dilate( std::function<void(int i, int j, iterator& it)> func, int count=1 ) {
 		dilate([&](int i, int j, iterator& it, int thread_index) {
 			func(i,j,it);
-		});
+		},count);
 	}
 	/**
 	 \~english @brief Dilate cells.
@@ -947,9 +947,63 @@ public:
 	 @param[in] count 拡張の回数。
 	 */
 	void dilate( int count=1 ) {
-		for( int n=0; n<count; ++n ) {
-			dilate([&](int i, int j, iterator& it){ it.set(); });
+		dilate([&](int i, int j, iterator& it){ it.set(); },count);
+	}
+	/**
+	 \~english @brief Erode cells.
+	 @param[in] func Function that specifies whether to inactivate the cell.
+	 @param[in] count Number of erode count.
+	 \~japanese @brief 縮小する。
+	 @param[in] func 拡張されたセルを非アクティブにするか指定する関数。
+	 @param[in] count 縮小の回数。
+	 */
+	void erode( std::function<bool(int i, int j, int thread_index)> func, int count=1 ) {
+		//
+		std::vector<std::vector<vec2i> > off_positions(get_thread_num());
+		//
+		while( count -- ) {
+			const_parallel_actives([&](int i, int j, int tn) {
+				bool exit_loop (false);
+				for( int dim : DIMS2 ) {
+					for( int dir=-1; dir<=1; dir+=2 ) {
+						const vec2i &pi = vec2i(i,j) + dir*vec2i(dim==0,dim==1);
+						if( ! this->shape().out_of_bounds(pi) && ! (*this)(pi)) {
+							if( func(i,j,tn)) {
+								off_positions[tn].push_back(vec2i(i,j));
+								exit_loop = true;
+								break;
+							}
+						}
+					}
+					if( exit_loop ) break;
+				}
+			});
+			for( const auto &bucket : off_positions ) for( const auto &pi : bucket ) {
+				set_off(pi);
+			}
 		}
+	}
+	/**
+	 \~english @brief Erode cells.
+	 @param[in] func Function that specifies whether to inactivate the cell.
+	 @param[in] count Number of erode count.
+	 \~japanese @brief 縮小する。
+	 @param[in] func 拡張されたセルを非アクティブにするか指定する関数。
+	 @param[in] count 縮小の回数。
+	 */
+	void erode( std::function<bool(int i, int j)> func, int count=1 ) {
+		erode([&](int i, int j, int thread_index) {
+			return func(i,j);
+		},count);
+	}
+	/**
+	 \~english @brief Erode cells.
+	 @param[in] count Number of erode count.
+	 \~japanese @brief 縮小する。
+	 @param[in] count 縮小の回数。
+	 */
+	void erode( int count=1 ) {
+		erode([&](int i, int j, int thread_index) { return true; },count);
 	}
 	/**
 	 \~english @brief Swap array.

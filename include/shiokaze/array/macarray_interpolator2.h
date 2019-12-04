@@ -38,17 +38,19 @@ namespace macarray_interpolator2 {
 	 \~english @brief Interpolate a physical quantity.
 	 @param[in] array Grid.
 	 @param[in] p Position in index space.
+	 @param[in] only_actives Sample only active values.
 	 @return Interpolation result.
 	 \~japanese @brief 補間を計算する。
 	 @param[in] array グリッド。
 	 @param[in] p インデックス空間での位置。
+	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @return 補間値。
 	 */
-	template<class T> vec2<T> interpolate( const macarray2<T> &array, const vec2d &p ) {
+	template<class T> vec2<T> interpolate( const macarray2<T> &array, const vec2d &p, bool only_actives=false ) {
 		vec2<T> result;
 		for( int dim : DIMS2 ) {
 			const vec2d pos = vec2d(p[0]-0.5*(dim!=0),p[1]-0.5*(dim!=1));
-			result[dim] = array_interpolator2::interpolate<T>(array[dim],pos);
+			result[dim] = array_interpolator2::interpolate<T>(array[dim],pos,only_actives);
 		}
 		return result;
 	}
@@ -58,16 +60,18 @@ namespace macarray_interpolator2 {
 	 @param[in] origin Origin in physical space.
 	 @param[in] dx Grid cell size.
 	 @param[in] p Position in physical space.
+	 @param[in] only_actives Sample only active values.
 	 @return Interpolation result.
 	 \~japanese @brief 補間を計算する。
 	 @param[in] array グリッド。
 	 @param[in] origin 物理空間での原点。
 	 @param[in] dx グリッドセルの大きさ。
 	 @param[in] p 物理空間の位置。
+	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @return 補間値。
 	 */
-	template<class T> vec2<T> interpolate( const macarray2<T> &array, const vec2d &origin, double dx, const vec2d &p ) {
-		return interpolate<T>(array,(p-origin)/dx);
+	template<class T> vec2<T> interpolate( const macarray2<T> &array, const vec2d &origin, double dx, const vec2d &p, bool only_actives=false ) {
+		return interpolate<T>(array,(p-origin)/dx,only_actives);
 	}
 };
 //
