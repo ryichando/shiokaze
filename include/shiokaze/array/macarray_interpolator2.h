@@ -46,7 +46,7 @@ namespace macarray_interpolator2 {
 	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @return 補間値。
 	 */
-	template<class T> vec2<T> interpolate( const macarray2<T> &array, const vec2d &p, bool only_actives=false ) {
+	template<class T> static vec2<T> interpolate( const macarray2<T> &array, const vec2d &p, bool only_actives=false ) {
 		vec2<T> result;
 		for( int dim : DIMS2 ) {
 			const vec2d pos = vec2d(p[0]-0.5*(dim!=0),p[1]-0.5*(dim!=1));
@@ -70,7 +70,7 @@ namespace macarray_interpolator2 {
 	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @return 補間値。
 	 */
-	template<class T> vec2<T> interpolate( const macarray2<T> &array, const vec2d &origin, double dx, const vec2d &p, bool only_actives=false ) {
+	template<class T> static vec2<T> interpolate( const macarray2<T> &array, const vec2d &origin, double dx, const vec2d &p, bool only_actives=false ) {
 		return interpolate<T>(array,(p-origin)/dx,only_actives);
 	}
 };

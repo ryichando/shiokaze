@@ -52,7 +52,7 @@ void macflipsmoke2::post_initialize () {
 	//
 	shared_array2<Real> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
-	m_flip->seed(fluid(),[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
+	m_flip->resample(fluid(),[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
 }
 //
 void macflipsmoke2::idle() {
@@ -75,7 +75,7 @@ void macflipsmoke2::idle() {
 	// Reseed particles
 	shared_array2<Real> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
-	m_flip->seed(m_fluid,
+	m_flip->resample(m_fluid,
 		[&](const vec2d &p){ return interpolate_solid(p); },
 		m_velocity
 	);

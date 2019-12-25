@@ -116,8 +116,8 @@ protected:
 		double volume_change_tol_ratio {0.03};
 		bool render_mesh {false};
 		bool render_transparent {false};
-		unsigned render_sample_count {64};
-		unsigned render_transparent_sample_count {512};
+		unsigned render_sample_count {8};
+		unsigned render_transparent_sample_count {32};
 		vec3d target {0.5,0.15,0.5};
 		vec3d origin {0.5,1.5,3.0};
 	};

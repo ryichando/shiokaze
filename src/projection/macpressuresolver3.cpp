@@ -234,7 +234,7 @@ protected:
 		auto result = m_factory->allocate_vector(index);
 		auto status = m_solver->solve(Lhs.get(),rhs.get(),result.get());
 		console::write(get_argument_name()+"_number_projection_iteration", status.count);
-		console::dump( "Done. Took %d iterations, Resid=%e. Took %s\n", status.count, status.residual, timer.stock("linsolve").c_str());
+		console::dump( "Done. Took %d iterations, Reresid=%e. Took %s\n", status.count, status.reresid, timer.stock("linsolve").c_str());
 		//
 		if( m_param.warm_start ) {
 			result->add(m_prev_pressure.get());

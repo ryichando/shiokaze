@@ -53,15 +53,17 @@ protected:
 			scoped_timer timer{this};
 			global_timer::pause();
 			std::string record_path = console::get_root_path() + "/record";
-			std::string record_image_path = console::get_root_path() + "/record/graph_images";
-			if( ! filesystem::is_exist(record_image_path)) {
-				filesystem::create_directory(record_image_path);
+			if( filesystem::is_exist(record_path)) {
+				std::string record_image_path = console::get_root_path() + "/record/graph_images";
+				if( ! filesystem::is_exist(record_image_path)) {
+					filesystem::create_directory(record_image_path);
+				}
+				std::string plot_command = console::format_str(plot_template.c_str(), console::get_root_path().c_str());
+				timer.tick(); console::dump( "Plotting graph (%s)...", plot_command.c_str());
+				console::system(plot_command);
+				console::dump( "Done.\n" );
+				global_timer::resume();
 			}
-			std::string plot_command = console::format_str(plot_template.c_str(), console::get_root_path().c_str());
-			timer.tick(); console::dump( "Plotting graph (%s)...", plot_command.c_str());
-			console::system(plot_command);
-			console::dump( "Done.\n" );
-			global_timer::resume();
 		}
 	}
 	//

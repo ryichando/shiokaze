@@ -56,7 +56,7 @@ img_path = '../'+name+'_img'
 if not os.path.exists(img_path):
 	os.system('mkdir '+img_path)
 
-for frame in range(1,end+1):
+for frame in range(0,end+1):
 	#
 	png_path = img_path+'/'+str(frame)+'_'+name+'.png'
 	if( not os.path.exists(png_path)):

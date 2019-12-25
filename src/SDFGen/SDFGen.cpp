@@ -26,6 +26,7 @@
 #include "makelevelset3.h"
 #include <cassert>
 #include <shiokaze/array/array_interpolator3.h>
+#include <shiokaze/utility/utility.h>
 //
 SHKZ_USING_NAMESPACE
 //
@@ -96,8 +97,9 @@ protected:
 		}
 	}
 	virtual double get_levelset( const vec3d &p ) const override {
+		double box_levelset = utility::box(p,m_corner0,m_corner1);
 		const vec3d converted_p = p - m_corner0;
-		return array_interpolator3::interpolate(m_levelset_array,converted_p/m_dx-vec3d(0.5,0.5,0.5));
+		return std::max(0.0,box_levelset)+array_interpolator3::interpolate(m_levelset_array,converted_p/m_dx-vec3d(0.5,0.5,0.5));
 	}
 	//
 	virtual void configure( configuration &config ) override {

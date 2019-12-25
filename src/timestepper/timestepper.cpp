@@ -49,13 +49,14 @@ protected:
 		//
 		double max_unit_u = max_velocity / dx;
 		assert( m_FPS && m_CFL );
-		double max_dt = std::max( m_min_dt, 1.0 / m_FPS );
+		double max_dt = std::max(m_min_dt,std::min(1.0/m_FPS,m_CFL*dx));
 		//
 		double dt;
 		if( m_fixed_timestep ) {
 			//
 			dt = m_fixed_timestep;
 			m_accumulated_time += dt;
+			m_should_export_video = false;
 			//
 			while( m_accumulated_time >= 1.0 / m_FPS ) {
 				//
@@ -76,18 +77,24 @@ protected:
 				dt = m_min_dt;
 			}
 			//
-			assert( m_accumulated_time < 1.0 / m_FPS );
-			if( m_accumulated_time+dt >= 1.0 / m_FPS ) {
-				dt = 1.0/m_FPS-m_accumulated_time;
-				if( dt < m_min_dt ) {
-					double odd = m_min_dt - dt;
-					dt = m_min_dt;
-					m_accumulated_time = std::max(0.0,odd);
+			assert( m_accumulated_time < 1.0/m_FPS );
+			if( m_accumulated_time+dt >= 1.0/m_FPS ) {
+				if( m_synchronize_frame ) {
+					dt = 1.0/m_FPS-m_accumulated_time;
+					if( dt < m_min_dt ) {
+						double odd = m_min_dt - dt;
+						dt = m_min_dt;
+						m_accumulated_time = std::max(0.0,odd);
+					} else {
+						m_accumulated_time = 0.0;
+					}
 				} else {
-					m_accumulated_time = 0.0;
+					while( m_accumulated_time+dt > 1.0/m_FPS ) {
+						m_accumulated_time -= 1.0/m_FPS;
+						++ m_frame;
+					}
 				}
 				m_should_export_video = true;
-				++ m_frame;
 				m_simulation_time_one_video_frame_prev = m_simulation_time_one_video_frame;
 				m_simulation_time_one_video_frame = global_timer::get_milliseconds();
 				//
@@ -161,6 +168,7 @@ protected:
 		config.get_double("CFL",m_CFL,"Target CFL number");
 		config.get_unsigned("MaxSubsteps",m_maximal_substeps,"Maximal substeps");
 		config.get_unsigned("MaxFrame",m_maximal_frame,"Maximal video frame count");
+		config.get_bool("SynchronizeFrame",m_synchronize_frame,"Synchronize frame");
 		m_min_dt = 1.0 / (static_cast<double>(m_maximal_substeps) * m_FPS);
 	}
 	//
@@ -178,7 +186,7 @@ protected:
 		console::set_time(0.0);
 	}
 	//
-	double m_time, m_FPS {60.0}, m_CFL {2.0}, m_min_dt {1e-10};
+	double m_time, m_FPS {120.0}, m_CFL {2.0}, m_min_dt {1e-10};
 	double m_accumulated_time;
 	double m_simulation_time0;
 	double m_simulation_time_one_video_frame_prev;
@@ -188,6 +196,7 @@ protected:
 	double m_fixed_timestep {0.0};
 	double m_current_CFL;
 	bool m_should_export_video {false};
+	bool m_synchronize_frame {false};
 	int m_frame;
 	unsigned m_maximal_frame;
 	unsigned m_maximal_substeps {100};

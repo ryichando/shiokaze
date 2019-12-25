@@ -45,9 +45,10 @@ protected:
 	LONG_NAME("MAC Narrowband FLIP 3D")
 	//
 	// Seed FLIP particles
-	virtual size_t seed( const array3<Real> &fluid,
+	virtual size_t resample( const array3<Real> &fluid,
 						 std::function<double(const vec3d &p)> solid,
-						 const macarray3<Real> &velocity ) override;
+						 const macarray3<Real> &velocity,
+						 std::function<bool(const vec3d &p)> mask ) override;
 	//
 	// Map FLIP momentum from particles to grid
 	virtual void splat( macarray3<macflip3_interface::mass_momentum3> &mass_and_momentum ) const override;

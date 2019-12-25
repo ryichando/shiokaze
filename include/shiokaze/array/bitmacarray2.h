@@ -774,6 +774,16 @@ public:
 		return erode([&](int dim, int i, int j){ return true; },count);
 	}
 	/**
+	 \~english @brief Set the core name of module of this grid.
+	 @param[in] Name of the core name.
+	 \~japanese @brief グリッドのモジュールのコアネームを取得する。
+	 @param[in] コアネームの名前。
+	 */
+	void set_core_name( std::string core_name ) {
+		m_array_0.set_core_name(core_name);
+		m_array_1.set_core_name(core_name);
+	}
+	/**
 	 \~english @brief Get the core name of module of this grid.
 	 @return Name of the core name.
 	 \~japanese @brief グリッドのモジュールのコアネームを取得する。

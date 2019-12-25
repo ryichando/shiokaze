@@ -151,10 +151,10 @@ void macliquid2::inject_external_fluid( array2<Real> &fluid, macarray2<Real> &ve
 		size_t total_injected (0);
 		if( m_inject_func ) {
 			total_injected = do_inject_external_fluid(fluid,velocity,dt,time,step);
-		}
-		if( m_post_inject_func ) {
 			double volume_change = (m_dx*m_dx) * total_injected;
-			m_post_inject_func(m_dx,dt,time,step,volume_change);
+			if( m_post_inject_func ) {
+				m_post_inject_func(m_dx,dt,time,step,volume_change);
+			}
 			if( volume_change ) {
 				m_target_volume += volume_change;
 			}
@@ -176,16 +176,15 @@ size_t macliquid2::do_inject_external_fluid( array2<Real> &fluid, macarray2<Real
 	fluid.parallel_all([&]( int i, int j, auto &it, int tid ) {
 		//
 		vec2d p = m_dx*vec2i(i,j).cell();
-		double value (it()); vec2d u (interp_vel(p));
-		double old_value (value);
+		double value (0.0); vec2d u;
 		if( m_inject_func(p,m_dx,dt,time,step,value,u)) {
 			if( value < 0.0 ) {
 				injected_positions[tid].push_back(vec2i(i,j));
-				if( old_value >= 0.0 ) inject_count[tid] ++;
+				if( it() >= 0.0 ) inject_count[tid] ++;
 			}
 			if( std::abs(value) < fluid.get_background_value() ||
 				(value < fluid.get_background_value() && it.active())) {
-				it.set(std::min(value,old_value));
+				it.set(std::min((Real)value,it()));
 			}
 		}
 	});
@@ -198,18 +197,15 @@ size_t macliquid2::do_inject_external_fluid( array2<Real> &fluid, macarray2<Real
 	}
 	eval_cells->dilate(1);
 	eval_cells->const_serial_actives([&]( int i, int j ) {
-		double original_fluid (fluid(i,j));
-		double value (original_fluid); vec2d u;
+		double value (0.0); vec2d u;
 		if( m_inject_func(m_dx*vec2i(i,j).cell(),m_dx,dt,time,step,value,u)) {
 			for( int dim : DIMS2 ) {
 				vec2d p0 = m_dx*vec2i(i,j).face(dim);
 				vec2d p1 = m_dx*vec2i(i+dim==0,j+dim==1).face(dim);
-				value = original_fluid; u = interp_vel(p0);
 				m_inject_func(p0,m_dx,dt,time,step,value,u);
-				velocity[dim].set(i,j,u[dim]);
-				value = original_fluid; u = interp_vel(p1);
+				velocity[dim].set(i,j,u[dim]); u = vec2d();
 				m_inject_func(p1,m_dx,dt,time,step,value,u);
-				velocity[dim].set(i+dim==0,j+dim==1,u[dim]);
+				velocity[dim].set(i+dim==0,j+dim==1,u[dim]); u = vec2d();
 			}
 		}
 	});

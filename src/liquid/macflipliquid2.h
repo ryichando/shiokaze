@@ -48,6 +48,7 @@ protected:
 	//
 	struct Parameters {
 		double PICFLIP;
+		bool disable_resample {false};
 	};
 	Parameters m_param;
 	//

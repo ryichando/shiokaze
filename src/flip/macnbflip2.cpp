@@ -269,13 +269,18 @@ void macnbflip2::update( std::function<double(const vec2d &p)> solid, array2<Rea
 		}
 		//
 		mask->dilate(2);
+		fluid.activate_as_bit(mask());
 		shared_array2<Real> particle_levelset(m_shape,1.0);
 		m_particlerasterizer->build_levelset(particle_levelset(),mask(),points);
 		//
 		fluid.parallel_actives([&](int i, int j, auto &it, int tn) {
 			//
+			const Real fluid_value (it());
+			const Real save_value (save_fluid()(i,j));
+			//
 			double sizing_sum (0.0);
 			double sizing_weight (0.0);
+			//
 			std::vector<size_t> list = m_pointgridhash->get_points_in_cell(vec2i(i,j));
 			for( const auto &n : list ) {
 				double w (m_particles[n].mass);
@@ -284,7 +289,10 @@ void macnbflip2::update( std::function<double(const vec2d &p)> solid, array2<Rea
 			}
 			if( sizing_weight ) sizing_sum /= sizing_weight;
 			//
-			double value = sizing_sum * std::min(fluid(i,j),particle_levelset()(i,j)) + (1.0-sizing_sum) * save_fluid()(i,j);
+			double value = sizing_sum * std::min(fluid_value,particle_levelset()(i,j)) + (1.0-sizing_sum) * save_value;
+			for( const auto &n : list ) {
+				value = std::min(value,(m_particles[n].p-m_dx*vec2i(i,j).cell()).len()-m_particles[n].r);
+			}
 			it.set(value);
 		});
 	}
@@ -387,30 +395,47 @@ void macnbflip2::fit_particle( std::function<double(const vec2d &p)> fluid, Part
 	}
 }
 //
-size_t macnbflip2::seed(const array2<Real> &fluid,
+size_t macnbflip2::resample(const array2<Real> &fluid,
 						std::function<double(const vec2d &p)> solid,
-						const macarray2<Real> &velocity ) {
+						const macarray2<Real> &velocity,
+						std::function<bool(const vec2d &p)> mask ) {
 	//
 	// Compute narrowband
 	shared_bitarray2 narrowband_mask(m_shape);
 	bool smoke_simulation_flag (true);
-	fluid.const_serial_actives([&](int i, int j, auto &it) {
-		if( it() > 0 && solid(m_dx*vec2i(i,j).cell()) > 0 ) {
-			narrowband_mask->set(i,j);
-		}
-		if( it() < 0.0 ) smoke_simulation_flag = false;
-	});
+	if( ! mask ) mask = []( const vec2d &p ) { return true; };
 	//
-	if( smoke_simulation_flag ) {
-		narrowband_mask->activate_all();
-	} else {
-		narrowband_mask->dilate([&](int i, int j, auto& it, int tn ) {
-			if(fluid.active(i,j) && fluid(i,j) < 0 && solid(m_dx*vec2i(i,j).cell()) > 0.125*m_dx ) it.set();
-		},m_param.narrowband);
-		//
-		fluid.const_serial_actives([&](int i, int j, auto &it) {
-			if( it() > m_dx ) narrowband_mask->set_off(i,j);
+	if( m_param.narrowband ) {
+		fluid.const_serial_actives([&](int i, int j, const auto &it) {
+			const vec2d p = m_dx*vec2i(i,j).cell();
+			if( it() > 0 && solid(p) > 0 ) narrowband_mask->set(i,j);
+			if( it() < 0.0 ) smoke_simulation_flag = false;
 		});
+		//
+		if( smoke_simulation_flag ) {
+			narrowband_mask->activate_all();
+		} else {
+			narrowband_mask->dilate([&](int i, int j, auto& it, int tn ) {
+				const vec2d p = m_dx*vec2i(i,j).cell();
+				if(fluid.active(i,j) && fluid(i,j) < 0 && solid(p) > 0.125*m_dx && mask(p)) it.set();
+			},m_param.narrowband);
+			//
+			fluid.const_serial_actives([&](int i, int j, auto &it) {
+				if( it() > m_dx ) narrowband_mask->set_off(i,j);
+			});
+		}
+	} else {
+		fluid.const_serial_actives([&](int i, int j, const auto &it) {
+			const vec2d p = m_dx*vec2i(i,j).cell();
+			if( solid(p) > 0 ) narrowband_mask->set(i,j);
+			if( it() < 0.0 ) smoke_simulation_flag = false;
+		});
+		fluid.const_serial_inside([&](int i, int j, const auto &it) {
+			const vec2d p = m_dx*vec2i(i,j).cell();
+			if( solid(p) > 0 ) narrowband_mask->set(i,j);
+			if( it() < 0.0 ) smoke_simulation_flag = false;
+		});
+		if( smoke_simulation_flag ) narrowband_mask->activate_all();
 	}
 	//
 	// Compute sizing function
@@ -433,24 +458,29 @@ size_t macnbflip2::seed(const array2<Real> &fluid,
 	if( m_particles.size()) {
 		for( size_t n=0; n<m_particles.size(); ++n ) {
 			const Particle &p = m_particles[n];
-			vec2i pi = m_shape.clamp(p.p/m_dx);
-			int i (pi[0]), j (pi[1]);
-			m_shape.clamp(i,j);
-			if( ! p.bullet ) {
-				if( ! narrowband_mask()(i,j) || ! sizing_array()(i,j) || cell_bucket()(i,j) >= m_param.max_particles_per_cell || p.sizing_value < 0.0 ) {
-					if( p.live_count > m_param.minimal_live_count ) {
+			if( mask(p.p)) {
+				vec2i pi = m_shape.clamp(p.p/m_dx);
+				int i (pi[0]), j (pi[1]);
+				m_shape.clamp(i,j);
+				if( ! p.bullet ) {
+					if( ! sizing_array()(i,j) || cell_bucket()(i,j) >= m_param.max_particles_per_cell || p.sizing_value < 0.0 ) {
+						if( p.live_count > m_param.minimal_live_count ) {
+							remove_particles[n] = 1;
+						}
+					}
+					if( ! narrowband_mask()(i,j) ) {
 						remove_particles[n] = 1;
 					}
 				}
-			}
-			if( ! remove_particles[n] && solid(p.p) < -p.r ) {
-				remove_particles[n] = 1;
-			}
-			if( utility::box(p.p,vec2d(0.0,0.0),m_dx*vec2d(m_shape[0],m_shape[1])) > -p.r ) {
-				remove_particles[n] = 1;
-			}
-			if( ! remove_particles[n] ) {
-				cell_bucket().increment(i,j,1);
+				if( ! remove_particles[n] && solid(p.p) < -p.r ) {
+					remove_particles[n] = 1;
+				}
+				if( utility::box(p.p,vec2d(0.0,0.0),m_dx*vec2d(m_shape[0],m_shape[1])) > -p.r ) {
+					remove_particles[n] = 1;
+				}
+				if( ! remove_particles[n] ) {
+					cell_bucket().increment(i,j,1);
+				}
 			}
 		}
 		//
@@ -465,10 +495,10 @@ size_t macnbflip2::seed(const array2<Real> &fluid,
 		//
 		size_t num_added (0);
 		double sizing_value = sizing_array()(i,j);
-		auto attempt_reseed = [&]( const vec2d &p ) {
+		auto attempt_resample = [&]( const vec2d &p ) {
 			//
 			double r = 0.25 * m_dx;
-			if( cell_bucket()(i,j)+num_added < m_param.min_particles_per_cell ) {
+			if( mask(p) && cell_bucket()(i,j)+num_added < m_param.min_particles_per_cell ) {
 				//
 				if( smoke_simulation_flag || this->interpolate_fluid(fluid,p) < -r ) {
 					//
@@ -503,12 +533,12 @@ size_t macnbflip2::seed(const array2<Real> &fluid,
 		};
 		//
 		if( sizing_value ) {
-			if( ! smoke_simulation_flag && fluid(i,j) < -1.25*m_dx ) {
-				attempt_reseed(m_dx*vec2i(i,j).cell());
+			if( m_param.narrowband && ! smoke_simulation_flag && fluid(i,j) < -1.25*m_dx ) {
+				attempt_resample(m_dx*vec2i(i,j).cell());
 			} else {
 				for( unsigned ii=0; ii<2; ii++ ) for( unsigned jj=0; jj<2; jj++ ) {
 					vec2d p = m_dx*vec2d(i,j)+0.25*m_dx*vec2d(1,1)+0.5*m_dx*vec2d(ii,jj);
-					attempt_reseed(p);
+					attempt_resample(p);
 				}
 			}
 		}
@@ -690,7 +720,7 @@ void macnbflip2::additionally_apply_velocity_derivative( macarray2<macflip2_inte
 }
 //
 double macnbflip2::interpolate_fluid( const array2<Real> &fluid, const vec2d &p ) const {
-	return array_interpolator2::interpolate(fluid,p/m_dx-vec2d(0.5,0.5),true);
+	return array_interpolator2::interpolate(fluid,p/m_dx-vec2d(0.5,0.5));
 }
 //
 vec2d macnbflip2::interpolate_fluid_gradient( std::function<double(const vec2d &p)> fluid, const vec2d &p ) const {

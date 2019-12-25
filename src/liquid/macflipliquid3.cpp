@@ -47,6 +47,7 @@ macflipliquid3::macflipliquid3 () {
 void macflipliquid3::configure( configuration &config ) {
 	//
 	config.get_double("PICFLIP",m_param.PICFLIP,"PICFLIP blending factor");
+	config.get_bool("DisableResample",m_param.disable_resample,"Disable resampling");
 	assert( m_param.PICFLIP >= 0.0 && m_param.PICFLIP <= 1.0 );
 	//
 	macliquid3::configure(config);
@@ -73,7 +74,7 @@ void macflipliquid3::post_initialize () {
 	timer.tick(); console::dump( ">>> Started FLIP initialization\n" );
 	//
 	extend_both();
-	m_flip->seed(m_fluid,[&](const vec3d &p){ return interpolate_solid(p); },m_velocity);
+	m_flip->resample(m_fluid,[&](const vec3d &p){ return interpolate_solid(p); },m_velocity);
 	//
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
 }
@@ -81,7 +82,14 @@ void macflipliquid3::post_initialize () {
 size_t macflipliquid3::do_inject_external_fluid( array3<Real> &fluid, macarray3<Real> &velocity, double dt, double time, unsigned step ) {
 	//
 	const size_t count = macliquid3::do_inject_external_fluid(fluid,velocity,dt,time,step);
-	m_flip->seed(m_fluid,[&](const vec3d &p){ return interpolate_solid(p); },m_velocity);
+	m_flip->resample(m_fluid,[&](const vec3d &p){ return interpolate_solid(p); },m_velocity,[&]( const vec3d &p ) {
+		double value (0.0); vec3d u;
+		if( this->m_inject_func(p,m_dx,dt,time,step,value,u)) {
+			return value < 0.0;
+		} else {
+			return false;
+		}
+	});
 	return count;
 }
 //
@@ -129,10 +137,12 @@ void macflipliquid3::idle() {
 	m_flip->correct([&](const vec3d &p){ return interpolate_fluid(p); },m_velocity);
 	//
 	// Reseed particles
-	m_flip->seed(m_fluid,
-		[&](const vec3d &p){ return interpolate_solid(p); },
-		m_velocity
-	);
+	if( ! m_param.disable_resample ) {
+		m_flip->resample(m_fluid,
+			[&](const vec3d &p){ return interpolate_solid(p); },
+			m_velocity
+		);
+	}
 	//
 	// Splat momentum and mass of FLIP particles onto grids
 	m_flip->splat(mass_and_momentum());

@@ -47,8 +47,21 @@ public:
 		N count;
 		/// \~english @brief Relative residual.
 		/// \~japanese @brief 比例誤差。
-		T residual;
+		T reresid;
+		/// \~english @brief Vector relative residual.
+		/// \~japanese @brief ベクトル比例誤差。
+		std::vector<T> vector_reresid;
+		/// \~english @brief Vector absolute residual.
+		/// \~japanese @brief ベクトル絶対誤差。
+		std::vector<T> vector_absresid;
 	};
+	/**
+	 \~english @brief Register a vector norm class.
+	 @param[in] kind Vector kind.
+	 \~japanese @brief ベクトルノルムの種類を登録する。
+	 @param[in] kind ベクトルの種類。
+	 */
+	virtual void register_vector_norm_kind( const std::vector<unsigned char> &kind ) {}
 	/**
 	 \~english @brief Solve a linear system of the form: Ax = b.
 	 @param[in] A Sparse Row Compressed Matrix.

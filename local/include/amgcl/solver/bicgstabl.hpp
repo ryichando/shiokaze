@@ -72,6 +72,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <amgcl/solver/precond_side.hpp>
 #include <amgcl/detail/qr.hpp>
 #include <amgcl/util.hpp>
+#include <cassert>
 
 namespace amgcl {
 namespace solver {
@@ -99,6 +100,10 @@ class bicgstabl {
             typename math::rhs_of<value_type>::type
             >::return_type coef_type;
 
+        std::vector<value_type> vector_reresid;
+        std::vector<value_type> vector_absresid;
+
+        const std::vector<unsigned char> *kind {nullptr};
 
         /// Solver parameters.
         struct params {
@@ -124,10 +129,13 @@ class bicgstabl {
             // Target absolute residual error.
             scalar_type abstol;
 
+            // Force use global residual
+            bool force_global_residual;
+
             params()
                 : L(2), delta(0), convex(true),
-                  pside(preconditioner::side::right), maxiter(100), tol(1e-8),
-                  abstol(std::numeric_limits<scalar_type>::min())
+                  pside(preconditioner::side::right), maxiter(100), tol(1e-8), force_global_residual(false),
+                  abstol(1e-20)//(std::numeric_limits<scalar_type>::min())
             {
             }
 
@@ -196,7 +204,7 @@ class bicgstabl {
          */
         template <class Matrix, class Precond, class Vec1, class Vec2>
         std::tuple<size_t, scalar_type> operator()(
-                const Matrix &A, const Precond &P, const Vec1 &rhs, Vec2 &&x) const
+                const Matrix &A, const Precond &P, const Vec1 &rhs, Vec2 &&x) //const
         {
             namespace side = preconditioner::side;
 
@@ -206,6 +214,8 @@ class bicgstabl {
             const int L = prm.L;
 
             scalar_type norm_rhs = norm(rhs);
+            std::vector<scalar_type> vector_resid0;
+            if( kind ) vector_resid0 = vector_norm_func(rhs);
 
             // Check if there is a trivial solution
             if (norm_rhs < amgcl::detail::eps<scalar_type>(n)) {
@@ -220,7 +230,9 @@ class bicgstabl {
                 backend::residual(rhs, A, x, *B);
             }
 
+            std::vector<scalar_type> vector_resid1;
             scalar_type zeta0 = norm(*B);
+            if( kind ) vector_resid1 = vector_norm_func(*B);
             scalar_type eps = std::max(prm.tol * norm_rhs, prm.abstol);
 
             coef_type alpha = zero;
@@ -237,8 +249,25 @@ class bicgstabl {
             scalar_type rnmax_computed = zeta0;
             scalar_type rnmax_true     = zeta0;
 
+            auto check_exit = [&]() {
+                if( prm.force_global_residual ) {
+                    return zeta < eps || zeta < prm.abstol;
+                } else if( kind ) {
+                    unsigned count (0);
+                    for( int i=0; i<vector_resid1.size(); ++i ) {
+                        if(vector_resid1[i]<=prm.tol*vector_resid0[i] || vector_resid1[i] < prm.abstol) {
+                            count ++;
+                        }
+                    }
+                    if( count == vector_resid1.size() ) return true;
+                    else return false;
+                } else {
+                  return zeta < eps;
+                }
+            };
+            //
             size_t iter = 0;
-            for(; iter < prm.maxiter && zeta >= eps; iter += L) {
+            for(; iter < prm.maxiter && ! check_exit(); iter += L) {
                 // BiCG part
                 rho0 = -omega * rho0;
 
@@ -273,7 +302,8 @@ class bicgstabl {
                     rnmax_true     = std::max(zeta, rnmax_true);
 
                     // Check for early exit
-                    if (zeta < eps) {
+                    if( kind ) vector_resid1 = vector_norm_func(*R[0]);
+                    if( check_exit()) {
                         iter += j+1;
                         goto done;
                     }
@@ -362,6 +392,7 @@ class bicgstabl {
                 for(int i = 1; i <= L; ++i) Y0[i] = -one * Y0[i];
 
                 zeta = norm(*R[0]);
+                if( kind ) vector_resid1 = vector_norm_func(*R[0]);
 
                 // Accurate update
                 if (prm.delta > 0) {
@@ -391,6 +422,13 @@ class bicgstabl {
             }
 
 done:
+            vector_absresid = vector_resid1;
+            vector_reresid.resize(vector_resid1.size());
+            for( int i=0; i<vector_resid1.size(); ++i ) {
+                if( vector_resid0[i] ) vector_reresid[i] = vector_resid1[i] / vector_resid0[i];
+                else vector_reresid[i] = 0.0;
+            }
+
             if (prm.pside == side::left) {
                 backend::axpby(one, *X, one, x);
             } else {
@@ -410,7 +448,7 @@ done:
          */
         template <class Precond, class Vec1, class Vec2>
         std::tuple<size_t, scalar_type> operator()(
-                const Precond &P, const Vec1 &rhs, Vec2 &&x) const
+                const Precond &P, const Vec1 &rhs, Vec2 &&x) //const
         {
             return (*this)(P.system_matrix(), P, rhs, x);
         }
@@ -441,7 +479,23 @@ done:
 
         template <class Vec>
         scalar_type norm(const Vec &x) const {
-            return sqrt(math::norm(inner_product(x, x)));
+            //return sqrt(math::norm(inner_product(x, x)));
+            scalar_type result (0.0);
+            for( size_t i=0; i<x.size(); ++i ) {
+                result = std::max(result,std::abs(x[i]));
+            }
+            return result;
+        }
+        template <class Vec>
+        std::vector<scalar_type> vector_norm_func(const Vec &x) const {
+            assert( kind && kind->size()==x.size());
+            std::vector<scalar_type> result;
+            for( size_t i=0; i<x.size(); ++i ) {
+                unsigned char k = (*kind)[i];
+                if( result.size() < k+1 ) result.resize(k+1);
+                result[k] = std::max(result[k],std::abs(x[i]));
+            }
+            return result;
         }
 };
 

@@ -46,14 +46,17 @@ public:
 	 @param[in] fluid Level set grid of fluid.
 	 @param[in] solid Solid level set function.
 	 @param[in] velocity Initial velocity function.
+	 @param[in] mask Mask function.
 	 \~japanese @brief 与えられた入力の流体レベルセットグリッドの内部に FLIP 粒子を散布する。
 	 @param[in] fluid 流体のレベルセットグリッド。
 	 @param[in] solid 壁のレベルセット関数。
 	 @param[in] velocity 初期速度場を与えるための速度関数。
+	 @param[in] mask マスク関数。
 	 */
-	virtual size_t seed( const array3<Real> &fluid,
+	virtual size_t resample( const array3<Real> &fluid,
 						 std::function<double(const vec3d &p)> solid,
-						 const macarray3<Real> &velocity ) = 0;
+						 const macarray3<Real> &velocity,
+						 std::function<bool(const vec3d &p)> mask=nullptr ) = 0;
 	//
 	/// \~english @brief Structure for mass and momentum.
 	/// \~japanese @brief 質量と運動量の構造体。

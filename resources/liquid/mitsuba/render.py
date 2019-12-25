@@ -29,7 +29,7 @@ img_path = '../'+xml_name+'_img'
 if not os.path.exists(img_path):
 	os.system('mkdir '+img_path)
 
-for frame in range(1,end+1):
+for frame in range(0,end+1):
 	#
 	png_path = img_path+'/'+str(frame)+'_'+xml_name+'.png'
 	if( not os.path.exists(png_path)):

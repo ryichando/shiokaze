@@ -54,8 +54,13 @@ protected:
 	//
 	virtual void configure( configuration &config ) override {
 		config.get_double("Residual",m_param.residual,"Tolerable residual");
+		config.get_double("AbsResidual",m_param.abs_residual,"Absolute tolerable residual");
 		config.get_unsigned("MaxIterations",m_param.max_iterations,"Maximal iteration count");
 		config.get_string("Solver",m_param.method,"Solver name");
+		config.get_bool("ForceGlobalResidual",m_param.force_global_residual,"Force using the global residual");
+	}
+	virtual void register_vector_norm_kind( const std::vector<unsigned char> &kind ) override {
+		m_kind = &kind;
 	}
 	virtual typename RCMatrix_solver_interface<N,T>::Result solve( const RCMatrix_interface<N,T> *A, const RCMatrix_vector_interface<N,T> *b, RCMatrix_vector_interface<N,T> *x ) const override {
 		//
@@ -85,58 +90,69 @@ protected:
 		std::vector<T> result(rows);
 		b->convert_to(rhs);
 		unsigned iteration_count (0);
-		double error;
+		double reresid;
+		std::vector<T> vector_reresid, vector_absresid;
 		//
 		auto set_param = [&]( auto &param ) {
 			param.maxiter = m_param.max_iterations;
 			param.tol = m_param.residual;
+			param.abstol = m_param.abs_residual;
 		};
 		//
 		if( m_param.method == "CG") {
 			typedef amgcl::solver::cg<amgcl::backend::builtin<T> > Solver;
 			typename Solver::params param; set_param(param);
 			Solver solve(rows,param);
-			std::tie(iteration_count,error) = solve(amg,rhs,result);
+			std::tie(iteration_count,reresid) = solve(amg,rhs,result);
 		} else if( m_param.method == "BICGSTAB") {
 			typedef amgcl::solver::bicgstab<amgcl::backend::builtin<T> > Solver;
 			typename Solver::params param; set_param(param);
 			Solver solve(rows,param);
-			std::tie(iteration_count,error) = solve(amg,rhs,result);
+			std::tie(iteration_count,reresid) = solve(amg,rhs,result);
 		} else if( m_param.method == "BICGSTABL") {
 			typedef amgcl::solver::bicgstabl<amgcl::backend::builtin<T> > Solver;
 			typename Solver::params param; set_param(param);
+			param.force_global_residual = m_param.force_global_residual;
 			Solver solve(rows,param);
-			std::tie(iteration_count,error) = solve(amg,rhs,result);
+			if( m_kind ) solve.kind = m_kind;
+			std::tie(iteration_count,reresid) = solve(amg,rhs,result);
+			if( m_kind ) {
+				vector_reresid = solve.vector_reresid;
+				vector_absresid = solve.vector_absresid;
+			}
 		} else if( m_param.method == "GMRES") {
 			typedef amgcl::solver::gmres<amgcl::backend::builtin<T> > Solver;
 			typename Solver::params param; set_param(param);
 			Solver solve(rows,param);
-			std::tie(iteration_count,error) = solve(amg,rhs,result);
+			std::tie(iteration_count,reresid) = solve(amg,rhs,result);
 		} else if( m_param.method == "FGMRES") {
 			typedef amgcl::solver::fgmres<amgcl::backend::builtin<T> > Solver;
 			typename Solver::params param; set_param(param);
 			Solver solve(rows,param);
-			std::tie(iteration_count,error) = solve(amg,rhs,result);
+			std::tie(iteration_count,reresid) = solve(amg,rhs,result);
 		} else if( m_param.method == "LGMRES") {
 			typedef amgcl::solver::lgmres<amgcl::backend::builtin<T> > Solver;
 			typename Solver::params param; set_param(param);
 			Solver solve(rows,param);
-			std::tie(iteration_count,error) = solve(amg,rhs,result);
+			std::tie(iteration_count,reresid) = solve(amg,rhs,result);
 		} else {
 			printf( "Unknown solver %s\n", m_param.method.c_str());
 			exit(0);
 		}
 		//
 		x->convert_from(result);
-		return {(N)iteration_count,(T)error};
+		return {(N)iteration_count,(T)reresid,vector_reresid,vector_absresid};
 	}
 	//
 	struct Parameters {
 		double residual {1e-4};
+		double abs_residual {1e-20};
 		unsigned max_iterations {300};
 		std::string method {"CG"};
+		bool force_global_residual;
 	};
 	Parameters m_param;
+	const std::vector<unsigned char> *m_kind {nullptr};
 };
 //
 extern "C" module * create_instance() {

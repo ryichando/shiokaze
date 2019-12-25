@@ -47,7 +47,7 @@ namespace array_interpolator2 {
 	 @param[out] indices 格子インデックス番号の出力。
 	 @param[out] coef 該当する係数の出力。
 	 */
-	void interpolate_coef( const shape2 &shape, const vec2d &p, vec2i indices[4], double coef[4] ) {
+	static void interpolate_coef( const shape2 &shape, const vec2d &p, vec2i indices[4], double coef[4] ) {
 		double x = std::max(0.0,std::min(shape.w-1.,p[0]));
 		double y = std::max(0.0,std::min(shape.h-1.,p[1]));
 		int i = std::min(x,shape.w-2.);
@@ -73,7 +73,7 @@ namespace array_interpolator2 {
 	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @return 補間値。
 	 */
-	template<class T> T interpolate( const array2<T> &array, const vec2d &p, bool only_actives=false ) {
+	template<class T> T static interpolate( const array2<T> &array, const vec2d &p, bool only_actives=false ) {
 		T values[4]; vec2i indices[4]; double coef[4];
 		interpolate_coef(array.shape(),p,indices,coef);
 		T value = T();
@@ -107,7 +107,7 @@ namespace array_interpolator2 {
 	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @param[out] 補間値。
 	 */
-	template<class T> T interpolate( const array2<T> &array, const vec2d &origin, double dx, const vec2d &p, bool only_actives=false ) {
+	template<class T> T static interpolate( const array2<T> &array, const vec2d &origin, double dx, const vec2d &p, bool only_actives=false ) {
 		return interpolate<T>(array,(p-origin)/dx,only_actives);
 	}
 };

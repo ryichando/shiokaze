@@ -63,6 +63,8 @@ private:
 	image_io_ptr m_image_io;
 	//
 	std::string m_screenshot_path;
+	std::string m_screenshot_label {"screenshot"};
+	std::string m_legend;
 	int m_until, m_frame, m_step;
 	double m_window_scale;
 	bool m_show_logo;

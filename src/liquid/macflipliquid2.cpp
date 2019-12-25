@@ -41,6 +41,7 @@ macflipliquid2::macflipliquid2 () {
 void macflipliquid2::configure( configuration &config ) {
 	//
 	config.get_double("PICFLIP",m_param.PICFLIP,"PICFLIP blending factor");
+	config.get_bool("DisableResample",m_param.disable_resample,"Disable resampling");
 	assert( m_param.PICFLIP >= 0.0 && m_param.PICFLIP <= 1.0 );
 	//
 	macliquid2::configure(config);
@@ -63,13 +64,20 @@ void macflipliquid2::post_initialize () {
 	//
 	macliquid2::post_initialize();
 	extend_both();
-	m_flip->seed(m_fluid,[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
+	m_flip->resample(m_fluid,[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
 }
 //
 size_t macflipliquid2::do_inject_external_fluid( array2<Real> &fluid, macarray2<Real> &velocity, double dt, double time, unsigned step ) {
 	//
 	size_t count = macliquid2::do_inject_external_fluid(fluid,velocity,dt,time,step);
-	m_flip->seed(m_fluid,[&](const vec2d &p){ return interpolate_solid(p); },m_velocity);
+	m_flip->resample(m_fluid,[&](const vec2d &p){ return interpolate_solid(p); },m_velocity,[&]( const vec2d &p ) {
+		double value (0.0); vec2d u;
+		if( this->m_inject_func(p,m_dx,dt,time,step,value,u)) {
+			return value < 0.0;
+		} else {
+			return false;
+		}
+	});
 	return count;
 }
 //
@@ -113,10 +121,12 @@ void macflipliquid2::idle() {
 	m_flip->correct([&](const vec2d &p){ return interpolate_fluid(p); },m_velocity);
 	//
 	// Reseed particles
-	m_flip->seed(m_fluid,
-		[&](const vec2d &p){ return interpolate_solid(p); },
-		m_velocity
-	);
+	if( ! m_param.disable_resample ) {
+		m_flip->resample(m_fluid,
+			[&](const vec2d &p){ return interpolate_solid(p); },
+			m_velocity
+		);
+	}
 	//
 	// Splat momentum and mass of FLIP particles onto grids
 	m_flip->splat(mass_and_momentum());

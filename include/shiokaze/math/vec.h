@@ -328,7 +328,7 @@ template <class T, unsigned D> struct vec {
 	 @param[in] r 2次元ベクトル。
 	 @return 結果。
 	 */
-	template<class Y=Real> T cross2(const vec<Y,2> &r) const {
+	template<class Y=double> T cross2(const vec<Y,2> &r) const {
 		assert( D == 2 );
 		return v[0]*r[1]-v[1]*r[0];
 	}
@@ -340,7 +340,7 @@ template <class T, unsigned D> struct vec {
 	 @param[in] r 2次元ベクトル。
 	 @return 結果。
 	 */
-	template<class Y=Real> vec<T,3> cross(const vec<Y,3> &r) const {
+	template<class Y=double> vec<T,3> cross(const vec<Y,3> &r) const {
 		assert( D == 3 );
 		return vec<T,3>(v[1]*r[2]-v[2]*r[1],v[2]*r[0]-v[0]*r[2],v[0]*r[1]-v[1]*r[0]);
 	}
@@ -350,7 +350,7 @@ template <class T, unsigned D> struct vec {
 	 \~japanese @brief インデックス位置からセルの中心位置を計算する。
 	 @return セルの中心の位置。
 	 */
-	template<class Y=Real> vec<Y,D> cell() const {
+	template<class Y=double> vec<Y,D> cell() const {
 		vec<Y,D> result;
 		for( int dim=0; dim<D; ++dim ) result[dim] = v[dim]+0.5;
 		return result;
@@ -361,7 +361,7 @@ template <class T, unsigned D> struct vec {
 	 \~japanese @brief インデックス位置からセルの節点位置を計算する。
 	 @return セルの節点の位置。
 	 */
-	template<class Y=Real> vec<Y,D> nodal() const {
+	template<class Y=double> vec<Y,D> nodal() const {
 		vec<Y,D> result;
 		for( int dim=0; dim<D; ++dim ) result[dim] = v[dim];
 		return result;
@@ -374,7 +374,7 @@ template <class T, unsigned D> struct vec {
 	 @param[in] dim 面の向きの次元番号。
 	 @return セルの面の中心位置。
 	 */
-	template<class Y=Real> vec<Y,D> face( int dim ) const {
+	template<class Y=double> vec<Y,D> face( int dim ) const {
 		vec<Y,D> result;
 		for( int _dim=0; _dim<D; ++_dim ) result[_dim] = v[_dim]+0.5*(dim!=_dim);
 		return result;
@@ -387,7 +387,7 @@ template <class T, unsigned D> struct vec {
 	 @param[in] dim エッジの向きの次元番号。
 	 @return エッジの中心位置。
 	 */
-	template<class Y=Real> vec<Y,D> edge( int dim ) const {
+	template<class Y=double> vec<Y,D> edge( int dim ) const {
 		assert( D == 3 );
 		return vec<Y,3>(v[0]+0.5*(dim==0),v[1]+0.5*(dim==1),v[2]+0.5*(dim==2));
 	}

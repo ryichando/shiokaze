@@ -676,7 +676,7 @@ protected:
 			std::vector<double> compressed_result;
 			auto status = m_solver->solve(compressed_Lhs.get(),compressed_rhs,compressed_result);
 			console::write(get_argument_name()+"_number_projection_iteration", status.count);
-			console::dump( "Done. Took %d iterations. Resid=%e. Took %s\n", status.count, status.residual, timer.stock("linsolve").c_str());
+			console::dump( "Done. Took %d iterations. Reresid=%e. Took %s\n", status.count, status.reresid, timer.stock("linsolve").c_str());
 			//
 			if( m_param.diff_solve ) {
 				m_parallel.for_each(Lhs->rows(),[&]( size_t row ) {

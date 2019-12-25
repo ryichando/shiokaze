@@ -57,7 +57,7 @@ void macflipsmoke3::post_initialize () {
 	//
 	shared_array3<Real> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
-	m_flip->seed(fluid(),[&](const vec3d &p){ return interpolate_solid(p); },m_velocity);
+	m_flip->resample(fluid(),[&](const vec3d &p){ return interpolate_solid(p); },m_velocity);
 	//
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
 }
@@ -87,7 +87,7 @@ void macflipsmoke3::idle() {
 	// Reseed particles
 	shared_array3<Real> fluid(m_shape);
 	fluid->set_as_levelset(m_dx);
-	m_flip->seed(m_fluid,
+	m_flip->resample(m_fluid,
 		[&](const vec3d &p){ return interpolate_solid(p); },
 		m_velocity
 	);

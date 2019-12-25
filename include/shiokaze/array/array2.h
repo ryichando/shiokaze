@@ -1730,6 +1730,15 @@ public:
 		return m_parallel;
 	}
 	/**
+	 \~english @brief Set the core name of module of this grid.
+	 @param[in] Name of the core name.
+	 \~japanese @brief グリッドのモジュールのコアネームを取得する。
+	 @param[in] コアネームの名前。
+	 */
+	void set_core_name( std::string core_name ) {
+		m_core_name = core_name;
+	}
+	/**
 	 \~english @brief Get the core name of module of this grid.
 	 @return Name of the core name.
 	 \~japanese @brief グリッドのモジュールのコアネームを取得する。

@@ -103,3 +103,8 @@ def build(bld):
 			target = bld.get_lib_name(bld,'injection3'),
 			cxxflags = ['-Wno-return-type-c-linkage'],
 			use = bld.get_target_name(bld,'core'))
+	#
+	bld.shlib(source = 'movingsolid2.cpp',
+			target = bld.get_lib_name(bld,'movingsolid2'),
+			cxxflags = ['-Wno-return-type-c-linkage'],
+			use = bld.get_target_name(bld,'core'))

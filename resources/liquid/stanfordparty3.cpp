@@ -63,6 +63,7 @@ extern "C" void unload () {
 //
 extern "C" void configure( configuration &config ) {
 	//
+	polygon->recursive_configure(config);
 	for( unsigned n=0; n<MAX_SLOT; ++n ) {
 		levelsets[n]->recursive_configure(config);
 	}

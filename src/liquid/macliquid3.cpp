@@ -149,6 +149,15 @@ void macliquid3::post_initialize() {
 	}
 	//
 	console::dump( "<<< Initialization finished. Took %s\n", timer.stock("initialization").c_str());
+	//
+	if( ! m_export_path.empty()) {
+		timer.tick(); console::dump( ">>> Exporting the first mesh...\n");
+		do_export_mesh(0);
+		console::dump( "<<< Done. Took %s\n", timer.stock("export_first_mesh").c_str());
+		if( m_param.render_mesh ) {
+			render_mesh(0);
+		}
+	}
 }
 //
 void macliquid3::setup_window( std::string &name, int &width, int &height ) const {
@@ -189,11 +198,11 @@ void macliquid3::inject_external_fluid( array3<Real> &fluid, macarray3<Real> &ve
 		size_t total_injected (0);
 		if( m_inject_func ) {
 			total_injected = do_inject_external_fluid(fluid,velocity,dt,time,step);
-		}
-		if( m_post_inject_func ) {
 			timer.tick(); console::dump( "Computing volume change..." );
 			double volume_change = (m_dx*m_dx*m_dx) * total_injected;
-			m_post_inject_func(m_dx,dt,time,step,volume_change);
+			if( m_post_inject_func ) {
+				m_post_inject_func(m_dx,dt,time,step,volume_change);
+			}
 			if( volume_change ) {
 				m_target_volume += volume_change;
 			}
@@ -220,17 +229,16 @@ size_t macliquid3::do_inject_external_fluid( array3<Real> &fluid, macarray3<Real
 	fluid.parallel_all([&]( int i, int j, int k, auto &it, int tid ) {
 		//
 		vec3d p = m_dx*vec3i(i,j,k).cell();
-		double value (it()); vec3d u (interp_vel(p));
-		double old_value (value);
+		double value (0.0); vec3d u;
 		if( m_inject_func(p,m_dx,dt,time,step,value,u)) {
 			if( value < 0.0 ) {
 				injected_positions[tid].push_back(vec3i(i,j,k));
-				if( old_value >= 0.0 ) inject_count[tid] ++;
+				if( it() >= 0.0 ) inject_count[tid] ++;
 			}
 			if( std::abs(value) < fluid.get_background_value() ||
 				(value < fluid.get_background_value() && it.active())) {
-				it.set(std::min(value,old_value));
-				if( old_value >= 0.0 && value < 0.0 ) {
+				it.set(std::min((Real)value,it()));
+				if( it() >= 0.0 && value < 0.0 ) {
 					inject_count[tid] ++;
 				}
 			}
@@ -249,18 +257,15 @@ size_t macliquid3::do_inject_external_fluid( array3<Real> &fluid, macarray3<Real
 	timer.tick(); console::dump( "Assigning velocity of injected liquid..." );
 	eval_cells->dilate(1);
 	eval_cells->const_serial_actives([&]( int i, int j, int k ) {
-		double original_fluid (fluid(i,j,k));
-		double value (original_fluid); vec3d u;
+		double value (0.0); vec3d u;
 		if( m_inject_func(m_dx*vec3i(i,j,k).cell(),m_dx,dt,time,step,value,u)) {
 			for( int dim : DIMS3 ) {
 				vec3d p0 = m_dx*vec3i(i,j,k).face(dim);
 				vec3d p1 = m_dx*vec3i(i+dim==0,j+dim==1,k+dim==2).face(dim);
-				value = original_fluid; u = interp_vel(p0);
 				m_inject_func(p0,m_dx,dt,time,step,value,u);
-				velocity[dim].set(i,j,k,u[dim]);
-				value = original_fluid; u = interp_vel(p1);
+				velocity[dim].set(i,j,k,u[dim]); u = vec3d();
 				m_inject_func(p1,m_dx,dt,time,step,value,u);
-				velocity[dim].set(i+dim==0,j+dim==1,k+dim==2,u[dim]);
+				velocity[dim].set(i+dim==0,j+dim==1,k+dim==2,u[dim]); u = vec3d();
 			}
 		}
 	});

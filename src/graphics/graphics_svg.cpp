@@ -48,6 +48,7 @@ private:
 	//
 	struct String : public Color {
 		std::string string;
+		unsigned size;
 		vec2d p;
 	};
 	//
@@ -72,6 +73,10 @@ private:
 		m_viewport.p1 = vec2d(m_canvas_width,m_canvas_height);
 		m_coordsys.p1 = vec2d(1.0,m_canvas_height/(double)m_canvas_width);
 		m_scale = (m_viewport.p1-m_viewport.p0).norm_inf();
+	}
+	//
+	virtual std::string get_graphics_engine_name () const override {
+		return "SVG";
 	}
 	//
 	virtual bool get_supported ( FEATURE feature ) const override {
@@ -156,11 +161,12 @@ private:
 		m_line_width = m_line_scale * width;
 	}
 	//
-	virtual void draw_string( const double *v, std::string str ) override {
+	virtual void draw_string( const double *v, std::string str, unsigned size=0 ) override {
 		//
 		String string_primitive;
 		string_primitive.string = str;
 		string_primitive.p = convert_position(v);
+		string_primitive.size = size;
 		std::memcpy(string_primitive.color,m_color,4*sizeof(double));
 		m_strings.push_back(string_primitive);
 	}
@@ -330,9 +336,10 @@ private:
 		//
 		int rgb[3];
 		convert_integer_rgb(primitive.color,rgb);
+		double font_size = primitive.size ? primitive.size : m_font_size;
 		//
 		std::fprintf(fp,"<text x=\"%g\" y=\"%g\" fill=\"rgb(%d,%d,%d)\" font-size=\"%g\" %s>%s</text>\n",
-							primitive.p[0], primitive.p[1], rgb[0], rgb[1], rgb[2], m_font_size, primitive.string.c_str(), opacity_fill_string(primitive).c_str() );
+							primitive.p[0], primitive.p[1], rgb[0], rgb[1], rgb[2], font_size, primitive.string.c_str(), opacity_fill_string(primitive).c_str() );
 	}
 	//
 	void write_example( void *ptr ) {

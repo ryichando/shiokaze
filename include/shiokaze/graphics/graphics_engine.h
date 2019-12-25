@@ -59,6 +59,13 @@ public:
 		_3D
 	};
 	/**
+	 \~english @brief Get the name of the graphics engine.
+	 @return Name of the graphics engine.
+	 \~japanese @brief グラフィックスエンジンの名前を得る。
+	 @return グラフィックスのエンジンの名前。
+	**/
+	virtual std::string get_graphics_engine_name () const = 0;
+	/**
 	 \~english @brief Get if a specified feature is supported.
 	 @param[in] feature Feature to examine.
 	 @return \c true if suppported \c false otherwise.
@@ -246,11 +253,13 @@ public:
 	 \~english @brief Draw a string at the current position.
 	 @param[in] p Position.
 	 @param[in] str String.
+	 @param[in] size String size.
 	 \~japanese @brief 現在の場所に文字を描く。
 	 @param[in] p 位置。
 	 @param[in] str 文字列。
+	 @param[in] size 文字の大きさ。
 	 */
-	virtual void draw_string( const double *v, std::string str ) = 0;
+	virtual void draw_string( const double *v, std::string str, unsigned size=0 ) = 0;
 };
 //
 SHKZ_END_NAMESPACE

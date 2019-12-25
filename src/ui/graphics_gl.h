@@ -45,6 +45,7 @@ public:
 	graphics_gl ();
 	//
 	virtual void setup_graphics ( std::map<std::string,const void *> params=std::map<std::string,const void *>() ) override;
+	virtual std::string get_graphics_engine_name () const override { return "OpenGL"; }
 	virtual bool get_supported ( FEATURE feature ) const override;
 	virtual void set_viewport( unsigned x, unsigned y, unsigned width, unsigned height ) override;
 	virtual void get_viewport( unsigned &x, unsigned &y, unsigned &width, unsigned &height ) const override;
@@ -63,7 +64,7 @@ public:
 	virtual void point_size( double size ) override;
 	virtual void line_width( double width ) override;
 	//
-	virtual void draw_string( const double *v, std::string str ) override;
+	virtual void draw_string( const double *v, std::string str, unsigned size=0 ) override;
 	//
 	void set_HiDPI_scaling_factor( double factor );
 	double get_HiDPI_scaling_factor() const;

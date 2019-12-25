@@ -31,7 +31,7 @@
  \~english @brief Name space definition for shiokaze.
  \~japanese @brief shiokaze の名前空間の定義。
  */
-#define SHKZ_NAMESPACE			shiokaze
+#define SHKZ_NAMESPACE			shiokaze_v1
 /**
  \~english @brief Name space beggining definition for shiokaze.
  \~japanese @brief shiokaze の名前空間の開始の定義。

@@ -46,7 +46,7 @@ namespace macarray_interpolator3 {
 	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @return 補間値。
 	 */
-	template<class T> vec3<T> interpolate( const macarray3<T> &array, const vec3d &p, bool only_actives=false ) {
+	template<class T> static vec3<T> interpolate( const macarray3<T> &array, const vec3d &p, bool only_actives=false ) {
 		vec3<T> result;
 		for( int dim : DIMS3 ) {
 			const vec3d pos = vec3d(p[0]-0.5*(dim!=0),p[1]-0.5*(dim!=1),p[2]-0.5*(dim!=2));
@@ -70,7 +70,7 @@ namespace macarray_interpolator3 {
 	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @return 補間値。
 	 */
-	template<class T> vec3<T> interpolate( const macarray3<T> &array, const vec3d &origin, double dx, const vec3d &p, bool only_actives=false ) {
+	template<class T> static vec3<T> interpolate( const macarray3<T> &array, const vec3d &origin, double dx, const vec3d &p, bool only_actives=false ) {
 		return interpolate<T>(array,(p-origin)/dx,only_actives);
 	}
 };

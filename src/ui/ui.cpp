@@ -249,6 +249,8 @@ void ui::configure( configuration &config ) {
 	//
 	configuration::auto_group group(config,group_name,argument_name);
 	config.get_string("Screenshot",m_screenshot_path,"Screnshot path");
+	config.get_string("ScreenshotLabel",m_screenshot_label,"Screnshot label");
+	config.get_string("Legend",m_legend,"Legend annotation string");
 	config.get_integer("RecordUntil",m_until,"Maximal screenshot frame to quit");
 	config.get_double("WindowScale",m_window_scale,"Widnow size scale");
 	config.get_bool("Paused",m_paused,"Paused on start");
@@ -463,15 +465,22 @@ void ui::run () {
 		//
 		if( running ) {
 			//
+			if( ! m_legend.empty()) {
+				ge.color4(1.0,1.0,1.0,1.0);
+				push_screen_coord(width,height);
+				ge.draw_string(vec2d(10,25).v, m_legend.c_str());
+				pop_screen_coord();
+			}
+			//
 			// Export screenshot if requested
 			++ m_step;
 			if( m_screenshot_path.size() && m_image_io ) {
 				if( m_instance->should_screenshot()) {
-					std::string path = m_screenshot_path + "/screenshot_" + std::to_string(m_frame++) + ".png";
+					std::string path = m_screenshot_path + "/" + m_screenshot_label + "_" + std::to_string(m_frame++) + ".png";
 					write_image(m_image_io.get(),path,width,height);
 				}
-				if( m_until && m_step >= m_until ) {
-					console::dump("run \"avconv -r 60 -i screenshot_%d.png -pix_fmt yuv420p -b:v 12000k video.mp4\" to compile the video.\n");
+				if( m_until && m_frame > m_until ) {
+					console::dump("run \"avconv -r 60 -i %s_%%d.png -pix_fmt yuv420p -b:v 12000k video.mp4\" to compile the video.\n", m_screenshot_label.c_str());
 					break;
 				}
 			}

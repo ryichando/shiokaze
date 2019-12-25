@@ -83,7 +83,7 @@ namespace array_interpolator3 {
 	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @return 補間値。
 	 */
-	template<class T> T interpolate( const array3<T> &array, const vec3d &p, bool only_actives=false ) {
+	template<class T> static T interpolate( const array3<T> &array, const vec3d &p, bool only_actives=false ) {
 		T values[8]; vec3i indices[8]; double coef[8];
 		interpolate_coef(array.shape(),p,indices,coef);
 		T value = T();
@@ -117,7 +117,7 @@ namespace array_interpolator3 {
 	 @param[in] only_actives アクティブな値だけサンプルするか。
 	 @param[out] 補間値。
 	 */
-	template<class T> T interpolate( const array3<T> &array, const vec3d &origin, double dx, const vec3d &p, bool only_actives=false ) {
+	template<class T> static T interpolate( const array3<T> &array, const vec3d &origin, double dx, const vec3d &p, bool only_actives=false ) {
 		return interpolate<T>(array,(p-origin)/dx,only_actives);
 	}
 };

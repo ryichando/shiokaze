@@ -26,12 +26,9 @@
 </film>
 </sensor>
 
-<emitter type="envmap" id="envmapLight">
-	<string name="filename" value="veranda_1k.hdr"/>
-	<transform name="toWorld">
-		<rotate y="1" angle="-75"/>
-	</transform>
-	<float name="scale" value="1.75"/>
+<emitter type="sky">
+	<float name="scale" value="10"/>
+	<float name="turbidity" value="4"/>
 </emitter>
 
 <shape type="rectangle">
