@@ -565,6 +565,33 @@ public:
 		return active(pi[0],pi[1],pi[2]);
 	}
 	/**
+	 \~english @brief Get if a position on grid is active. (i,j,k) can be safely out of the domain.
+	 @param[in] i position on x coordiante.
+	 @param[in] j position on y coordinate.
+	 @return \c true if active \c flase if inactive.
+	 \~japanese @brief グリッドのある位置がアクティブか得る。(i,j) は領域外でも安全に取得可能。
+	 @param[in] i x 座標上の位置。
+	 @param[in] j y 座標上の位置。
+	 @return アクティブなら \c true 非アクティブなら \c false。
+	 */
+	bool safe_active( int i, int j, int k ) const {
+		if( ! m_shape.out_of_bounds(i,j,k)) {
+			return active(i,j,k);
+		}
+		return false;
+	}
+	/**
+	 \~english @brief Get if a position on grid is active. pi can be safely out of the domain.
+	 @param[in] pi position on grid.
+	 @return \c true if active \c flase if inactive.
+	 \~japanese @brief グリッドのある位置がアクティブか得る。pi は領域外でも安全に取得可能。
+	 @param[in] pi x グリッドでの位置。
+	 @return アクティブなら \c true 非アクティブなら \c false。
+	 */
+	bool safe_active( const vec3i &pi ) const {
+		return safe_active(pi[0],pi[1],pi[2]);
+	}
+	/**
 	 \~english @brief Set a position on grid inactive.
 	 @param[in] i position on x coordiante.
 	 @param[in] j position on y coordinate.
