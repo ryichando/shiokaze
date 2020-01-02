@@ -59,7 +59,7 @@ if not os.path.exists(img_path):
 for frame in range(0,end+1):
 	#
 	png_path = img_path+'/'+str(frame)+'_'+name+'.png'
-	if( not os.path.exists(png_path)):
+	while( not os.path.exists(png_path)):
 		#
 		# Get a reference to the thread's file resolver
 		fileResolver = Thread.getThread().getFileResolver()
@@ -151,7 +151,7 @@ for frame in range(0,end+1):
 		os.system('mtsutil tonemap -g 3 '+exr_path)
 		#
 		# Sometimes compile movie
-		if frame % interval == interval-1:
+		if frame > 0 and frame % interval == 0:
 			video_path = img_path+'/'+name+'.mp4'
 			os.system('rm -rf '+video_path)
 			os.system('avconv -r 60 -i '+img_path+'/%d_'+name+'.png -b:v 120000k -c:v libx264 -pix_fmt yuv420p -loglevel panic -filter:v lutyuv="y=gammaval(1.3)" '+video_path)

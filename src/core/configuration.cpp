@@ -199,7 +199,7 @@ void configuration::print_help() const {
 //
 void configuration::print_splash() const {
 	//
-	print_bar("Shiokaze Core <Light_Magenta>(MIT)<Default>");
+	print_bar("Shiokaze Core v1 <Light_Magenta>(MIT)<Default>");
 	print_center("A research-oriented fluid solver for computer graphics");
 	print_center("Designed and maintained by <Yellow>Ryoichi Ando <Cyan><rand@nii.ac.jp><Default>");
 	print_bar();

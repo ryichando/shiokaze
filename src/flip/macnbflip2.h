@@ -77,7 +77,7 @@ protected:
 	virtual void update( std::function<void(const vec2r &p, vec2r &velocity, Real &mass, bool bullet )> func ) override;
 	//
 	// Delete particles
-	virtual size_t remove(std::function<double(const vec2r &p, bool bullet)> test_function ) override;
+	virtual size_t remove(std::function<bool(const vec2r &p, bool bullet)> test_function ) override;
 	//
 	// Draw FLIP partciels
 	virtual void draw( graphics_engine &g, double time=0.0 ) const override;

@@ -49,8 +49,12 @@ std::string filesystem::find_resource_path( std::string directory, std::string n
 	std::string path = "./resources/"+ directory + "/" + name;
 	if(filesystem::is_exist(path)) return path;
 	else {
-		std::cout << "Could not locate the file: path=" << path << std::endl;
-		exit(0);
+		std::string private_path = "./private-resources/"+ directory + "/" + name;
+		if(filesystem::is_exist(private_path)) return private_path;
+		else {
+			std::cout << "Could not locate the resource path=" << directory << "/" << name << std::endl;
+			exit(0);
+		}
 	}
 	return std::string();
 }

@@ -562,7 +562,7 @@ size_t macnbflip2::resample(const array2<Real> &fluid,
 	return reseeded;
 }
 //
-size_t macnbflip2::remove(std::function<double(const vec2r &p, bool bullet)> test_function ) {
+size_t macnbflip2::remove(std::function<bool(const vec2r &p, bool bullet)> test_function ) {
 	//
 	size_t removed_count (0);
 	if( m_particles.size()) {
@@ -664,7 +664,7 @@ void macnbflip2::sort_particles() {
 //
 void macnbflip2::update_velocity_derivative( Particle& particle, const macarray2<Real> &velocity ) {
 	//
-	// Written by Takahiro Sato
+	// Written by Takahiro Sato updated by Ryoichi Ando
 	for( int dim : DIMS2 ) {
 		vec2r &c = particle.c[dim];
 		c = vec2d();
@@ -684,17 +684,38 @@ void macnbflip2::update_velocity_derivative( Particle& particle, const macarray2
 		cell_pos[2] = m_dx*(vec2d(i,j+1)+offset);
 		cell_pos[3] = m_dx*(vec2d(i+1,j+1)+offset);
 		//
-		vec2d dw[4];
-		dw[0] = grid_gradient_kernel(cell_pos[0]-p_pos, m_dx);
-		dw[1] = grid_gradient_kernel(cell_pos[1]-p_pos, m_dx);
-		dw[2] = grid_gradient_kernel(cell_pos[2]-p_pos, m_dx);
-		dw[3] = grid_gradient_kernel(cell_pos[3]-p_pos, m_dx);
+		bool actives[4];
+		const auto v_shape = velocity[dim].shape();
+		actives[0] = velocity[dim].active(v_shape.clamp(i,j));
+		actives[1] = velocity[dim].active(v_shape.clamp(i+1,j));
+		actives[2] = velocity[dim].active(v_shape.clamp(i,j+1));
+		actives[3] = velocity[dim].active(v_shape.clamp(i+1,j+1));
 		//
-		auto v_shape = velocity[dim].shape();
-		c += dw[0] * velocity[dim](v_shape.clamp(i,j));
-		c += dw[1] * velocity[dim](v_shape.clamp(i+1,j));
-		c += dw[2] * velocity[dim](v_shape.clamp(i,j+1));
-		c += dw[3] * velocity[dim](v_shape.clamp(i+1,j+1));
+		bool APIC_enabled (true);
+		for( char n=0; n<4; ++n ) {
+			if( ! actives[n] ) {
+				APIC_enabled = false;
+				break;
+			}
+		}
+		//
+		if( APIC_enabled ) {
+			vec2d dw[4];
+			dw[0] = grid_gradient_kernel(cell_pos[0]-p_pos, m_dx);
+			dw[1] = grid_gradient_kernel(cell_pos[1]-p_pos, m_dx);
+			dw[2] = grid_gradient_kernel(cell_pos[2]-p_pos, m_dx);
+			dw[3] = grid_gradient_kernel(cell_pos[3]-p_pos, m_dx);
+			//
+			Real u[4];
+			u[0] = velocity[dim](v_shape.clamp(i,j));
+			u[1] = velocity[dim](v_shape.clamp(i+1,j));
+			u[2] = velocity[dim](v_shape.clamp(i,j+1));
+			u[3] = velocity[dim](v_shape.clamp(i+1,j+1));
+			//
+			for( char n=0; n<4; ++n ) {
+				c += dw[n] * u[n];
+			}
+		}
 	}
 }
 //

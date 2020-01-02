@@ -149,7 +149,7 @@ public:
 	 \~japanese @brief テスト関数をパスする粒子を削除する。
 	 @param[in] test_function テスト関数。
 	 */
-	virtual size_t remove(std::function<double(const vec3r &p, bool bullet)> test_function ) = 0;
+	virtual size_t remove(std::function<bool(const vec3r &p, bool bullet)> test_function ) = 0;
 	/**
 	 \~english @brief Draw FLIP particles.
 	 @param[in] g Graphics engine.
