@@ -96,13 +96,11 @@ protected:
 		if( mate_array ) {
 			m_Z = mate_array->m_Z;
 			initialize(nx,ny,element_bytes);
-			if( element_bytes ) {
-				m_fill_mask = mate_array->m_fill_mask;
-				for( size_t n=0; n<m_bx*m_by; ++n ) {
-					if( mate_array->m_tiles[n] ) {
-						m_tiles[n] = new chunk2(*mate_array->m_tiles[n],copy_func);
-						if( block_filled(n)) m_tiles[n]->fill_all();
-					}
+			m_fill_mask = mate_array->m_fill_mask;
+			for( size_t n=0; n<m_bx*m_by; ++n ) {
+				if( mate_array->m_tiles[n] ) {
+					m_tiles[n] = new chunk2(*mate_array->m_tiles[n],copy_func);
+					if( block_filled(n)) m_tiles[n]->fill_all();
 				}
 			}
 		} else {

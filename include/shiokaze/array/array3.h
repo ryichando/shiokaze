@@ -1863,7 +1863,7 @@ public:
 				core_name == rhs.core_name &&
 				shape == rhs.shape &&
 				background_value == rhs.background_value &&
-				fill_value && rhs.fill_value &&
+				fill_value == rhs.fill_value &&
 				is_fillable == rhs.is_fillable &&
 				is_levelset == rhs.is_levelset &&
 				touch_only_actives == rhs.touch_only_actives;
