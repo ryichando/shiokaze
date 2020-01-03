@@ -45,12 +45,55 @@ public:
 	 */
 	static bool is_exist( std::string path );
 	/**
+	 \~english @brief Check if a path contains a parent directory.
+	 @param[in] path Path to check.
+	 @return \c true if exists \c false otherwise.
+	 \~japanese @brief パスに親ディレクトリが存在するか確認する。
+	 @param[in] path 確認するパス。
+	 @return 存在すれば \c true 存在していなければ \c false が返る。
+	 */
+	static bool has_parent( std::string path );
+	/**
+	 \~english @brief Get the path to the parent directory.
+	 @param[in] path Full path.
+	 @return Path to the parent directory.
+	 \~japanese @brief 親ディレクトリへのパスを得る。
+	 @param[in] path 完全なパス。
+	 @return 親ディレクトリへのパス。
+	 */
+	static std::string parent_path( std::string path );
+	/**
+	 \~english @brief Check if a path contains a root path.
+	 @param[in] path Path to check.
+	 @return \c true if exists \c false otherwise.
+	 \~japanese @brief パスにルートパスが存在するか確認する。
+	 @param[in] path 確認するパス。
+	 @return 存在すれば \c true 存在していなければ \c false が返る。
+	 */
+	static bool has_root( std::string path );
+	/**
 	 \~english @brief Create directory to a path.
 	 @return \c true if successful \c false otherwise.
 	 \~japanese @brief ディレクトリを指定されたパスに作成する。
 	 @return 成功すれば \c true 失敗すれば \c false が返る。
 	 */
 	static bool create_directory( std::string path );
+	/**
+	 \~english @brief Recursively create directory to a path.
+	 @return \c true if successful \c false otherwise.
+	 \~japanese @brief ディレクトリを指定されたパスに再帰的に作成する。
+	 @return 成功すれば \c true 失敗すれば \c false が返る。
+	 */
+	static bool create_directories( std::string path );
+	/**
+	 \~english @brief Rename the path (equivalently moving a file/directory)
+	 @param[in] old_path Old path.
+	 @param[in] new_path New path.
+	 \~japanese @brief パスを変更する (ファイル/ディレクトリの移動)
+	 @param[in] old_path 古いパス。
+	 @param[in] new_path 新しいパス。
+	 */
+	static void rename( std::string old_path, std::string new_path );
 	/**
 	 \~english @brief Delete the file to a path.
 	 @param[in] path Path to the file to delete.

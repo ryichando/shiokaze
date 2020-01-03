@@ -541,15 +541,32 @@ int ui::run ( int argc, const char* argv[] ) {
 	if( ! help ) {
 		if( path_to_log.size()) {
 			// Some safety check
-			if( path_to_log[0] == '/' ) {
+			if( path_to_log[0] == '/' || filesystem::has_root(path_to_log)) {
 				console::dump( "Absolute path \"%s\" not allowed.\n", path_to_log.c_str());
 				exit(0);
 			} else if( path_to_log.substr(0,2) == ".." ) {
 				console::dump( "Parent path \"%s\" not allowed.\n", path_to_log.c_str());
 				exit(0);
 			} else {
-				if( filesystem::is_exist(path_to_log)) filesystem::remove_dir_contents(path_to_log);
-				filesystem::create_directory(path_to_log);
+				if( filesystem::is_exist(path_to_log)) {
+					const std::string duplicated_dir ("duplicated");
+					if( ! filesystem::is_exist(duplicated_dir)) filesystem::create_directory(duplicated_dir);
+					unsigned count (0);
+					while( true ) {
+						const std::string new_path = duplicated_dir+"/"+path_to_log+"_"+std::to_string(count);
+						if( ! filesystem::is_exist(new_path)) {
+							if( filesystem::has_parent(path_to_log)) {
+								filesystem::create_directories(filesystem::parent_path(new_path));
+							}
+							filesystem::rename(path_to_log,new_path);
+							assert(filesystem::is_exist(new_path));
+							break;
+						}
+						++count;
+					}
+				}
+				assert(!filesystem::is_exist(path_to_log));
+				filesystem::create_directories(path_to_log);
 				console::set_root_path(path_to_log);
 			}
 		}

@@ -32,8 +32,31 @@ bool filesystem::is_exist( std::string path ) {
 	return boost::filesystem::exists(path);
 }
 //
+bool filesystem::has_parent( std::string path ) {
+	const auto p = boost::filesystem::path(path);
+	return p.has_parent_path();
+}
+//
+std::string filesystem::parent_path( std::string path ) {
+	const auto p = boost::filesystem::path(path);
+	return p.parent_path().string();
+}
+//
+bool filesystem::has_root( std::string path ) {
+	const auto p = boost::filesystem::path(path);
+	return p.has_root_path();
+}
+//
 bool filesystem::create_directory( std::string path ) {
 	return boost::filesystem::create_directory(path);
+}
+//
+bool filesystem::create_directories( std::string path ) {
+	return boost::filesystem::create_directories(path);
+}
+//
+void filesystem::rename( std::string old_path, std::string new_path ) {
+	boost::filesystem::rename(old_path,new_path);
 }
 //
 void filesystem::remove_file( std::string path ) {
