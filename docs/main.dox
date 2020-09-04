@@ -63,7 +63,7 @@ At the cost of flexible usability, Shiokaze heavily depends on virtual function 
 
 \section contributors Contributors
 
-\li [Ryoichi Ando](http://research.nii.ac.jp/~rand/)
+\li [Ryoichi Ando](https://ryichando.graphics)
 \li [Hikaru Ibayashi](http://www-scf.usc.edu/~ibayashi/)
 \li [Takahiro Sato](https://takahirosato.bitbucket.io)
 \li [Takeo Igarashi](http://www-ui.is.s.u-tokyo.ac.jp/~takeo/)
@@ -73,7 +73,7 @@ At the cost of flexible usability, Shiokaze heavily depends on virtual function 
 
 \section acknowledgements Acknowledgements
 
-Shiokaze is currently being actively developed and maintained at [National Institute of Informatics](https://www.nii.ac.jp/) by [Ryoichi Ando](http://research.nii.ac.jp/~rand/). The authors of Shiokaze wish that more people get in touch with Shiokaze and they find it useful. Therefore, we wish that Shiokaze is cited in your research paper if used. Bibliography of Shiokaze is:
+Shiokaze is currently being actively developed and maintained by [Ryoichi Ando](https://ryichando.graphics). The authors of Shiokaze wish that more people get in touch with Shiokaze and they find it useful. Therefore, we wish that Shiokaze is cited in your research paper if used. Bibliography of Shiokaze is:
 
 \include shiokaze-bib.bib
 
@@ -138,7 +138,7 @@ Shiokaze is currently being actively developed and maintained at [National Insti
 
 \section contributors 貢献者
 
-\li [安東遼一](http://research.nii.ac.jp/~rand/)
+\li [安東遼一](https://ryichando.graphics)
 \li [尉林暉](http://www-scf.usc.edu/~ibayashi/)
 \li [佐藤雄大](https://takahirosato.bitbucket.io)
 \li [五十嵐健夫](http://www-ui.is.s.u-tokyo.ac.jp/~takeo/)
@@ -148,7 +148,7 @@ Shiokaze is currently being actively developed and maintained at [National Insti
 
 \section acknowledgements 謝辞
 
-潮風は現在[国立情報学研究所](https://www.nii.ac.jp/)にて、[安東遼一](http://research.nii.ac.jp/~rand/)によって開発が活発に行われています。開発者は、より多くの方に潮風を使って頂けることを望んでいます。もし、潮風が研究に使われた時、論文で潮風を引用して頂ければ幸いです。潮風の Bibliography は以下の通りです。
+潮風は現在[安東遼一](https://ryichando.graphics)によって開発が活発に行われています。開発者は、より多くの方に潮風を使って頂けることを望んでいます。もし、潮風が研究に使われた時、論文で潮風を引用して頂ければ幸いです。潮風の Bibliography は以下の通りです。
 
 \include shiokaze-bib.bib
 
